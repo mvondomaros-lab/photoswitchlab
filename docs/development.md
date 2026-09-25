@@ -31,14 +31,16 @@ pixi run -e dev web --port 8001 --max-jobs 2 --job-timeout 600
 ### Routine checks
 
 ```sh
+pixi run -e dev pre-commit run --all-files
 pixi run -e dev test-web
 node --test tests/*.cjs
 ```
 
-These check the Python application and numerical utilities, and browser-side
-logic, respectively. Node.js must be installed separately; it is not needed to
-run the application. Inspect changed interfaces in a browser as well. Changes to
-Hub integration also need a login test on a real Hub.
+These check Python formatting and basic static errors, the Python application and
+numerical utilities, and browser-side logic, respectively. Node.js must be
+installed separately; it is not needed to run the application. Inspect changed
+interfaces in a browser as well. Changes to Hub integration also need a login
+test on a real Hub.
 
 ### Chemistry regression tests
 

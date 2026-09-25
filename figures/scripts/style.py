@@ -7,15 +7,29 @@ import matplotlib
 
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-from photoswitchlab.plot_style import (
-    STYLE,
-    TEXT,
+from achprak.plot_style import (
+    MARKER_SIZE,
     MUTED,
     REFERENCE,
     STICK_WIDTH,
-    MARKER_SIZE,
+    STYLE,
+    TEXT,
     style_axes,
 )
+
+__all__ = [
+    "DIAGRAM_BODY",
+    "DIAGRAM_HEADING",
+    "DIAGRAM_TITLE",
+    "DIAGRAM_WIDTH",
+    "MARKER_SIZE",
+    "MUTED",
+    "REFERENCE",
+    "STICK_WIDTH",
+    "TEXT",
+    "export",
+    "run",
+]
 
 # Diagram type scale: at the site's 760 px article width, 12 pt on an
 # 8-inch canvas renders as 15.8 CSS px, close to the 16 px body text.

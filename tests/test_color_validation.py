@@ -23,7 +23,9 @@ def test_validator_scales_inputs_and_preserves_original():
     # A flat absorbance has an analytical transmission, independent of observer data.
     np.testing.assert_allclose(
         [result["luminance"] for result in results],
-        10.0 ** -np.asarray(module.TEST_SCALES), rtol=1e-12, atol=1e-15,
+        10.0 ** -np.asarray(module.TEST_SCALES),
+        rtol=1e-12,
+        atol=1e-15,
     )
     assert results[0]["rgb"] == [255, 255, 255]
     assert results[-1]["rgb"] == [0, 0, 0]

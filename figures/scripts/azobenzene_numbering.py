@@ -1,6 +1,6 @@
 """RDKit source for azobenzene_numbering.svg, using the web app's drawing style."""
 
-from structures import TRANS, CIS, export_structure
+from structures import TRANS, export_structure
 from style import run
 
 

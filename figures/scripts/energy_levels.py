@@ -10,7 +10,9 @@ def draw():
     plt.plot([0.1, 0.9], [4.0, 4.0], color="C1")
     plt.text(0.9, 0.02, "Grundzustand", ha="right", va="bottom")
     plt.text(0.1, 3.08, "Erster angeregter Zustand", ha="left", va="bottom", color="C1")
-    plt.text(0.1, 4.08, "Zweiter angeregter Zustand", ha="left", va="bottom", color="C1")
+    plt.text(
+        0.1, 4.08, "Zweiter angeregter Zustand", ha="left", va="bottom", color="C1"
+    )
     plt.annotate(
         "",
         xy=(0.18, 3.0),
@@ -25,8 +27,12 @@ def draw():
         arrowprops=dict(arrowstyle="->", linewidth=1.5, color=TEXT),
         annotation_clip=False,
     )
-    plt.text(0.22, 1.5, "Photon\n3,0 eV", ha="left", va="center", color=TEXT, linespacing=1.5)
-    plt.text(0.69, 1.5, "Photon\n4,0 eV", ha="left", va="center", color=TEXT, linespacing=1.5)
+    plt.text(
+        0.22, 1.5, "Photon\n3,0 eV", ha="left", va="center", color=TEXT, linespacing=1.5
+    )
+    plt.text(
+        0.69, 1.5, "Photon\n4,0 eV", ha="left", va="center", color=TEXT, linespacing=1.5
+    )
     plt.xlim(0.06, 0.94)
     plt.ylim(-0.2, 4.4)
     plt.xticks([])

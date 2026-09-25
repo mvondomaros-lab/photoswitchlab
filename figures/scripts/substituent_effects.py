@@ -21,11 +21,24 @@ def draw():
         ax.plot([center - 0.8, center + 0.8], [0, 0], color="C0")
         ax.plot([center - 0.8, center + 0.8], [gap, gap], color="C1")
         ax.text(center, -0.08, "Grundzustand", ha="center", va="top", color="C0")
-        ax.text(center, gap + 0.06, "Angeregter Zustand", ha="center", va="bottom", color="C1")
-        ax.add_patch(FancyArrowPatch(
-            (center, 0), (center, gap), arrowstyle="->",
-            linewidth=1.5, color=TEXT, mutation_scale=10,
-        ))
+        ax.text(
+            center,
+            gap + 0.06,
+            "Angeregter Zustand",
+            ha="center",
+            va="bottom",
+            color="C1",
+        )
+        ax.add_patch(
+            FancyArrowPatch(
+                (center, 0),
+                (center, gap),
+                arrowstyle="->",
+                linewidth=1.5,
+                color=TEXT,
+                mutation_scale=10,
+            )
+        )
 
 
 def render(output_dir=None, formats=("svg",)):

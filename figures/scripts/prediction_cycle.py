@@ -18,61 +18,125 @@ def draw():
         height = 1.55
         ax.add_patch(
             FancyBboxPatch(
-                (x, y), width, height,
+                (x, y),
+                width,
+                height,
                 boxstyle="round,pad=0.08,rounding_size=0.12",
-                facecolor="white", edgecolor=blue, linewidth=1.5,
+                facecolor="white",
+                edgecolor=blue,
+                linewidth=1.5,
             )
         )
         ax.text(
-            x + width / 2, y + 1.1, title,
-            ha="center", va="center", weight="bold", color=TEXT, fontsize=DIAGRAM_HEADING,
+            x + width / 2,
+            y + 1.1,
+            title,
+            ha="center",
+            va="center",
+            weight="bold",
+            color=TEXT,
+            fontsize=DIAGRAM_HEADING,
         )
         ax.text(
-            x + width / 2, y + 0.48, detail,
-            ha="center", va="center", color=TEXT, fontsize=DIAGRAM_BODY,
+            x + width / 2,
+            y + 0.48,
+            detail,
+            ha="center",
+            va="center",
+            color=TEXT,
+            fontsize=DIAGRAM_BODY,
             linespacing=1.35,
         )
 
     # Axis margins include the rounded-box padding and stroke width.
     box(
-        2.6, 5.85, 8.8, "Vorhersage des Rechenmodells",
+        2.6,
+        5.85,
+        8.8,
+        "Vorhersage des Rechenmodells",
         "Zum Beispiel: Verschiebung einer Absorptionsbande\ndurch einen Substituenten",
     )
     ax.plot([7, 7], [5.7, 5.1], color=blue, linewidth=1.5)
     ax.plot([3.65, 10.35], [5.1, 5.1], color=blue, linewidth=1.5)
     for center in (3.65, 10.35):
-        ax.add_patch(FancyArrowPatch(
-            (center, 5.1), (center, 4.55), arrowstyle="-|>",
-            mutation_scale=12, linewidth=1.5, color=blue,
-        ))
+        ax.add_patch(
+            FancyArrowPatch(
+                (center, 5.1),
+                (center, 4.55),
+                arrowstyle="-|>",
+                mutation_scale=12,
+                linewidth=1.5,
+                color=blue,
+            )
+        )
 
     box(
-        0.7, 2.85, 5.9, "Vergleich mit Messwerten",
+        0.7,
+        2.85,
+        5.9,
+        "Vergleich mit Messwerten",
         "Dieselben Moleküle und dieselbe Größe\nunter vergleichbaren Bedingungen",
     )
     box(
-        7.4, 2.85, 5.9, "Vergleich mit Referenzrechnungen",
+        7.4,
+        2.85,
+        5.9,
+        "Vergleich mit Referenzrechnungen",
         "Verfahren mit belegter Genauigkeit\nfür die untersuchte Größe",
     )
 
     for center, title, detail in (
-        (3.65, "Prüfung am Experiment",
-         "Berechnete und gemessene\nBandenverschiebungen vergleichen"),
-        (10.35, "Beurteilung der Näherungen",
-         "Abweichungen von der\nReferenzrechnung untersuchen"),
+        (
+            3.65,
+            "Prüfung am Experiment",
+            "Berechnete und gemessene\nBandenverschiebungen vergleichen",
+        ),
+        (
+            10.35,
+            "Beurteilung der Näherungen",
+            "Abweichungen von der\nReferenzrechnung untersuchen",
+        ),
     ):
-        ax.add_patch(FancyArrowPatch(
-            (center, 2.68), (center, 2.2), arrowstyle="-|>",
-            mutation_scale=12, linewidth=1.5, color=blue,
-        ))
-        ax.text(center, 1.9, title, ha="center", va="center",
-                weight="bold", color=TEXT, fontsize=DIAGRAM_HEADING)
-        ax.text(center, 1.25, detail, ha="center", va="center",
-                color=TEXT, fontsize=DIAGRAM_BODY, linespacing=1.35)
+        ax.add_patch(
+            FancyArrowPatch(
+                (center, 2.68),
+                (center, 2.2),
+                arrowstyle="-|>",
+                mutation_scale=12,
+                linewidth=1.5,
+                color=blue,
+            )
+        )
+        ax.text(
+            center,
+            1.9,
+            title,
+            ha="center",
+            va="center",
+            weight="bold",
+            color=TEXT,
+            fontsize=DIAGRAM_HEADING,
+        )
+        ax.text(
+            center,
+            1.25,
+            detail,
+            ha="center",
+            va="center",
+            color=TEXT,
+            fontsize=DIAGRAM_BODY,
+            linespacing=1.35,
+        )
 
     ax.text(
-        7, 0.35, "Vergleiche für mehrere Moleküle helfen,\ndie Zuverlässigkeit eines Trends einzuschätzen.",
-        ha="center", va="center", color=TEXT, fontsize=DIAGRAM_BODY, linespacing=1.35,
+        7,
+        0.35,
+        "Vergleiche für mehrere Moleküle helfen,\ndie Zuverlässigkeit eines Trends einzuschätzen.",
+        ha="center",
+        va="center",
+        color=TEXT,
+        fontsize=DIAGRAM_BODY,
+        linespacing=1.35,
     )
 
 

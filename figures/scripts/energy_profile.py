@@ -33,10 +33,7 @@ def draw():
         # Offset along screen-space normals: a vertical offset narrows on slopes.
         ax = plt.gca()
         arrow_x = np.linspace(center - span / 2, center + span / 2, 101)
-        arrow_y = (
-            2.7 * arrow_x**4 - 1.6 * arrow_x**2 + 0.2 * arrow_x
-            - np.min(y0)
-        )
+        arrow_y = 2.7 * arrow_x**4 - 1.6 * arrow_x**2 + 0.2 * arrow_x - np.min(y0)
         points = ax.transData.transform(np.column_stack((arrow_x, arrow_y)))
         slopes = 10.8 * arrow_x**3 - 3.2 * arrow_x + 0.2
         # Transform analytical tangents using the finalized axes aspect ratio.
