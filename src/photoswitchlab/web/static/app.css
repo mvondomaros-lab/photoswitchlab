@@ -1468,8 +1468,6 @@ select {
 }
 :root { scroll-padding-top: 1rem; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-.header .text-preference { display: flex; align-items: center; justify-content: flex-start; gap: .5rem; color: #e3ecf7; font-size: .8rem; line-height: 1.4; max-width: 13rem; min-height: 44px; margin: 0; }
-.header .text-preference input { appearance: auto; width: 1.15rem; height: 1.15rem; min-height: 0; padding: 0; margin: 0; flex: 0 0 1.15rem; accent-color: #165de1; }
 .accessible-results { margin: 0 0 1rem; border: 1px solid var(--line, #dce4ed); border-radius: 10px; padding: .8rem 1rem; background: #fff; min-width: 0; }
 .accessible-results > summary { cursor: pointer; font-weight: 600; }
 .accessible-results p { line-height: 1.6; }
@@ -1489,7 +1487,6 @@ select {
 .text-preferred #play, .text-preferred #energy-play,
 .text-preferred #spectrum-result { display: none !important; }
 .text-preferred .accessible-results { border-color: #165de1; }
-@media (max-width: 720px) { .header { flex-wrap: wrap; height: auto; } .header-actions { flex-wrap: wrap; } .text-preference { max-width: none; } }
 @media (forced-colors: active) { button, select, input, summary { forced-color-adjust: auto; } :focus-visible { outline: 3px solid Highlight; } }
 
 /* A linear workflow using the same controls and calculation state. */
@@ -1523,13 +1520,9 @@ select {
 .text-preferred #simple-tools { margin-top: 1rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 8px; background: white; }
 .text-preferred #simple-tools > :not(summary) { margin: .75rem .75rem 0 0; }
 .text-preferred #simple-tools .quiet { display: inline-flex; align-items: center; min-height: 44px; padding: .6rem .85rem; color: var(--blue); background: #f3f6fa; border: 1px solid #b7c9df; border-radius: 7px; text-decoration: none; }
-.text-preferred #simple-default-capture:empty { display: none; }
-.text-preferred #simple-collection { margin-top: .75rem; }
-.text-preferred #simple-collection > button { margin-top: .75rem; }
 .text-preferred #simple-structure-figure { margin: 1.25rem 0; }
 .text-preferred #simple-structure-image { display: block; width: 100%; max-width: 20rem; max-height: 15rem; object-fit: contain; }
 .text-preferred #simple-structure-figure figcaption { margin-top: .5rem; color: var(--muted); font-size: .875rem; }
-.text-preferred #simple-validation .ts-summary { margin: .75rem 0; }
 .text-preferred .table-scroll { overflow-x: auto; }
 @media (max-width: 480px) {
   .text-preferred main#workspace { padding-inline: .75rem; }
@@ -1537,3 +1530,16 @@ select {
   .text-preferred .steps { flex-wrap: wrap; overflow: visible; }
   .text-preferred .step { flex: 1 1 9rem; text-align: left; }
 }
+
+.text-preferred .graphical-only { display: none !important; }
+.text-preferred #accessible-molecule-select { width: 100%; min-height: 44px; }
+.text-preferred #simple-converter { margin-top: 1rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 8px; background: white; }
+.text-preferred #simple-converter h2 { margin-top: 0; font-size: 1.1rem; }
+.text-preferred #simple-converter .conversion-fields { display: flex; flex-wrap: wrap; gap: 1rem; }
+.text-preferred #simple-converter label { flex: 1 1 10rem; }
+.text-preferred #simple-converter input { width: 100%; min-height: 44px; }
+#result-report-content h3 { margin-bottom: .5rem; font-size: 1.05rem; }
+#result-report-content section:first-child { margin-top: 0; }
+#result-report-content th, #result-report-content td { overflow-wrap: anywhere; }
+#data-report { margin-block: 1rem; }
+@media (max-width: 720px) { .header-actions { flex-wrap: wrap; } }

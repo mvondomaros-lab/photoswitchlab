@@ -44,7 +44,7 @@ test("atom references carry chemical positions through substituent connectivity"
   assert.ok(data.atomLabel(graph, 0, settings).includes("trägt Methoxygruppe"));
 });
 test("approximate color words distinguish achromatic, dark and selective colors", () => {
-  assert.equal(data.color([255, 255, 255]), "annähernd weiß");
+  assert.equal(data.color([255, 255, 255]), "nahezu farblos");
   assert.equal(data.color([15, 15, 15]), "annähernd schwarz");
   assert.equal(data.color([250, 250, 0]), "gelb");
   assert.equal(data.color([0, 0, 100]), "dunkel, blau");
@@ -82,8 +82,10 @@ function accessibleLab(search = "", deniedStorage = false) {
   let mutations = 0;
   const elements = new Map(), saved = new Map();
   function element() {
-    let text = "";
+    let text = "", html = "";
     return {
+      get innerHTML() { return html; },
+      set innerHTML(value) { html = value; mutations++; },
       options: [], children: [], value: "", open: false, checked: false,
       get textContent() { return text; },
       set textContent(value) { text = value; mutations++; },
@@ -112,15 +114,17 @@ function accessibleLab(search = "", deniedStorage = false) {
   });
   vm.runInContext(fs.readFileSync("src/photoswitchlab/web/static/progress.js", "utf8"), context);
   vm.runInContext(fs.readFileSync("src/photoswitchlab/web/static/accessibility.js", "utf8"), context);
-  const molecule = { id: "a", kind: "minimum", name: 'A <script>alert("x")</script>', formula: "C12H10N2", atom_count: 3,
+  const molecule = { id: "a", kind: "minimum", converged: true, settings: {configuration: "cis", substituents: Array(10).fill("H")}, name: 'A <script>alert("x")</script>', formula: "C12H10N2", atom_count: 3,
     xyz: "3\nexample\nC 0 0 0\nN 1 0 0\nN 1 2 0", properties: {energy_ev: -10, dihedral_deg: 180, ring_distance_pm: 400},
     atom_graph: [1, 2, 3].map((number) => ({ number, element: "C", position: `C${number}`, neighbors: [] })),
     spectrum: {energy_ev: [1, 2], absorption: [0.1, 0.5], excitations_ev: [1.5], oscillator_strengths: [0.2], color: {rgb: [255, 255, 0], luminance: 0.5}},
   };
-  const state = { step: "spectrum", molecules: [molecule, {...molecule, id: "b", name: "B"}] };
+  const state = { step: "spectrum", molecules: [molecule, {...molecule, id: "b", name: "B", settings: {...molecule.settings, configuration: "trans"}}] };
   let selected = molecule;
   const view = context.AccessibilityView;
   view.initialize({ state, current: () => selected, records: () => [], playback: () => ({records: []}),
+    selectableMolecules: () => state.molecules.filter((m) => state.step !== "spectrum" || m.kind === "minimum"),
+    selectMolecule: (id) => { selected = state.molecules.find((m) => m.id === id); view.render(); },
     render: () => view.render(), showResult: () => {}, selectFrame: () => {}, label: (m) => m.name,
     substituentLabel: (s) => s, filename: (extension) => `result.${extension}`,
     download: (content, filename) => { exported = {content, filename}; },
@@ -133,7 +137,8 @@ test("explicit text preference persists and turning it off restores graphical-fi
   assert.equal(lab.saved.get("photoswitchlab.textPreferred"), "true");
   assert.equal(lab.node("accessible-results").open, true);
   lab.node("text-preference").checked = false;
-  lab.node("text-preference").onchange();
+  lab.node("graphic-preference").checked = true;
+  lab.node("graphic-preference").onchange();
   assert.equal(lab.node("accessible-results").open, false);
   const denied = accessibleLab("?text=0", true);
   assert.equal(denied.view.prefersText, false);
@@ -149,186 +154,137 @@ test("identical result renders cause no text mutations or live announcements", (
   assert.equal(lab.node("accessible-status").textContent, "");
 });
 
-test("readable report escapes data and includes chosen information without full curve dumps", () => {
+test("automatic in-app result and optional export share one escaped report model", () => {
+  const lab = accessibleLab("?text=1");
+  lab.view.render();
+  const displayed = lab.node("result-report-content").innerHTML;
+  assert.ok(displayed.includes("&lt;script&gt;"));
+  assert.ok(!displayed.includes("<script>"));
+  assert.ok(displayed.includes("Stärkste elektronische Übergänge"));
+  assert.ok(displayed.includes("Zugehöriges cis/trans-Paar"));
+  lab.node("data-report").onclick();
+  assert.equal(lab.exported().filename, "result.html");
+  assert.ok(lab.exported().content.includes(displayed));
+  assert.ok(!lab.exported().content.includes("Beobachtung 1"));
+  assert.ok(!lab.exported().content.includes("Vollständige Spektraldaten"));
+  const source = fs.readFileSync("src/photoswitchlab/web/static/accessibility.js", "utf8");
+  assert.ok(!source.includes("remember-observation"));
+  assert.ok(!source.includes("observations"));
+});
+
+test("shared-energy probe immediately compares both configurations without capturing or choosing a partner", () => {
   const lab = accessibleLab();
+  lab.state.molecules[1].spectrum = {...lab.molecule.spectrum, absorption: [0.3, 0.9]};
   lab.view.render();
   lab.node("curve-energy").value = "1,5";
   lab.node("curve-query").onclick();
-  lab.node("remember-observation").onclick();
-  lab.node("color-comparison").value = "b";
-  lab.node("color-comparison").onchange();
-  lab.node("remember-observation").onclick();
+  const displayed = lab.node("curve-value").innerHTML;
+  for (const text of ["1,5000 eV", "cis", "trans", "0,3000", "0,6000"]) assert.ok(displayed.includes(text), text);
   lab.node("data-report").onclick();
-  const output = lab.exported();
-  assert.equal(output.filename, "photoswitchlab-beobachtungen.html");
-  assert.ok(output.content.includes('lang="de"'));
-  assert.ok(output.content.includes("&lt;script&gt;"));
-  assert.ok(!output.content.includes("<script>"));
-  assert.ok(output.content.includes("Beobachtung 1"));
-  assert.ok(output.content.includes("1,5000 eV"));
-  assert.ok(output.content.includes("Farbabstand"));
-  assert.ok(output.content.includes("feste Absorbanzskalierung"));
-  assert.ok(!output.content.includes("Vollständige Spektraldaten"));
-});
-
-test("invalid and out-of-range curve input remain distinct", () => {
-  const lab = accessibleLab();
-  lab.view.render();
-  lab.node("curve-energy").value = "0,3";
-  lab.node("curve-query").onclick();
-  assert.ok(lab.node("curve-value").textContent.includes("zwischen 1,0000 und 2,0000"));
-  lab.node("curve-energy").value = "1,5.1";
-  lab.node("curve-query").onclick();
-  assert.ok(lab.node("curve-value").textContent.includes("Dezimalkomma oder Dezimalpunkt"));
-});
-
-test("the shared capture action remembers only its explicit current scope and cannot capture a failed query", () => {
-  const lab = accessibleLab();
-  lab.view.render();
-  lab.node("curve-energy").value = "1,2";
-  lab.node("curve-query").onclick();
-  assert.equal(lab.node("remember-observation").textContent, "Kurvenwert merken");
-  lab.node("atom-explorer").open = true;
-  lab.node("atom-first").onchange();
-  assert.equal(lab.node("remember-observation").textContent, "Messung merken");
-  lab.node("remember-observation").onclick();
-  lab.node("data-report").onclick();
-  assert.ok(lab.exported().content.includes("Ringposition C1"));
-  assert.ok(!lab.exported().content.includes("1,2000 eV"));
+  assert.ok(lab.exported().content.includes(displayed));
+  assert.ok(!lab.exported().content.includes("Diederwinkel"));
+  // A later query replaces the current value instead of building a mental queue.
   lab.node("curve-energy").value = "1,8";
   lab.node("curve-query").onclick();
-  lab.node("curve-energy").value = "0,3";
-  lab.node("curve-query").onclick();
-  assert.equal(lab.node("remember-observation").disabled, true);
-  lab.node("remember-observation").onclick(); // Even a programmatic invocation adds no stale datum.
-  assert.equal(lab.node("observations-summary").textContent, "Gemerkte Beobachtungen (1)");
   lab.node("data-report").onclick();
-  assert.ok(!lab.exported().content.includes("1,8000 eV"));
+  assert.ok(lab.exported().content.includes("1,8000 eV"));
+  assert.ok(!lab.exported().content.includes("1,5000 eV ("));
 });
 
-test("explicit observation collection retains several named probes and geometries without collecting every selection", () => {
+test("invalid and out-of-range probes show clear messages and do not export stale values", () => {
   const lab = accessibleLab();
   lab.view.render();
-  lab.node("atom-explorer").open = true;
-  lab.node("atom-first").onchange();
-  const initialCount = lab.node("observations-summary").textContent;
-  lab.node("curve-energy").value = "1,2";
-  lab.node("curve-query").onclick();
-  assert.equal(lab.node("observations-summary").textContent, initialCount); // No automatic capture.
-  lab.node("remember-observation").onclick();
   lab.node("curve-energy").value = "1,8";
   lab.node("curve-query").onclick();
-  lab.node("remember-observation").onclick();
-  lab.node("remember-observation").onclick(); // Duplicate capture is harmless.
-  assert.equal(lab.node("observations-summary").textContent, "Gemerkte Beobachtungen (2)");
-  lab.state.step = "optimize";
-  lab.molecule.ts_search = {path: [
-    {image: 0, energy_ev: -10, positions: [0, 0, 0, 1, 0, 0, 1, 2, 0]},
-    {image: 1, energy_ev: -9, positions: [0, 0, 0, 2, 0, 0, 2, 2, 0]},
-  ]};
-  lab.view.render();
-  lab.node("atom-first").onchange();
-  for (const index of ["0", "1"]) {
-    lab.node("path-point").value = index;
-    lab.node("path-point").onchange();
-    lab.node("remember-observation").onclick();
-    lab.node("atom-first").onchange();
-    lab.node("remember-observation").onclick();
-  }
-  lab.node("data-report").onclick();
-  const report = lab.exported().content;
-  for (const text of ["1,2000 eV", "1,8000 eV", "Pfadstruktur 1", "Pfadstruktur 2", "Ringposition C1", "100,0 pm", "200,0 pm"]) assert.ok(report.includes(text), text);
-  assert.equal((report.match(/<h3>Beobachtung /g) || []).length, 6);
-  lab.node("clear-observations").onclick();
-  lab.node("data-report").onclick();
-  assert.ok(!lab.exported().content.includes("Beobachtung 1"));
-});
-
-test("remembered spectral evidence keeps frozen source context without unrelated current or default geometry", () => {
-  const lab = accessibleLab();
-  lab.molecule.name = "Spektrum A";
-  lab.molecule.converged = true;
-  lab.molecule.spectrum.coverage_complete = false;
-  lab.view.render();
-  lab.node("atom-explorer").open = true; // Opening optional geometry alone is not a measurement selection.
-  for (const energy of ["1,2", "1,8"]) {
-    lab.node("curve-energy").value = energy;
+  for (const [value, expected] of [["0,3", "zwischen 1,0000 und 2,0000"], ["1,5.1", "Dezimalkomma oder Dezimalpunkt"]]) {
+    lab.node("curve-energy").value = value;
     lab.node("curve-query").onclick();
-    lab.node("remember-observation").onclick();
+    assert.ok(lab.node("curve-value").innerHTML.includes(expected));
+    lab.node("data-report").onclick();
+    assert.ok(!lab.exported().content.includes("1,8000 eV ("));
   }
-  // Later state changes must not rewrite the provenance of retained observations.
-  lab.molecule.spectrum.coverage_complete = true;
-  const start = {...lab.molecule, id: "new", name: "Unbeteiligte Startstruktur B", kind: "initial", spectrum: null};
-  lab.select(start);
-  lab.node("atom-explorer").open = true;
+});
+
+test("automatic matching accepts all eight independent ring orientations and never crosses derivatives", () => {
+  const substitutions = ["Me", "OMe", "NMe2", "CF3", "CN", "NO2", "Me", "H", "OMe", "H"];
+  const m = {id: "cis", kind: "minimum", converged: true, settings: {configuration: "cis", substituents: substitutions}};
+  const first = substitutions.slice(0, 5), second = substitutions.slice(5), keys = new Set();
+  for (const a of [first, [...first].reverse()]) for (const b of [second, [...second].reverse()]) for (const subs of [[...a, ...b], [...b, ...a]]) {
+    const other = {...m, id: "trans", settings: {configuration: "trans", substituents: subs}};
+    keys.add(JSON.stringify(subs));
+    assert.equal(data.partner(m, [m, other]), other);
+  }
+  assert.equal(keys.size, 8);
+  const wrong = {...m, id: "wrong", settings: {configuration: "trans", substituents: ["H", ...substitutions.slice(1)]}};
+  assert.equal(data.partner(m, [m, wrong]), null);
+  assert.equal(data.derivativeKey({configuration: "cis", substituents: ["H"]}), null);
+  assert.equal(data.derivativeKey({configuration: "cis", substituents: Array(10).fill("unknown")}), null);
+  assert.equal(data.partner({...m, settings: undefined}, [wrong]), null);
+  assert.equal(data.partner(m, [m]), null);
+  const other = {...m, id: "other", settings: {...m.settings, configuration: "trans"}};
+  assert.equal(data.partner(m, [m, {...other, converged: false}]), null);
+  assert.equal(data.partner(m, [m, other, {...other, id: "ambiguous"}]), null);
+  assert.equal(data.partner(m, [m, other], true), null); // No spectra.
+});
+
+test("five transitions are selected by positive finite strength in the inclusive observation window and displayed by energy", () => {
+  const spectrum = {energy_ev: [1.5, 5.5], absorption: [0, 1],
+    excitations_ev: [1.4, 1.5, 2, 2.5, 3, 4, 5, 5.5, 5.6, 3.5, 4.5, 4.7],
+    oscillator_strengths: [100, .2, .9, 0, .5, .5, .3, .4, 100, -1, NaN, Infinity]};
+  const selected = data.strongestTransitions(spectrum);
+  assert.deepEqual(selected.map((t) => t.index), [3, 5, 6, 7, 8]);
+  assert.deepEqual(data.strongestTransitions(spectrum, 6).map((t) => t.index), [2, 3, 5, 6, 7, 8]);
+  const tied = {...spectrum, oscillator_strengths: spectrum.oscillator_strengths.map((f) => f > 0 && Number.isFinite(f) ? 1 : f)};
+  assert.deepEqual(data.strongestTransitions(tied).map((t) => t.index), [2, 3, 5, 6, 7]);
+  assert.deepEqual(data.strongestTransitions({...spectrum, oscillator_strengths: spectrum.oscillator_strengths.map(() => 0)}), []);
+});
+
+test("a weak visible line remains discoverable while curve maximum and same-energy values use the full broadened spectrum", () => {
+  const lab = accessibleLab();
+  lab.molecule.spectrum = {energy_ev: [1.5, 2, 2.5, 3, 4, 5.5], absorption: [0, 4, 0, 1, 0, 0],
+    excitations_ev: [2.1, 3.5, 3.7, 4, 4.5, 5], oscillator_strengths: [0.0000002, .1, .2, .3, .4, .5]};
+  lab.view.render();
+  const report = lab.node("result-report-content").innerHTML;
+  assert.ok(report.includes("Emax = 2,0000 eV"));
+  assert.ok(report.includes("Stärkster weiterer Übergang im sichtbaren Bereich: 2,1000 eV"));
+  assert.ok(report.includes("0,0000002"));
+  assert.ok(lab.node("visible-transition-data").innerHTML.includes("2,1000"));
+  assert.equal(lab.node("transition-table-body").options.length, 6);
+  assert.ok(!report.includes("Lokale Maxima"));
+});
+
+test("reports follow the selected saved structure and preserve convergence and transition-structure validation", () => {
+  const lab = accessibleLab();
+  lab.state.step = "optimize";
+  lab.molecule.kind = "ts";
+  lab.molecule.ts_search = {connectivity: {verified: false}, validation: {imaginary_count: 1, imaginary_frequency_cm1: -230},
+    failure_reason: "Verbindung nicht bestätigt", path: [{image: 0, energy_ev: -10, positions: [0, 0, 0, 1, 0, 0, 1, 2, 0]}, {image: 1, energy_ev: -9, positions: [0, 0, 0, 2, 0, 0, 2, 2, 0]}]};
+  lab.view.render();
+  const report = lab.node("result-report-content").innerHTML;
+  for (const text of ["Verbindung zwischen cis und trans bestätigt</th><td>nein", "Betrag über 20 cm⁻¹</th><td>1", "230,0", "Verbindung nicht bestätigt"]) assert.ok(report.includes(text), text);
+  lab.node("path-point").value = "1";
+  lab.node("path-point").onchange();
+  assert.ok(lab.node("result-report-content").innerHTML.includes("Pfadstruktur 2"));
+  lab.select({...lab.molecule, id: "different", name: "Andere Struktur", kind: "minimum", ts_search: null});
   lab.node("data-report").onclick();
-  const report = lab.exported().content;
-  assert.equal(lab.exported().filename, "photoswitchlab-beobachtungen.html");
-  assert.ok(!report.includes("Unbeteiligte Startstruktur B"));
-  assert.ok(!report.includes("Aktuelle Auswahl"));
-  assert.ok(!report.includes("Diederwinkel"));
-  assert.ok(!report.includes("Ringposition"));
-  assert.equal((report.match(/INDO\/S–CIS/g) || []).length, 1);
-  assert.equal((report.match(/Absorption kann dort unterschätzt werden/g) || []).length, 1);
-  for (const energy of ["1,2000", "1,8000"]) assert.ok(report.includes(energy));
+  assert.ok(lab.exported().content.includes("Andere Struktur"));
+  assert.ok(!lab.exported().content.includes("230,0"));
   lab.select(null);
-  assert.equal(lab.node("accessible-results").hidden, false);
-  assert.equal(lab.node("accessible-current").hidden, true);
-  assert.equal(lab.node("remember-observation").disabled, true);
-  assert.equal(lab.node("data-report").disabled, false);
-  lab.node("data-report").onclick();
-  assert.equal(lab.exported().content, report);
-  lab.node("clear-observations").onclick();
   assert.equal(lab.node("accessible-results").hidden, true);
   assert.equal(lab.node("data-report").disabled, true);
 });
 
-test("remembered path evidence retains its own convergence and validation after selecting another structure", () => {
-  const lab = accessibleLab();
-  lab.state.step = "optimize";
-  lab.molecule.name = "Pfadstruktur A";
-  lab.molecule.kind = "ts";
-  lab.molecule.converged = true;
-  lab.molecule.ts_search = {
-    connectivity: {verified: false},
-    validation: {imaginary_count: 1, imaginary_frequency_cm1: -230},
-    path: [
-      {image: 0, energy_ev: -10, positions: [0, 0, 0, 1, 0, 0, 1, 2, 0]},
-      {image: 1, energy_ev: -9, positions: [0, 0, 0, 2, 0, 0, 2, 2, 0]},
-    ],
-  };
-  lab.view.render();
-  for (const point of ["0", "1"]) {
-    lab.node("path-point").value = point;
-    lab.node("path-point").onchange();
-    lab.node("remember-observation").onclick();
-  }
-  lab.molecule.ts_search.validation.imaginary_count = 3;
-  lab.select({...lab.molecule, id: "other", name: "Andere Minimumstruktur B", kind: "minimum", ts_search: null});
-  lab.node("data-report").onclick();
-  const report = lab.exported().content;
-  assert.ok(!report.includes("Andere Minimumstruktur B"));
-  assert.equal((report.match(/Verbindung zwischen cis und trans bestätigt/g) || []).length, 1);
-  assert.ok(report.includes('Verbindung zwischen cis und trans bestätigt</th><td>nein</td>'));
-  assert.ok(report.includes('Betrag über 20 cm⁻¹</th><td>1</td>'));
-  assert.ok(report.includes("230,0"));
-  assert.ok(report.includes("erste Pfadstruktur"));
-  assert.equal((report.match(/Optimierung abgeschlossen/g) || []).length, 1);
-});
-
-test("spectrum presentation prioritizes its own results while geometry remains optional", () => {
+test("inline structure selection calls the shared selection action without opening a dialog", () => {
   const lab = accessibleLab("?text=1");
   lab.view.render();
-  assert.equal(lab.node("accessible-spectrum").hidden, false);
-  assert.equal(lab.node("accessible-geometry").hidden, true);
-  assert.equal(lab.node("accessible-spectrum-geometry").hidden, false);
-  lab.node("data-report").onclick();
-  assert.ok(lab.exported().content.includes("Höchste gespeicherte relative Absorption"));
-  assert.ok(!lab.exported().content.includes("Diederwinkel"));
-  lab.state.step = "optimize";
-  lab.view.render();
-  assert.equal(lab.node("accessible-spectrum").hidden, true);
-  assert.equal(lab.node("accessible-geometry").hidden, false);
+  lab.node("accessible-molecule-select").value = "b";
+  lab.node("accessible-molecule-select").onchange();
+  assert.ok(lab.node("result-report-content").innerHTML.includes("B · Minimumstruktur"));
+  const template = fs.readFileSync("src/photoswitchlab/web/static/index.html", "utf8");
+  assert.ok(!template.includes('id="transition-point"'));
+  assert.ok(!template.includes('id="color-comparison"'));
+  assert.ok(!template.includes('id="remember-observation"'));
+  assert.ok(template.includes('id="accessible-molecule-select"'));
 });
 
 test("stored broadened-curve overview finds visible and ultraviolet maxima without fitting sub-grid peaks", () => {
@@ -388,50 +344,12 @@ test("full spectral data exposes every broadened-curve maximum when the compact 
   const lab = accessibleLab();
   lab.molecule.spectrum = spectrum;
   lab.view.render();
-  assert.equal(lab.node("spectrum-band-list").options.length, 6);
   assert.equal(lab.node("spectrum-all-band-list").options.length, 8);
   assert.ok(lab.node("spectrum-all-band-list").options[0].textContent.includes("1,7000 eV"));
   lab.node("curve-energy").value = "1,7";
   lab.node("curve-query").onclick();
-  lab.node("remember-observation").onclick();
   lab.node("data-report").onclick();
   assert.ok(lab.exported().content.includes("1,7000 eV"));
-});
-
-test("remembering a spectrum retains the factual band overview with its source context", () => {
-  const lab = accessibleLab();
-  lab.molecule.spectrum = {energy_ev: [1.5, 2, 2.5, 3, 3.5], absorption: [0, 1, 0, 2, 0], excitations_ev: [2], oscillator_strengths: [0.2]};
-  lab.view.render();
-  lab.node("remember-observation").onclick();
-  lab.select(null);
-  lab.node("data-report").onclick();
-  const report = lab.exported().content;
-  assert.ok(report.includes("2,0000 eV"));
-  assert.ok(report.includes("3,0000 eV"));
-  assert.ok(report.includes("Sichtbarer Bereich"));
-  assert.ok(report.includes("INDO/S–CIS"));
-  assert.ok(report.includes("Lokale Maxima werden an den gespeicherten Kurvenpunkten bestimmt"));
-});
-
-test("removing or clearing the last observation without a current structure focuses a visible heading", () => {
-  for (const remove of [true, false]) {
-    const lab = accessibleLab();
-    lab.view.render();
-    lab.node("remember-observation").onclick();
-    const button = lab.node("observations-list").options[0].children[1];
-    lab.select(null);
-    if (remove) button.onclick();
-    else lab.node("clear-observations").onclick();
-    assert.equal(lab.node("accessible-results").hidden, true);
-    assert.equal(lab.focused(), lab.node("step-title"));
-    assert.ok(lab.node("accessible-status").textContent.includes(remove ? "entfernt" : "geleert"));
-  }
-  const lab = accessibleLab();
-  lab.view.render();
-  lab.node("remember-observation").onclick();
-  lab.node("clear-observations").onclick();
-  assert.equal(lab.node("accessible-results").hidden, false);
-  assert.equal(lab.focused(), lab.node("observations-summary"));
 });
 
 test("unit conversion accepts comma or dot consistently in all fields and rejects invalid wavelengths", () => {

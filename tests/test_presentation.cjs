@@ -70,7 +70,7 @@ test("simplified app uses the original controls in linear DOM order and restores
   const document = templateDocument("src/photoswitchlab/web/static/index.html");
   const $ = (id) => document.getElementById(id);
   const originalIds = document.nodes().filter((node) => node.id).map((node) => node.id).sort();
-  const moved = ["guide-open", "guide", "job-status", "method-build", "method-optimize", "method-spectrum", "observations-collection", "data-report", "remember-observation", "fundamentals-link", "converter-open"];
+  const moved = ["guide-open", "guide", "job-status", "method-build", "method-optimize", "method-spectrum", "fundamentals-link", "converter-content"];
   const originals = new Map(moved.map((id) => [id, {node: $(id), parent: $(id).parentNode}]));
   $("molecule-select").textContent = "Gewählte Minimumstruktur";
   $("job-status").hidden = false;
@@ -87,9 +87,12 @@ test("simplified app uses the original controls in linear DOM order and restores
   assert.equal($("accessible-results-summary").hidden, true);
   assert.equal($("accessible-results").open, true);
   const order = document.nodes().filter((node) => node.id).map((node) => node.id);
-  for (const [before, after] of [["guide-open", "structure-library"], ["optimize", "job-status"], ["job-status", "accessible-current"], ["accessible-current", "observations-collection"], ["observations-collection", "data-report"], ["data-report", "atom-explorer"], ["atom-explorer", "method-optimize"]]) assert.ok(order.indexOf(before) < order.indexOf(after), `${before} precedes ${after}`);
-  layout.captureAfter("atom-angle");
-  assert.equal($("remember-observation").previousSibling, $("atom-angle"));
+  for (const [before, after] of [["guide-open", "structure-library"], ["optimize", "job-status"], ["job-status", "accessible-current"], ["accessible-current", "data-report"], ["data-report", "atom-explorer"], ["atom-explorer", "method-optimize"]]) assert.ok(order.indexOf(before) < order.indexOf(after), `${before} precedes ${after}`);
+  assert.equal($("converter-content").parentNode.id, "simple-converter");
+  assert.equal($("convert-ev").parentNode.parentNode.parentNode.id, "converter-content");
+  assert.equal($("simple-tools").tagName, "section");
+  assert.equal($("text-preference").attributes.type, "radio");
+  assert.equal($("graphic-preference").attributes.name, $("text-preference").attributes.name);
   const mutations = document.mutations();
   layout.apply(true, "optimize");
   assert.equal(document.mutations(), mutations); // Polling does not reparent focused controls.
@@ -112,8 +115,10 @@ test("simplified website moves its original compact navigation into the reading 
   const document = templateDocument("site/template.html");
   document.currentScript = {src: "https://example.org/assets/site.js"};
   const preference = document.getElementById("text-preference");
-  const listeners = new Map();
+  const listeners = new Map(), graphicListeners = new Map();
   preference.addEventListener = (type, handler) => listeners.set(type, handler);
+  const graphic = document.getElementById("graphic-preference");
+  graphic.addEventListener = (type, handler) => graphicListeners.set(type, handler);
   const sidebar = document.querySelector(".sidebar"), main = document.querySelector("main"), article = main.querySelector("article");
   const originalParent = sidebar.parentNode;
   const context = vm.createContext({document, location: {search: ""}, URL, URLSearchParams,
@@ -126,7 +131,8 @@ test("simplified website moves its original compact navigation into the reading 
   assert.equal(sidebar.nextSibling, article);
   assert.equal(sidebar.querySelector(".site-menu").open, false);
   preference.checked = false;
-  listeners.get("change")();
+  graphic.checked = true;
+  graphicListeners.get("change")();
   assert.equal(sidebar.parentNode, originalParent);
   assert.equal(sidebar.querySelector(".site-menu").open, true);
 });

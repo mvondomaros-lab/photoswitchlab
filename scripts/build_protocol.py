@@ -23,7 +23,8 @@ OUTPUT = STATIC / "materials/protokollvorlage.docx"
 def build(text_based=False):
     branding = json.loads((STATIC / "branding.json").read_text())
     course_subtitle = branding["subtitle"] + branding["course_suffixes"]["marburg"]
-    source = html.fromstring((STATIC / "guide.html").read_text())
+    source_name = "guide-accessible.html" if text_based else "guide.html"
+    source = html.fromstring((STATIC / source_name).read_text())
     tasks = {el.get("id"): el for el in source.xpath('.//details[@class="task"]')}
     doc = Document()
     sec = doc.sections[0]
@@ -71,20 +72,6 @@ def build(text_based=False):
         run.font.color.rgb = RGBColor.from_string("586B80")
 
     def p(text):
-        if text_based:
-            replacements = {
-                "Fügen Sie gleich ausgerichtete 3D-Ansichten der substituierten Start- und Minimumstruktur ein.": "Dokumentieren Sie ausgewählte Abstände zwischen benannten Atomen oder Gruppen in der substituierten Start- und Minimumstruktur.",
-                "[gleich ausgerichtete 3D-Ansicht einfügen und beschriften]": "[Benannte Atompaare und Abstände / pm dokumentieren]",
-                "[Energieprofil einfügen und beschriften]": "[Bericht mit ausgewählten Pfadstrukturen, Energiebezug und Strukturgrößen oder entsprechende kompakte Tabelle beilegen]",
-                "Fügen Sie das Energieprofil ein.": "Dokumentieren Sie ausgewählte Pfadstrukturen mit ihren Energien und Strukturgrößen im Ergebnisbericht oder in einer kompakten Tabelle. Beziehen Sie Anfang, Energiemaximum und Ende sowie weitere für Ihre Beschreibung benötigte Pfadstrukturen ein.",
-                "Fügen Sie die Spektren der Derivate mit dem kleinsten und dem größten Wert von ΔEmax ein.": "Legen Sie Ergebnisberichte mit ausgewählten Kurvenabfragen oder entsprechende kompakte Tabellen der Derivate mit dem kleinsten und dem größten Wert von ΔEmax bei.",
-                "fügen Sie beide Spektren ein": "legen Sie für beide Spektren Ergebnisberichte mit ausgewählten Kurvenabfragen oder entsprechende kompakte Tabellen bei",
-                "[Abbildung einfügen und beschriften]": "[Ergebnisbericht mit gemerkten Kurvenabfragen oder entsprechende kompakte Tabelle beilegen]",
-                "[Spektrum einfügen und beschriften]": "[Ergebnisbericht mit gemerkten Kurvenabfragen oder entsprechende kompakte Tabelle beilegen]",
-                "fügen Sie gespeicherte Abbildungen mit Beschriftungen ein": "legen Sie die lesbaren Ergebnisberichte mit ausgewählten Daten bei und ergänzen Sie Ihre Beobachtungen; vollständige CSV- oder JSON-Rohdaten sind optional",
-            }
-            for old, new in replacements.items():
-                text = text.replace(old, new)
         para = doc.add_paragraph()
         for part in re.split(r"(E(?:trans|cis|TS|max)|ΔE(?:‡|max))", text):
             if part in ("Etrans", "Ecis", "ETS", "Emax"):
@@ -109,13 +96,19 @@ def build(text_based=False):
         el = tasks[task_id]
         title = el.find("summary").text.strip()
         doc.add_heading(title, 2)
+        if text_based:
+            for paragraph in el.findall("p"):
+                if paragraph.get("class") not in (
+                    "protocol-output",
+                    "protocol-group-output",
+                ):
+                    p(" ".join(paragraph.text_content().split()))
         text = el.xpath('.//p[@class="protocol-output"]')[0].text_content()
         text = " ".join(text.removeprefix("Für Ihr Protokoll:").split())
         p(text)
-        if text_based and task_id == "task-plan-experiment-series":
-            p(
-                "Vergleichen Sie selbst gewählte cis/trans-Paare anhand des Farbabstands der berechneten Farben. Dokumentieren Sie beide Strukturen und den Farbabstand. Berücksichtigen Sie die methodischen Hinweise der Farbauswertung."
-            )
+        if text_based:
+            for paragraph in el.xpath('./p[@class="protocol-group-output"]'):
+                p(" ".join(paragraph.text_content().split()))
 
     def table(headers, rows, widths):
         t = doc.add_table(rows=1, cols=len(headers))
@@ -169,6 +162,196 @@ def build(text_based=False):
                             run.font.bold = True
                             run.font.color.rgb = RGBColor(255, 255, 255)
         p("")
+
+    if text_based:
+        doc.add_heading("Molekulare Photoschalter", 0)
+        doc.add_paragraph(course_subtitle, "Subtitle")
+        p("Praktikumsprotokoll für tabellarische Auswertung")
+        p("Name: [Name]    Gruppe: [Gruppe]    Datum: [Datum]")
+        p(
+            "Dokumentieren Sie Ihre Berechnungen und deren Interpretation. Die Aufgaben entsprechen dem barrierearmen Arbeitsmodus der Webapp. "
+            "Die Rechenergebnisse und zugehörigen Vergleiche stehen direkt in der App. Übertragen Sie die für Ihre Auswertung benötigten Werte in dieses Protokoll "
+            "und ergänzen Sie Ihre eigenen Deutungen. Ergebnisberichte können Sie zusätzlich speichern. Ersetzen Sie die Angaben in eckigen Klammern; die Felder erweitern sich beim Schreiben."
+        )
+        p(
+            "Speichern Sie die Datei regelmäßig und laden Sie das ausgefüllte Protokoll in ILIAS hoch."
+        )
+        doc.add_heading("Strukturen erstellen", 1)
+        task("task-compare-configurations")
+        answer("Unterschied zwischen cis und trans: [höchstens zwei Sätze]")
+        task("task-identify-symmetry")
+        answer(
+            "Anzahl chemisch verschiedener Strukturen: [Anzahl]\nSymmetrieäquivalente Positionen: [Gruppen]\nBegründung: [höchstens zwei Sätze]"
+        )
+
+        doc.add_page_break()
+        doc.add_heading("Strukturen und Energien vergleichen", 1)
+        task("task-compare-optimized-geometries")
+        answer("Vermutung vor den Optimierungen: [Ihre Vermutung]")
+        table(
+            ["Struktur", "E / eV", "C–N=N–C / °", "Ringabstand / pm"],
+            [
+                [label, "[Wert]", "[Wert]", "[Wert]"]
+                for label in [
+                    "cis-Startstruktur",
+                    "trans-Startstruktur",
+                    "cis-Minimumstruktur",
+                    "trans-Minimumstruktur",
+                ]
+            ],
+            [5, 4, 4, 4],
+        )
+        answer(
+            "ΔE = Etrans − Ecis / (kJ/mol): [Wert]\nStrukturänderungen und Vorzeichen: [höchstens drei Sätze]"
+        )
+
+        doc.add_page_break()
+        doc.add_heading("Sterischen Einfluss untersuchen", 1)
+        task("task-examine-substituent-geometry")
+        answer("Vermutung vor der Optimierung: [Ihre Vermutung]")
+        table(
+            ["Struktur", "C–N=N–C / °", "Ringabstand / pm"],
+            [
+                [label, "[Wert]", "[Wert]"]
+                for label in [
+                    "unsubstituierte trans-Minimumstruktur",
+                    "2,6,2′,6′-Tetramethoxy-Startstruktur",
+                    "2,6,2′,6′-Tetramethoxy-Minimumstruktur",
+                ]
+            ],
+            [8, 4.5, 4.5],
+        )
+        table(
+            ["Benanntes Atompaar", "Startstruktur / pm", "Minimumstruktur / pm"],
+            [["[Atome und Gruppen]", "[Wert]", "[Wert]"] for _ in range(2)],
+            [8, 4.5, 4.5],
+        )
+        answer("Auswahl der Atompaare und sterischer Einfluss: [höchstens vier Sätze]")
+
+        doc.add_page_break()
+        doc.add_heading("Reaktionspfad und Energiebarrieren", 1)
+        task("task-analyze-reaction-path")
+        answer("Energiebezug der Pfadstrukturen: [Bezug]")
+        table(
+            ["Pfadstruktur", "ΔE / eV", "C–N=N–C / °", "C–N=N / °", "N=N–C / °"],
+            [
+                [label, "[Wert]", "[Wert]", "[Wert]", "[Wert]"]
+                for label in ["Anfang", "Energiemaximum", "Ende", "[weitere]"]
+            ],
+            [4.2, 3.2, 3.2, 3.2, 3.2],
+        )
+        table(
+            ["Richtung", "ΔE‡ / (kJ/mol)", "ΔE‡ / RT bei 298 K"],
+            [["trans → cis", "[Wert]", "[Wert]"], ["cis → trans", "[Wert]", "[Wert]"]],
+            [5, 6, 6],
+        )
+        answer(
+            "Pfad, Verbindungsprüfung, Geometrie und Barrieren: [höchstens drei Sätze]"
+        )
+
+        doc.add_page_break()
+        doc.add_heading("UV Vis Spektren vergleichen", 1)
+        p(
+            "Emax bezeichnet die Energie des höchsten Maximums der verbreiterten Absorptionskurve im untersuchten Energiebereich."
+        )
+        task("task-compare-isomer-spectra")
+        table(
+            [
+                "Konfiguration",
+                "Emax / eV",
+                "UV oder sichtbar",
+                "Lösungsfarbe",
+                "Lichtdurchlässigkeit / %",
+            ],
+            [
+                ["cis", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"],
+                ["trans", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"],
+            ],
+            [2.8, 3, 3.1, 3.8, 4.3],
+        )
+        table(
+            ["Energie / eV", "Absorption cis", "Absorption trans"],
+            [["[Energie]", "[Wert]", "[Wert]"] for _ in range(2)],
+            [5, 6, 6],
+        )
+        answer("Energiebereich und Grenze der Vorhersage: [höchstens drei Sätze]")
+
+        doc.add_page_break()
+        doc.add_heading("Systematische Substituentenreihe", 1)
+        task("task-compare-substituent-spectra")
+        answer("Untersuchte Reihe: [4-X, 2-X, 3-X oder 4,4′-X₂]")
+        table(
+            [
+                "X",
+                "Emax / eV",
+                "ΔEmax / eV",
+                "UV oder sichtbar",
+                "Lösungsfarbe",
+                "Lichtdurchlässigkeit / %",
+            ],
+            [
+                [label, "[Wert]", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"]
+                for label in ["CH₃", "OCH₃", "N(CH₃)₂", "CF₃", "CN", "NO₂"]
+            ],
+            [2, 2.7, 2.8, 2.7, 3.2, 3.6],
+        )
+        answer("Kleinstes und größtes ΔEmax: [Derivate und Werte]")
+        answer(
+            "Sichtbare Übergänge der beiden Derivate mit E und f sowie sichtbare Absorptionsbanden: [Werte]"
+        )
+        answer("Trend und Abweichung: [höchstens vier Sätze]")
+
+        doc.add_page_break()
+        doc.add_heading("Substituentenreihen vergleichen", 1)
+        task("task-compare-substituent-series")
+        table(
+            ["X", "2-X / eV", "3-X / eV", "4-X / eV", "4,4′-X₂ / eV"],
+            [
+                [label, "[Wert]", "[Wert]", "[Wert]", "[Wert]"]
+                for label in ["CH₃", "OCH₃", "N(CH₃)₂", "CF₃", "CN", "NO₂"]
+            ],
+            [2, 3.5, 3.5, 3.5, 4.5],
+        )
+        answer(
+            "Höchstens zwei übergreifende Trends mit konkreten Werten: [Trends und Belege]"
+        )
+        answer("Abweichung oder begrenzter Gültigkeitsbereich: [Beobachtung]")
+        answer(
+            "Gewählter Substituent und Spektrenvergleich einschließlich sichtbarer Übergänge: [Substituent und Werte]"
+        )
+
+        doc.add_page_break()
+        doc.add_heading("Eigenes Derivat untersuchen", 1)
+        task("task-plan-experiment-series")
+        answer(
+            "Positionen und Substituenten: [Auswahl]\nBezug zur systematischen Reihe und Begründung: [Ergebnis und Begründung]\nVermutung vor den Rechnungen: [Ihre Vermutung]"
+        )
+        table(
+            [
+                "Konfiguration",
+                "Emax / eV",
+                "UV oder sichtbar",
+                "Lösungsfarbe",
+                "Lichtdurchlässigkeit / %",
+            ],
+            [
+                ["cis", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"],
+                ["trans", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"],
+            ],
+            [2.8, 3, 3.1, 3.8, 4.3],
+        )
+        answer("cis/trans-Farbabstand und sichtbare Übergänge mit E und f: [Werte]")
+        answer(
+            "Prüfung der Vermutung: [Stützt das Ergebnis den Trend, widerspricht es ihm oder ist keine eindeutige Aussage möglich?]"
+        )
+        answer(
+            "Gruppenergebnisse: [Positionen, Gruppen, entscheidender Zahlenwert und beim kleinsten Emax die Konfiguration]"
+        )
+        output = OUTPUT.with_name("protokollvorlage-text.docx")
+        output.parent.mkdir(parents=True, exist_ok=True)
+        doc.save(output)
+        print(output)
+        return
 
     doc.add_heading("Molekulare Photoschalter", 0)
     doc.add_paragraph(course_subtitle, "Subtitle")

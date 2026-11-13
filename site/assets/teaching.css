@@ -7,8 +7,6 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; }
-.header .text-preference { color: #e3ecf7; display: flex; align-items: center; justify-content: flex-start; gap: .4rem; font-size: .8rem; max-width: 13rem; min-height: 44px; line-height: 1.4; }
-.header .text-preference input { appearance: auto; flex: 0 0 1.1rem; width: 1.1rem; height: 1.1rem; min-height: 0; padding: 0; margin: 0; }
 .text-preferred [data-ngl-viewer] { display: none; }
 @media (max-width: 700px) { .header { flex-wrap: wrap; height: auto; } .header-actions { flex-wrap: wrap; } }
 [hidden] { display: none !important; }

@@ -16,26 +16,30 @@ document their own choices.
     <meta name="application-name" content="$project_name"/>
     <meta name="description" content="$brand_title · $brand_subtitle"/>
     <link rel="icon" type="image/svg+xml" href="static/brand-mark.svg"/>
-    <link rel="stylesheet" href="static/header.css?v=6"/>
-    <link rel="stylesheet" href="static/app.css?v=ui-67"/>
+    <link rel="stylesheet" href="static/header.css?v=7"/>
+    <link rel="stylesheet" href="static/app.css?v=ui-68"/>
     <script src="static/vendor/ngl.js" defer></script>
     <script src="static/vendor/chart.js" defer></script>
     <script src="static/progress.js?v=ui-36" defer></script>
     <script src="static/vendor/cie-color.js?v=1" defer></script>
     <script src="static/solution-color.js?v=1" defer></script>
-    <script src="static/presentation.js?v=2" defer></script>
-    <script src="static/accessibility.js?v=7" defer></script>
-    <script src="static/app.js?v=ui-98" defer></script>
+    <script src="static/presentation.js?v=3" defer></script>
+    <script src="static/accessibility.js?v=8" defer></script>
+    <script src="static/app.js?v=ui-99" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
 <header class="header">
     <a class="brand" href="./"><img class="brand-mark" src="static/brand-mark.svg" alt="" width="44" height="44"><span class="brand-text">$brand_title<small>$brand_subtitle</small></span></a>
     <div class="header-actions">
-        <label class="text-preference"><input id="text-preference" type="checkbox"/> Vereinfachte Ansicht</label>
+        <fieldset class="mode-choice">
+            <legend class="sr-only">Arbeitsmodus</legend>
+            <label><input id="graphic-preference" type="radio" name="working-mode" value="graphical" checked/><span>Grafisch</span></label>
+            <label title="Barrierearmer Arbeitsmodus"><input id="text-preference" type="radio" name="working-mode" value="accessible" aria-label="Barrierearmer Arbeitsmodus"/><span>Barrierearm</span></label>
+        </fieldset>
         <a class="quiet" id="fundamentals-link" href="$guide_url" target="_blank" rel="noreferrer">Grundlagen</a>
         <button class="quiet" id="guide-open" aria-expanded="false" aria-controls="guide">Aufgaben</button>
-        <button class="quiet" id="converter-open">Einheiten</button>
+        <button class="quiet graphical-only" id="converter-open">Einheiten</button>
         <a class="quiet" id="hub-logout" hidden>Abmelden</a>
     </div>
 </header>
@@ -74,13 +78,13 @@ document their own choices.
     <div class="workbench">
         <aside class="controls">
             <section class="library" id="structure-library" hidden>
-                <label for="molecule-select"
+                <label for="molecule-select" class="graphical-only"
                 ><span id="structure-choice-label">Gespeicherte Strukturen</span>
                     <span id="structure-count" class="count">0</span></label
                 >
                 <button
                         id="molecule-select"
-                        class="structure-select"
+                        class="structure-select graphical-only"
                         aria-label="Aktive Struktur"
                         aria-haspopup="dialog"
                         aria-controls="structure-picker"
@@ -88,6 +92,10 @@ document their own choices.
                 >
                     Noch keine Struktur
                 </button>
+                <div class="simple-only">
+                    <label for="accessible-molecule-select">Ausgewählte Struktur</label>
+                    <select id="accessible-molecule-select" disabled></select>
+                </div>
             </section>
             <section class="step-panel" data-panel="build">
                 <form id="builder">
@@ -426,90 +434,64 @@ document their own choices.
             </div>
             <details id="accessible-results" class="accessible-results" hidden>
                 <summary id="accessible-results-summary">Struktur und Ergebnisse als Text und Tabellen</summary>
-                <h2 id="simple-collection-title" class="simple-only" hidden>Gemerkte Ergebnisse</h2>
                 <div id="accessible-current">
-                    <p id="accessible-identity"></p>
-                    <p id="accessible-structure-facts" hidden></p>
-                    <p id="accessible-geometry"></p>
-                    <p id="accessible-validation" hidden></p>
-                    <div id="simple-validation" class="simple-only"></div>
+                    <div id="result-report-content"></div>
                     <details id="accessible-path" hidden>
-                    <summary>Rechenschritte untersuchen</summary>
-                    <p id="accessible-path-note" class="note"></p>
-                    <label for="path-point">Schritt oder Pfadstruktur</label><select id="path-point"></select>
-                    <p id="accessible-point"></p>
-                    <details><summary>Vollständige Energietabelle</summary>
-                    <div class="table-scroll" tabindex="0" role="region" aria-label="Energiedaten"><table>
-                        <caption id="energy-table-caption">Energiedaten</caption>
-                        <thead><tr><th scope="col">Schritt / Pfadstruktur</th><th scope="col">E / eV</th><th scope="col">ΔE / eV</th><th scope="col">Diederwinkel / °</th><th scope="col">Ringabstand / pm</th></tr></thead>
-                        <tbody id="energy-table-body"></tbody>
-                    </table></div>
+                        <summary>Pfadstrukturen und Rechenschritte</summary>
+                        <p id="accessible-path-note" class="note"></p>
+                        <label for="path-point">Schritt oder Pfadstruktur</label><select id="path-point"></select>
+                        <p id="accessible-point"></p>
+                        <div class="table-scroll" tabindex="0" role="region" aria-label="Energiedaten"><table>
+                            <caption id="energy-table-caption">Energiedaten</caption>
+                            <thead><tr><th scope="col">Schritt / Pfadstruktur</th><th scope="col">E / eV</th><th scope="col">ΔE / eV</th><th scope="col">C–N=N–C / °</th><th scope="col">Ringabstand / pm</th><th scope="col">C–N=N / °</th><th scope="col">N=N–C / °</th></tr></thead>
+                            <tbody id="energy-table-body"></tbody>
+                        </table></div>
                     </details>
-                </details>
-                    <section id="accessible-spectrum" hidden>
-                    <h3>UV/Vis-Spektrum</h3>
-                    <p id="accessible-spectrum-summary"></p>
-                    <p id="accessible-color"></p>
-                    <p id="accessible-spectrum-note" class="note"></p>
-                    <h4>Bandenübersicht der gespeicherten Kurve</h4>
-                    <p id="spectrum-visible-coverage"></p>
-                    <ul id="spectrum-band-list"></ul>
-                    <p id="spectrum-band-note" class="note"></p>
-                    <label for="transition-point">Elektronischen Übergang auswählen</label><select id="transition-point"></select>
-                    <p id="transition-value"></p>
-                    <label for="curve-energy">Absorptionskurve abfragen: Energie / eV</label>
-                    <input id="curve-energy" type="text" inputmode="decimal" autocomplete="off" aria-describedby="curve-value"/>
-                    <button id="curve-query" class="text-button" type="button">Absorption bestimmen</button>
-                    <p id="curve-value" role="status"></p>
-                    <details id="full-spectrum-data"><summary>Vollständige Spektraldaten</summary>
-                    <h4>Lokale Maxima der verbreiterten Kurve</h4>
-                    <ul id="spectrum-all-band-list"></ul>
-                    <p id="spectrum-all-band-note" class="note"></p>
-                    <h4>Diskrete elektronische Übergänge</h4>
-                    <div class="table-scroll" tabindex="0" role="region" aria-label="Elektronische Übergänge"><table>
-                        <caption>Berechnete elektronische Übergänge</caption>
-                        <thead><tr><th scope="col">Übergang</th><th scope="col">E / eV</th><th scope="col">λ / nm</th><th scope="col">Oszillatorstärke</th></tr></thead>
-                        <tbody id="transition-table-body"></tbody>
-                    </table></div>
-                    </details>
-                    <details><summary>Farbunterschied vergleichen</summary>
-                        <label for="color-comparison">Zweite Struktur</label><select id="color-comparison"></select>
-                        <p id="color-comparison-value"></p>
-                    </details>
-                </section>
+                    <section id="accessible-spectrum" hidden aria-label="Absorptionsvergleich und weitere Spektraldaten">
+                        <label for="curve-energy">Absorption bei gleicher Energie vergleichen / eV</label>
+                        <input id="curve-energy" type="text" inputmode="decimal" autocomplete="off" aria-describedby="curve-value"/>
+                        <button id="curve-query" class="text-button" type="button">Absorption bestimmen</button>
+                        <div id="curve-value" role="status"></div>
+                        <details id="full-spectrum-data"><summary>Weitere Spektraldaten</summary>
+                            <h4>Übergänge im sichtbaren Bereich</h4>
+                            <div id="visible-transition-data"></div>
+                            <h4>Alle berechneten elektronischen Übergänge</h4>
+                            <div class="table-scroll" tabindex="0" role="region" aria-label="Alle elektronischen Übergänge"><table>
+                                <caption>Berechnete elektronische Übergänge</caption>
+                                <thead><tr><th scope="col">Übergang</th><th scope="col">E / eV</th><th scope="col">λ / nm</th><th scope="col">Oszillatorstärke f</th></tr></thead>
+                                <tbody id="transition-table-body"></tbody>
+                            </table></div>
+                            <h4>Lokale Maxima der verbreiterten Kurve</h4>
+                            <p id="spectrum-visible-coverage"></p>
+                            <ul id="spectrum-all-band-list"></ul>
+                            <p id="spectrum-all-band-note" class="note"></p>
+                            <p class="note">Maxima werden an den gespeicherten Kurvenpunkten bestimmt; gleich hohe benachbarte Punkte erscheinen als Intervall. Randwerte sind keine inneren Bandenmaxima.</p>
+                        </details>
+                    </section>
                 </div>
-                <div id="simple-default-capture" class="simple-only"></div>
-                <div id="simple-collection" class="simple-only"></div>
                 <figure id="simple-structure-figure" class="simple-only" hidden>
                     <img id="simple-structure-image" alt=""/>
                     <figcaption>Strukturformel der ausgewählten Struktur</figcaption>
                 </figure>
-                <div class="inline-actions">
-                    <button id="remember-observation" class="text-button" type="button">Auswahl merken</button>
-                    <button id="data-report" class="text-button" type="button">Ergebnisbericht speichern</button>
-                </div>
+                <button id="data-report" class="text-button" type="button">Diesen Ergebnisbericht speichern</button>
                 <details id="atom-explorer">
-                    <summary>Atome, Bindungen und Abstände untersuchen</summary>
-                    <p id="accessible-spectrum-geometry" hidden></p>
+                    <summary>Atome, Bindungen und Abstände</summary>
+                    <p id="accessible-spectrum-geometry"></p>
                     <p id="atom-scaffold" class="note"></p>
-                    <p class="note">Atomnummern gelten innerhalb dieser Struktur und ihrer gespeicherten Rechenschritte. Sie sind keine chemischen Positionsnummern. Bei Atomen außerhalb der Ringe nennt der Ringbezug die nächste Ringposition in der Bindungsfolge. Abstände werden aus den dargestellten Koordinaten berechnet.</p>
+                    <p class="note">Atomnummern gelten innerhalb dieser Struktur und ihrer gespeicherten Rechenschritte. Sie sind keine chemischen Positionsnummern. Bei Atomen außerhalb der Ringe nennt der Ringbezug die nächste Ringposition in der Bindungsfolge.</p>
                     <label for="atom-first">Erstes Atom</label><select id="atom-first"></select>
                     <p id="atom-neighbors"></p>
                     <label for="atom-second">Zweites Atom</label><select id="atom-second"></select>
                     <p id="atom-distance"></p>
-                    <label for="atom-third">Drittes Atom für den Winkel am zweiten Atom</label><select id="atom-third"></select>
-                    <p id="atom-angle"></p>
+                    <div class="graphical-only">
+                        <label for="atom-third">Drittes Atom für den Winkel am zweiten Atom</label><select id="atom-third"></select>
+                        <p id="atom-angle"></p>
+                    </div>
                     <p id="atom-rings" class="note"></p>
-                    <p id="accessible-azo-angles"></p>
                 </details>
-                <details id="observations-collection"><summary id="observations-summary">Gemerkte Beobachtungen (0)</summary>
-                    <p class="note">Merken Sie ausgewählte Pfadstrukturen, Atomabstände oder Kurvenabfragen für den Bericht. Die Sammlung gilt bis zum Neuladen; speichern Sie Ihren Bericht rechtzeitig.</p>
-                    <ol id="observations-list"></ol>
-                    <button id="clear-observations" class="text-button" type="button" disabled>Sammlung leeren</button>
-                </details>
-                <details id="accessible-context"><summary>Strukturzuordnung und Rechenkontext</summary><p id="accessible-assumptions"></p><div id="accessible-output-methods"></div></details>
-                <details id="accessible-raw"><summary>Vollständige Rohdaten exportieren</summary>
-                    <p class="note">CSV enthält alle gespeicherten Kurven- und Energiedaten; JSON enthält zusätzlich Strukturen und Rechenmetadaten. Für die direkte Lektüre verwenden Sie den Ergebnisbericht.</p>
+                <div id="accessible-context"></div>
+                <details id="accessible-raw" class="graphical-only"><summary>Vollständige Rohdaten exportieren</summary>
+                    <p class="note">CSV enthält alle gespeicherten Kurven- und Energiedaten; JSON enthält zusätzlich Strukturen und Rechenmetadaten.</p>
                     <div class="inline-actions"><button id="data-json" class="text-button" type="button">JSON speichern</button><button id="data-csv" class="text-button" type="button">CSV speichern</button></div>
                 </details>
             </details>
@@ -664,11 +646,12 @@ document their own choices.
             </div>
         </section>
         <section id="simple-methods" class="simple-only" aria-label="Methoden und Prüfung"></section>
-        <details id="simple-tools" class="simple-only"><summary>Grundlagen und Einheiten</summary></details>
+        <section id="simple-tools" class="simple-only" aria-label="Grundlagen"></section>
+        <section id="simple-converter" class="simple-only" aria-labelledby="simple-converter-title"><h2 id="simple-converter-title">Einheiten umrechnen</h2></section>
     </div>
 </div>
     <footer>
-        <div>Exportieren Sie Ihre Ergebnisse. Die Sitzung endet bei einem
+        <div>Dokumentieren Sie Ihre Ergebnisse rechtzeitig. Die Sitzung endet bei einem
         Serverneustart oder nach 24 Stunden Inaktivität.</div>
         <a href="https://mvondomaros-lab.github.io/photoswitchlab/lizenz/"
            target="_blank" rel="noopener">Lizenz und Quellen</a>
@@ -707,6 +690,7 @@ document their own choices.
             ×
         </button>
     </div>
+    <div id="converter-content">
     <p>
         Die Energie E eines Photons und seine Wellenlänge λ hängen über E = hc / λ
         zusammen. Dabei ist h die Planck-Konstante und c die Lichtgeschwindigkeit
@@ -734,6 +718,7 @@ document their own choices.
         Anregungsenergie; die daraus umgerechnete Wellenlänge lässt daher keine Aussage
         über das Absorptionsspektrum des Moleküls zu.
     </p>
+    </div>
 </dialog>
 <div id="energy-help" class="property-help" popover role="dialog"
      aria-labelledby="energy-help-title">

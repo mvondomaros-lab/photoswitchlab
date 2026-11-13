@@ -415,7 +415,7 @@ function renderSolutionColor() {
   swatch.setAttribute("aria-label", `Geschätzte Lösungsfarbe für ${structureLabel(current())}`);
   $("transmission-help-trigger").hidden = !result;
   $("solution-color-status").textContent = result
-    ? `${fmt(100 * result.luminance, 1)} %`
+    ? `${AccessibleData.color(result.rgb)} · ${fmt(100 * result.luminance, 1)} %`
     : "Keine Farbschätzung verfügbar: Das Spektrum ist unvollständig oder enthält keine auswertbaren Absorptionsdaten.";
 }
 
@@ -1457,15 +1457,23 @@ function updateGuide(step) {
     section.hidden = key !== step;
   }
 }
+let loadedGuide = null, guideRequest = 0;
+const guideCache = new Map();
 async function guide(step, focus = true) {
-  if (!$("guide-content").children.length) {
-    const response = await fetch("static/guide.html?v=ui-75");
-    if (!response.ok) throw new Error("Aufgaben konnten nicht geladen werden. Öffnen Sie die Aufgaben erneut.");
-    $("guide-content").innerHTML = await response.text(); // Trusted, bundled teaching material.
+  const source = globalThis.AccessibilityView?.prefersText ? "guide-accessible.html" : "guide.html";
+  const request = ++guideRequest;
+  if (loadedGuide !== source) {
+    if (!guideCache.has(source)) {
+      const response = await fetch(`static/${source}?v=ui-76`);
+      if (!response.ok) throw new Error("Aufgaben konnten nicht geladen werden. Öffnen Sie die Aufgaben erneut.");
+      guideCache.set(source, await response.text());
+    }
+    if (request !== guideRequest) return;
+    if (source !== (globalThis.AccessibilityView?.prefersText ? "guide-accessible.html" : "guide.html")) return guide(state.step, focus);
+    $("guide-content").innerHTML = guideCache.get(source); // Trusted, bundled teaching material.
+    loadedGuide = source;
   }
   updateGuide(state.step);
-  if (globalThis.AccessibilityView?.prefersText)
-    $("guide-content").querySelectorAll(".nonvisual-alternative").forEach((detail) => { detail.open = true; });
   $("guide").hidden = false;
   $("guide-open").setAttribute("aria-expanded", "true");
   if (focus) $("guide-title").focus();
@@ -1502,6 +1510,9 @@ globalThis.AccessibilityView?.initialize({
   state, current, records: energyRecords, playback: playbackData,
   selectFrame: selectPlaybackFrame, showResult, render: renderState,
   label: structureLabel, substituentLabel, download, filename,
+  selectableMolecules,
+  selectMolecule: (id) => { state.live = null; selectMolecule(id, state.step !== "build" || id !== state.selected); error(""); renderState(); },
+  presentationChanged: () => { if (!$("guide").hidden) handle(() => guide(state.step, false))(); },
 });
 boot();
 // Optional browser-native agent interface; uses the same actions as the UI.

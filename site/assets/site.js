@@ -2,11 +2,13 @@
 const root = new URL('../', document.currentScript.src);
 // This preference affects presentation only; all descriptions remain available.
 const textPreference = document.querySelector('#text-preference');
+const graphicPreference = document.querySelector('#graphic-preference');
 if (textPreference) {
   const query = new URLSearchParams(location.search).get('text');
   let saved = false;
   try { saved = localStorage.getItem('photoswitchlab.textPreferred') === 'true'; } catch (_) {}
   textPreference.checked = query === '1' || (query !== '0' && saved);
+  if (graphicPreference) graphicPreference.checked = !textPreference.checked;
   if (query === '1' || query === '0') {
     try { localStorage.setItem('photoswitchlab.textPreferred', String(textPreference.checked)); } catch (_) {}
   }
@@ -41,13 +43,15 @@ if (textPreference) {
     if (typeof Event === 'function') document.dispatchEvent?.(new Event('photoswitchlab-presentation'));
   };
   apply();
-  textPreference.addEventListener('change', () => {
+  const changePreference = () => {
     disclosureStates[activeMode] = descriptions.map(description => description.open);
     navigationStates[activeMode] = navigation?.open;
     activeMode = textPreference.checked ? 'text' : 'graphical';
     apply();
     try { localStorage.setItem('photoswitchlab.textPreferred', String(textPreference.checked)); } catch (_) {}
-  });
+  };
+  textPreference.addEventListener('change', changePreference);
+  graphicPreference?.addEventListener('change', changePreference);
 }
 const mobileNavigation = matchMedia('(max-width: 700px)');
 const siteMenu = document.querySelector('.site-menu');

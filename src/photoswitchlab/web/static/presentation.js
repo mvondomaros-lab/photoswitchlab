@@ -5,7 +5,6 @@ globalThis.PresentationLayout = {
     if (!document.createComment) return null;
     const $ = (id) => document.getElementById(id);
     const origins = new Map();
-    let simple = false, captureTarget = null;
     function move(node, destination, after = false) {
       if (!node?.parentNode || !destination) return;
       if (after ? node.parentNode === destination.parentNode && node.previousSibling === destination : node.parentNode === destination) return;
@@ -20,14 +19,8 @@ globalThis.PresentationLayout = {
     function restore() {
       for (const [node, marker] of origins) if (marker.nextSibling !== node) marker.parentNode.insertBefore(node, marker.nextSibling);
     }
-    function positionCapture() {
-      if (!simple) return;
-      if (captureTarget) move($("remember-observation"), $(captureTarget), true);
-      else move($("remember-observation"), $("simple-default-capture"));
-    }
     return {
       apply(enabled, step) {
-        simple = enabled;
         $("accessible-results-summary").hidden = enabled;
         if (enabled) {
           $("accessible-results").open = true;
@@ -35,28 +28,23 @@ globalThis.PresentationLayout = {
           move($("guide"), $("simple-task-access"));
           move($("job-status"), $("simple-calculation-status"));
           move($("fundamentals-link"), $("simple-tools"));
-          move($("converter-open"), $("simple-tools"));
+          if ($("converter").open) $("converter").close?.();
+          move($("converter-content"), $("simple-converter"));
           for (const key of ["build", "optimize", "spectrum"]) {
             const method = $(`method-${key}`);
             move(method, $("simple-methods"));
             method.hidden = key !== step;
           }
-          move($("ts-summary"), $("simple-validation"));
           move($("ts-details"), $("simple-methods"));
-          move($("observations-collection"), $("simple-collection"));
-          move($("data-report"), $("simple-collection"));
           const heading = step === "build" ? "Ausgewählte Startstruktur" : "Ergebnis";
           if ($("active-name").textContent !== heading) $("active-name").textContent = heading;
           if ($("structure-choice-label").textContent !== "Ausgewählte Struktur") $("structure-choice-label").textContent = "Ausgewählte Struktur";
-          positionCapture();
         } else {
           restore();
           if ($("structure-choice-label").textContent !== "Gespeicherte Strukturen") $("structure-choice-label").textContent = "Gespeicherte Strukturen";
           for (const key of ["build", "optimize", "spectrum"]) $(`method-${key}`).hidden = false;
         }
       },
-      resetCapture() { captureTarget = null; positionCapture(); },
-      captureAfter(id) { captureTarget = id; positionCapture(); },
     };
   },
 };

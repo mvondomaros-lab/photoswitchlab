@@ -513,6 +513,12 @@ def create_app(
     async def guide():
         return HTMLResponse(course_content((STATIC / "guide.html").read_text(), course))
 
+    @app.get("/static/guide-accessible.html")
+    async def accessible_guide():
+        return HTMLResponse(
+            course_content((STATIC / "guide-accessible.html").read_text(), course)
+        )
+
     @app.get("/static/materials/{filename}")
     async def teaching_material(filename: str):
         if course != "marburg" or filename not in {

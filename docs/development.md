@@ -44,58 +44,74 @@ test on a real Hub.
 
 ### Accessible presentation
 
-The app and website offer an optional **Vereinfachte Ansicht**, persisted locally
+The app and website offer a **Barrierearmer Arbeitsmodus**, persisted locally
 and selectable directly with `?text=1` (`?text=0` overrides the stored choice).
-Both views use the same calculation data and controls. The simplified app is a
-linear, single-column workflow: current task access, structure and inputs,
-calculation/status, operation-specific result, observation collection/report,
-then optional exploration and methods. `presentation.js` relocates the original
-nodes with restoration markers; it does not duplicate forms or reset selections.
-Repeated updates must not reparent focused controls. The concise result stays
-open without an additional disclosure, and a modest supporting 2D formula avoids
-initializing WebGL in simplified mode. The default graphical layout is restored
-when switching back. The website similarly places its existing compact navigation
-in the reading flow and omits the duplicate outline in simplified mode.
-The spectrum overview reports local maxima of the stored broadened curve before
-scalar queries, with visible-range coverage and raw relative heights. Plateau
-locations remain intervals of stored samples; edge maxima are identified as
-boundary values rather than fitted band peaks. A short overview prioritizes up
-to four visible-range maxima and two others, explicitly noting omitted maxima.
-The existing full-spectral-data disclosure lists every stored-curve maximum
-separately from the discrete electronic transitions, including weak maxima
-omitted from the short overview.
-Remembering the spectrum retains this overview with its source context.
-The app's `accessibility.js` provides atom/bond exploration, distances and angles,
-search/path tables, spectrum transitions, interpolated curve queries and compact
-readable HTML reports. Full CSV/JSON exports and full tables are optional details.
-An empty observation collection exports the current result and deliberately
-selected data. Once observations are remembered, the report contains only that
-collection, grouped by source structure with frozen calculation methods and
-essential convergence, validation, and coverage context. It does not prepend an
-unrelated current structure or automatically collect default atom selections.
-The collection retains selections across structures until reload and remains
-exportable when the current step has no eligible structure or all structures
-have been deleted. Students can remove entries and export the collection as a
-readable report without exporting every history record.
-Curve queries and all three unit-converter fields accept one comma or dot
-without relying on number-input locale handling. Energy differences may be
-negative; photon wavelengths must be positive. Atom numbers are one-based indices
-of the stored geometry, distinct
-from the chemical ring positions supplied alongside them. Old stored sessions
-without `atom_graph` require recreating their structures for bond exploration.
+A native radio group selects **Grafisch** or **Barrierearm**; both choices must
+handle `change`, including the switch back to the graphical layout. Both modes
+use the same scientific calculation data and actions. The accessible app is a
+linear, single-column workflow with one inline structure selector, current tasks,
+inputs, calculation status, and the current result report. `presentation.js`
+relocates existing nodes with restoration markers and restores their original
+positions, values and disclosure state. Repeated updates must not reparent
+focused controls. The unit converter uses its original fields inline rather than
+opening a dialog. Supporting 2D formulas retain alternative text, and this mode
+avoids initializing WebGL. The website puts compact navigation in the reading
+flow and omits the duplicate outline.
 
-Keep the graphical tasks and `protokollvorlage.docx` unchanged when adjusting
-nonvisual guidance. Build the equivalent text protocol with
-`scripts/build_protocol.py --text` using the document-authoring runtime and
-render every page for verification. Both downloads are available in the Marburg
-course. No voice service or generative model is required for text presentation.
+`accessibility.js` builds a compact report directly from saved calculation
+results. The optional HTML download renders the same report sections; there is
+no separate remembered-observation collection or capture/remove/clear workflow.
+Reports show the selected result, its chemical source identity and status (full stored IDs are optional metadata), and only
+contextually related comparisons. Geometry comparisons use stored parent links.
+A cis/trans pair requires explicit valid substitution settings, converged minima,
+and (for spectral comparisons) valid spectra. Derivative identity is normalized
+over independent reversal of each ring and exchange of the two rings (eight
+orientations), ignoring configuration. Missing or ambiguous partners are not
+replaced with an arbitrary latest structure. No derivative ranking is performed.
 
-Run `node --test tests/test_accessibility.cjs` and
-`pytest tests/test_accessibility.py` alongside the routine checks. Manual
-keyboard, screen-reader, zoom and graphical presentation checks remain necessary;
-the automated tests do not establish WCAG conformance. The presentation tests
-parse the maintained templates and exercise actual node relocation/restoration,
-control identity, linear order, and capture placement without a second form tree.
+The spectrum report prioritizes up to five transitions with the largest positive,
+finite oscillator strengths inside the inclusive curve observation window, then
+displays them by energy with stable tie handling. The complete transition table
+and a separate visible-range transition table remain optional data; an omitted
+strongest visible line is mentioned in the main report. Oscillator strength is
+not measured absorbance. `Emax` remains the highest sampled value of the full
+broadened spectrum, matching the graphical task quantity, with flat, tied and
+boundary cases identified. The same-energy probe automatically compares both
+configurations of a uniquely matching pair at an energy chosen by the student.
+Interpolation and color estimation use the full broadened data, not just the
+five displayed transitions. Local curve maxima and visible-range coverage remain
+in additional spectral data; plateau locations are intervals of stored samples,
+and edge values are not described as inner peaks.
+
+Solution-color words and the graphical swatch use the same color calculation.
+Near-white transmission is described as nearly colorless. The result states once
+that its fixed absorbance scale has no specified concentration or path length.
+Color-space details belong to optional methods. Atom/bond exploration, named
+atom distances and path tables remain available as secondary data; both azo
+angles are reported directly for the displayed optimization/path geometry.
+Curve probes and all three converter fields accept one comma or dot without
+relying on number-input locale handling. Negative energy differences remain
+valid, while photon wavelengths must be positive. Atom numbers are indices of
+the stored coordinates, distinct from chemical ring positions. Old stored
+sessions without `atom_graph` require recreating structures for bond exploration.
+
+`guide.html` retains the graphical exercises. `guide-accessible.html` contains
+nine autonomous, equivalent exercises and is the shared source for both the
+accessible app and `scripts/build_protocol.py --text`. Both task routes apply
+course filtering. Preserve the graphical tasks and `protokollvorlage.docx` when
+adjusting the accessible workflow. The text protocol requires selected numeric
+evidence and student interpretation, without requiring report or raw-data
+exports. Build it using the document-authoring runtime and render and inspect
+every page. Both protocol downloads are available in the Marburg course. No voice
+service or generative model is required.
+
+Run `node --test tests/*.cjs` and `pytest tests/test_accessibility.py` alongside
+the routine checks. Tests cover native mode selection in both directions,
+restoration of actual controls, automatic report/export agreement, pair identity
+and ambiguity, transition filtering, visible weak lines, probes, convergence,
+validation and autonomous task/protocol consistency. Manual keyboard,
+screen-reader, zoom and graphical checks remain necessary; automated tests do
+not establish WCAG conformance.
 
 The optional color comparison uses the CIE76 Euclidean distance in CIELAB with
 D65 reference white, calculated from the same clipped sRGB triples as the swatch.
@@ -210,7 +226,8 @@ sizes before committing the source and generated SVG together.
 
 ## Updating tasks and the protocol
 
-The task source is `src/photoswitchlab/web/static/guide.html`. Each `details.task` has a
+The graphical task source is `src/photoswitchlab/web/static/guide.html`; the autonomous
+accessible equivalent is `src/photoswitchlab/web/static/guide-accessible.html`. Each `details.task` has a
 stable ID, a title in `summary`, and required deliverables in a `.protocol-output`
 paragraph. `scripts/build_protocol.py` reads those titles and deliverables and
 adds the protocol's answer fields and tables.
