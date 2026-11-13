@@ -1263,10 +1263,12 @@ test("minimum playback uses its optimization history without a mode toggle", () 
 
 test("spectrum preserves bands and stick strengths with reciprocal wavelength ticks", () => {
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
-  let chart;
+  let chart, partner = null;
   const elements = new Map();
   const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     spectrumChart: null,
+    spectrumPartner: () => partner,
+    structureLabel: (m) => m.name,
     HC: 1239.8419843320026,
     fmt: (value) => String(Math.round(value)),
     plotStyle: { text: "#586b80", font: { size: 16 }, titleFont: { size: 17 } },
@@ -1286,6 +1288,15 @@ test("spectrum preserves bands and stick strengths with reciprocal wavelength ti
   assert.deepEqual(Array.from(chart.data.datasets[1].data, (p) => p.y), [0, 0.7, null, 0, 0.1, null]);
   assert.equal(chart.options.scales.x.min, 1.5);
   assert.equal(chart.options.scales.wavelength.max, 5.5);
+  assert.equal(chart.data.datasets[3].data.length, 0);
+  assert.equal(elements.get("spectrum-key-partner").hidden, true);
+  partner = { name: "cis-Azobenzol", spectrum: { energy_ev: [1.5, 3, 5.5], absorption: [0, 0.4, 0.6] } };
+  context.renderSpectrumChart({ energy_ev: [1.5, 3, 5.5], absorption: [0, 1, 0.2],
+    excitations_ev: [1, 3, 5, 6], oscillator_strengths: [2, 0.7, 0.1, 3] });
+  assert.deepEqual(Array.from(chart.data.datasets[3].data, (p) => p.y), [0, 0.4, 0.6]);
+  assert.ok(chart.data.datasets[3].borderDash.length); // Distinguishable without color.
+  assert.equal(elements.get("spectrum-key-partner").hidden, false);
+  assert.equal(elements.get("spectrum-key-partner").textContent, "Gestrichelte Kurve: cis-Azobenzol");
   const axis = { min: 1.5, max: 5.5 };
   chart.options.scales.wavelength.afterBuildTicks(axis);
   assert.deepEqual(Array.from(axis.ticks, (t) => chart.options.scales.wavelength.ticks.callback(t.value)),

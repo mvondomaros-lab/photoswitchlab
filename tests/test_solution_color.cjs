@@ -42,10 +42,11 @@ test("structure changes refresh the swatch and clear unavailable results", () =>
     value: "1", style: {}, setAttribute(key, value) { this[key] = value; },
     addEventListener(event, callback) { this[event] = callback; },
   };
-  let molecule = {label: "trans · H", spectrum: flat(0)};
+  let molecule = {label: "trans · H", spectrum: flat(0)}, partner = null;
   const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     $: get, current: () => molecule, SolutionColor: globalThis.SolutionColor, AccessibleData: globalThis.AccessibleData,
     structureLabel: (m) => m.label,
+    spectrumPartner: () => partner,
     fmt: (v, n) => v.toFixed(n).replace(".", ","),
   });
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
@@ -53,6 +54,14 @@ test("structure changes refresh the swatch and clear unavailable results", () =>
   context.renderSolutionColor();
   assert.equal(get("solution-color-swatch").style.backgroundColor, "rgb(255, 255, 255)");
   assert.match(get("solution-color-status").textContent, /nahezu farblos/);
+  assert.equal(get("solution-color-partner").hidden, true);
+  assert.equal(get("solution-color-scope").textContent, "nur ausgewählte Struktur");
+  partner = {label: "cis · H", spectrum: flat(1)};
+  context.renderSolutionColor();
+  assert.equal(get("solution-color-partner").hidden, false);
+  assert.match(get("solution-color-partner-status").textContent, /^cis · H: .* · 10 %$/);
+  assert.ok(get("solution-color-partner-swatch").style.backgroundColor.startsWith("rgb("));
+  partner = null;
   molecule = {label: "cis · 4-OMe", spectrum: flat(1)};
   context.renderSolutionColor();
   assert.match(get("solution-color-swatch")["aria-label"], /cis · 4-OMe/);

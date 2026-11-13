@@ -17,7 +17,7 @@ document their own choices.
     <meta name="description" content="$brand_title · $brand_subtitle"/>
     <link rel="icon" type="image/svg+xml" href="static/brand-mark.svg"/>
     <link rel="stylesheet" href="static/header.css?v=7"/>
-    <link rel="stylesheet" href="static/app.css?v=ui-69"/>
+    <link rel="stylesheet" href="static/app.css?v=ui-70"/>
     <script src="static/vendor/ngl.js" defer></script>
     <script src="static/vendor/chart.js" defer></script>
     <script src="static/progress.js?v=ui-36" defer></script>
@@ -25,7 +25,7 @@ document their own choices.
     <script src="static/solution-color.js?v=1" defer></script>
     <script src="static/presentation.js?v=4" defer></script>
     <script src="static/accessibility.js?v=12" defer></script>
-    <script src="static/app.js?v=ui-103" defer></script>
+    <script src="static/app.js?v=ui-104" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
@@ -607,6 +607,7 @@ document their own choices.
                             <div class="spectrum-notes note">
                                 <span class="spectrum-key spectrum-key-band">Blaue Kurve: verbreiterte Banden</span>
                                 <span class="spectrum-key spectrum-key-line">Orange Linien: diskrete Übergänge</span>
+                                <span class="spectrum-key spectrum-key-partner" id="spectrum-key-partner" hidden></span>
                                 <span>Relative Absorption in willkürlichen Einheiten</span>
                             </div>
                             <button id="spectrum-png" class="text-button" type="button"
@@ -631,13 +632,17 @@ document their own choices.
                              aria-label="Geschätzte Lösungsfarbe"></div>
                         <div class="solution-color-controls">
                             <h3 id="solution-color-title">Geschätzte Lösungsfarbe</h3>
-                            <p class="note">nur ausgewählte Struktur</p>
+                            <p class="note" id="solution-color-scope">nur ausgewählte Struktur</p>
                             <div class="solution-color-values">
                                 <div class="solution-color-value" role="status">
                                     <button type="button" class="property-help-trigger"
                                         id="transmission-help-trigger" popovertarget="transmission-help"
                                         aria-haspopup="dialog">Gewichtete Lichtdurchlässigkeit:</button>
                                     <span id="solution-color-status"></span>
+                                </div>
+                                <div class="solution-color-value solution-color-partner" id="solution-color-partner" hidden>
+                                    <span id="solution-color-partner-swatch" class="solution-color-partner-swatch" aria-hidden="true"></span>
+                                    <span id="solution-color-partner-status"></span>
                                 </div>
                             </div>
                             <p id="solution-color-limitation" class="note">Modellvorhersage für die ausgewählte Struktur

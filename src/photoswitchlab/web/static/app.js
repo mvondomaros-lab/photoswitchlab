@@ -412,6 +412,10 @@ function renderSpectrum() {
       : "");
 
 }
+// Unique converged minimum of the other configuration, as used by the text results.
+function spectrumPartner() {
+  return globalThis.AccessibleData?.partner(current(), state.molecules, true) || null;
+}
 function renderSolutionColor() {
   const result = SolutionColor.estimate(current()?.spectrum);
   const swatch = $("solution-color-swatch");
@@ -422,6 +426,14 @@ function renderSolutionColor() {
   ScientificDisplay.setText($("solution-color-status"), result
     ? `${AccessibleData.color(result.rgb)} · ${ScientificDisplay.percent(100 * result.luminance)} %`
     : "Keine Farbschätzung verfügbar: Das Spektrum ist unvollständig oder enthält keine auswertbaren Absorptionsdaten.");
+  const partner = spectrumPartner(), other = partner && SolutionColor.estimate(partner.spectrum);
+  $("solution-color-partner").hidden = !other;
+  $("solution-color-scope").textContent = other ? "ausgewählte Struktur und andere Konfiguration" : "nur ausgewählte Struktur";
+  if (other) {
+    $("solution-color-partner-swatch").style.backgroundColor = other.css;
+    ScientificDisplay.setText($("solution-color-partner-status"),
+      `${structureLabel(partner)}: ${AccessibleData.color(other.rgb)} · ${ScientificDisplay.percent(100 * other.luminance)} %`);
+  }
 }
 
 function renderState() {
@@ -783,6 +795,9 @@ function renderSpectrumChart(spec) {
           spanGaps: false },
         { label: "Ausgewählter Übergang", order: -1, data: [], borderColor: plotStyle.selected,
           backgroundColor: plotStyle.selected, borderWidth: 3, pointRadius: [0, 4] },
+        // The other configuration of the same derivative, dashed so it does not rely on color.
+        { label: "Andere Konfiguration", order: 2, data: [], borderColor: plotStyle.text,
+          borderWidth: plotStyle.curveWidth, borderDash: [7, 5], pointRadius: 0, tension: 0 },
       ] },
       options: {
         locale: "de-DE", color: plotStyle.text, font: plotStyle.font,
@@ -815,6 +830,12 @@ function renderSpectrumChart(spec) {
   spectrumChart.data.datasets[0].data = spec.energy_ev.map((x, i) => ({ x, y: spec.absorption[i] }));
   spectrumChart.data.datasets[1].data = spec.excitations_ev.flatMap((x, i) =>
     x < min || x > max ? [] : [{ x, y: 0 }, { x, y: spec.oscillator_strengths[i] }, { x, y: null }]);
+  const partner = spectrumPartner();
+  spectrumChart.data.datasets[3].data = partner
+    ? partner.spectrum.energy_ev.map((x, i) => ({ x, y: partner.spectrum.absorption[i] }))
+    : [];
+  $("spectrum-key-partner").hidden = !partner;
+  if (partner) $("spectrum-key-partner").textContent = `Gestrichelte Kurve: ${structureLabel(partner)}`;
   for (const id of ["x", "wavelength"]) {
     spectrumChart.options.scales[id].min = min;
     spectrumChart.options.scales[id].max = max;
@@ -1423,7 +1444,9 @@ $("spectrum-png").onclick = handle(async () => {
   ctx.drawImage(source, 0, header);
   ctx.fillStyle = plotStyle.text;
   ctx.font = `${12 * scale}px Arial, Helvetica, sans-serif`;
-  ctx.fillText("Relative Absorption in willkürlichen Einheiten · INDO/S–CIS", 12 * scale,
+  const partner = spectrumPartner();
+  ctx.fillText("Relative Absorption in willkürlichen Einheiten · INDO/S–CIS" +
+    (partner ? ` · gestrichelt: ${structureLabel(partner)}` : ""), 12 * scale,
     header + source.height + 22 * scale, canvas.width - 24 * scale);
   const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/png"));
   if (!blob) throw new Error("Spektrum konnte nicht gespeichert werden.");
