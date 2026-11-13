@@ -7,6 +7,7 @@ Keep license notices when replacing a library.
 | --- | --- | --- | --- |
 | `ngl.js` | 2.5.0 | [Distribution](https://unpkg.com/ngl@2.5.0/dist/ngl.js), [upstream](https://github.com/nglviewer/ngl) | [MIT](NGL-LICENSE) |
 | `chart.js` | 4.5.1 | [Distribution](https://registry.npmjs.org/chart.js/-/chart.js-4.5.1.tgz), [upstream](https://github.com/chartjs/Chart.js) | [MIT](ChartJS-LICENSE) |
+| `chart2music.js` | 1.20.0 | [Distribution](https://registry.npmjs.org/chart2music/-/chart2music-1.20.0.tgz) (`dist/index.js`, npm SHA-1 `2681ed8626cc1087023d3a7d9acc1fcb9209fcfd`), [upstream](https://github.com/julianna-langston/chart2music) | [MIT](Chart2Music-LICENSE) |
 | `cie-color.js` | CIE 2019 data | [Observer](https://doi.org/10.25039/CIE.DS.xvudnb9b), [D65](https://doi.org/10.25039/CIE.DS.hjfjmt59) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
 
 The CIE tables are joined by wavelength and restricted to 380–780 nm in 1 nm

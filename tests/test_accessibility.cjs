@@ -704,3 +704,15 @@ test("running optimizations keep step tables hidden and unchanged until the resu
   assert.equal(lab.node("accessible-path").hidden, false);
   assert.equal(lab.node("path-point").options.length, 3);
 });
+
+test("sonification series share one coarse energy grid within the common window", () => {
+  const a = {energy_ev: [1.5, 3.5, 5.5], absorption: [0, 1, 0]}, b = {energy_ev: [1.5, 5.5], absorption: [0.2, 0.2]};
+  const series = data.sonificationSeries([{name: "trans", spectrum: a}, {name: "cis", spectrum: b}, {name: "leer", spectrum: null}]);
+  assert.deepEqual(series.map((s) => s.name), ["trans", "cis"]);
+  assert.equal(series[0].points.length, 81);
+  assert.equal(series[0].points[0].x, 1.5);
+  assert.equal(series[0].points.at(-1).x, 5.5);
+  assert.equal(series[0].points[40].y, 1); // 3.5 eV lies on the grid.
+  assert.ok(series[1].points.every((p) => p.y === 0.2));
+  assert.deepEqual(data.sonificationSeries([{name: "x", spectrum: {energy_ev: [1], absorption: [1]}}]), []);
+});

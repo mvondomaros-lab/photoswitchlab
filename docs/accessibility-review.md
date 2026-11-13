@@ -599,3 +599,21 @@ Targeted corrections from the independent review, kept free of new controls:
 
 All 90 JavaScript tests and 196 Python tests passed (21 skipped). These changes
 were not checked in a browser or with a screen reader.
+
+## Phase 3: comparison and sonification
+
+- The graphical spectrum overlays the automatically paired other configuration as
+  a dashed curve with a legend entry, and shows its color estimate next to the
+  selected one. The PNG export names the dashed curve. No control was added.
+- Each step offers the next step for the selected structure (commit `689d038`).
+- Chart2Music 1.20.0 (MIT, vendored) makes the broadened curves explorable by
+  keyboard, speech and pitch: on the graphical spectrum canvas, where a marker shows
+  the explored point, and as a focusable element in the accessible spectrum result.
+  Both configurations are groups on a common 0.05 eV grid; values below 0.001 are
+  spoken as “unter 0,001”. Without the library the canvas remains a described image.
+
+Chart2Music was exercised in jsdom with the production configuration: application
+role, tab stop, German summary, arrow-key movement, group switching and the focus
+callback behaved as expected. No real browser, audio output, JAWS, NVDA or Braille
+test was possible in this session; Chart2Music's help dialog partly shows English
+key names.

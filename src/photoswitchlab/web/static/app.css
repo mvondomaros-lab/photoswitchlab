@@ -1556,3 +1556,7 @@ select {
 .solution-color-partner-swatch { flex: none; width: 2rem; height: 2rem; border: 1px solid #b8c4d1; border-radius: 4px; }
 
 .next-step { margin-top: 12px; min-height: 44px; padding: 10px 14px; color: var(--blue); font-weight: 600; background: white; border: 1px solid #8eafea; border-radius: 7px; }
+
+.sonification { margin: .5rem 0; padding: .75rem 1rem; border: 2px solid #8eafea; border-radius: 7px; background: #f1f6ff; font-weight: 600; }
+.sonification:focus-visible, #spectrum-chart:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
+.sonification-hint { margin: .25rem 24px 0; }

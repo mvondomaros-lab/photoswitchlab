@@ -189,6 +189,19 @@ globalThis.AccessibleData = {
     if (omitted) notes.push(`${omitted === 1 ? "1 weiteres lokales Maximum ist" : `${omitted} weitere lokale Maxima sind`} in der Kurzansicht nicht aufgeführt. Die vollständige Übersicht steht in den Spektraldaten der App.`);
     return {summary: `Höchste gespeicherte relative Absorption: ${height(curve.maximum)}.`, coverage, bands, allBands, note: notes.join(" ")};
   },
+  // Coarse common energy grid for sonification: one point per 0.05 eV is fine enough to
+  // hear band shapes and few enough to step through with arrow keys.
+  sonificationSeries(entries, step = 0.05) {
+    const valid = entries.filter(({spectrum}) => this.curveOverview(spectrum));
+    if (!valid.length) return [];
+    const low = Math.max(...valid.map(({spectrum}) => spectrum.energy_ev[0]));
+    const high = Math.min(...valid.map(({spectrum}) => spectrum.energy_ev.at(-1)));
+    if (!(high > low)) return [];
+    const count = Math.floor((high - low) / step + 1e-9);
+    const grid = Array.from({length: count + 1}, (_, i) => Number((low + i * step).toFixed(6)));
+    if (grid.at(-1) < high - 1e-9) grid.push(high);
+    return valid.map(({name, spectrum}) => ({name, points: grid.map((x) => ({x, y: this.absorption(spectrum, x)}))}));
+  },
   coordinates(xyz) {
     return (xyz || "").trim().split("\n").slice(2).flatMap((line) =>
       line.trim().split(/\s+/).slice(1, 4).map(Number));
