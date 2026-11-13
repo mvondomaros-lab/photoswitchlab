@@ -1347,6 +1347,38 @@ test("spectrum stage descriptions only appear for a running spectrum job", () =>
   assert.equal(elements.get("job-detail").hidden, true);
 });
 
+test("completed jobs name their result and identify an existing symmetry-equivalent structure", () => {
+  const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
+  const elements = new Map();
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
+    state: { step: "build", busy: true },
+    JOBS: {}, fmt: String, renderEnergyHistory() {}, structureLabel: (m) => m.base_name,
+    $: (id) => {
+      if (!elements.has(id)) elements.set(id, { classList: { toggle() {} } });
+      return elements.get(id);
+    },
+  });
+  vm.runInContext(app.slice(app.indexOf("function displayJob("), app.indexOf("async function monitor(")), context);
+  const title = () => elements.get("job-title").textContent;
+  const existing = { id: "old", base_name: "trans-2-Methoxyazobenzol" };
+  context.displayJob.knownIds = new Set(["old"]);
+  context.displayJob({ id: 1, kind: "template", status: "complete", result: { molecule: existing } });
+  assert.equal(title(), "Bereits vorhanden: trans-2-Methoxyazobenzol ausgewählt");
+  context.displayJob({ id: 2, kind: "template", status: "complete", result: { molecule: { ...existing, id: "new" } } });
+  assert.equal(title(), "Struktur erstellt");
+  context.state.step = "optimize";
+  context.displayJob({ id: 3, kind: "minimum", status: "complete", result: { molecule: { converged: true } } });
+  assert.equal(title(), "Minimumstruktur gefunden");
+  context.displayJob({ id: 4, kind: "minimum", status: "complete", result: { molecule: { converged: false } } });
+  assert.equal(title(), "Optimierung nicht abgeschlossen");
+  context.displayJob({ id: 5, kind: "ts", status: "complete", result: { molecule: { converged: true, ts_search: { connectivity: { verified: true } } } } });
+  assert.equal(title(), "Übergangsstruktur gefunden und geprüft");
+  context.displayJob({ id: 6, kind: "ts", status: "complete", result: { molecule: { converged: true, ts_search: { connectivity: { verified: false } } } } });
+  assert.equal(title(), "Suche beendet, keine bestätigte Übergangsstruktur");
+  context.displayJob({ id: 7, kind: "minimum", status: "failed" });
+  assert.equal(title(), "Berechnung fehlgeschlagen");
+});
+
 test("picker groups by starting configuration and substitution without redundant origin text", () => {
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
   const element = () => ({
@@ -1635,4 +1667,18 @@ test("builder disables existing starting structures and updates when settings ch
   context.state.busy = true;
   check(true, "Struktur erstellen");
   assert.ok(app.includes('$("builder").addEventListener("change", updateControls)'));
+});
+
+test("substituent options carry group names in accessible mode and formulas in graphical mode", () => {
+  const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
+  const options = ["H", "OMe", "NMe2"].map((value) => ({ value, text: "" }));
+  const context = vm.createContext({
+    $: () => ({ querySelectorAll: () => [{ options }] }),
+    substituentLabel: (value) => ({ OMe: "OCH₃", NMe2: "N(CH₃)₂" })[value] || value,
+  });
+  vm.runInContext(app.slice(app.indexOf("const SUBSTITUENT_NAMES"), app.indexOf("const state = {")), context);
+  context.labelSubstituentOptions(true);
+  assert.deepEqual(options.map((option) => option.text), ["H", "Methoxy (OCH₃)", "Dimethylamino (N(CH₃)₂)"]);
+  context.labelSubstituentOptions(false);
+  assert.deepEqual(options.map((option) => option.text), ["H", "OCH₃", "N(CH₃)₂"]);
 });

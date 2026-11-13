@@ -579,3 +579,23 @@ atom pair in task 4, a three-row path table (relative energy and C–N=N–C dih
 in task 5, no additional absorption-value table in task 6, and no band-position
 list in task 7. The app still shows these data. The graphical tasks and visual
 protocol are unchanged. Rendered text-protocol pages 3–6 were inspected.
+
+## Phase 2: announcements, feedback and labels
+
+Targeted corrections from the independent review, kept free of new controls:
+
+- Atom-list changes no longer trigger live announcements; the result paragraph
+  follows the list. Path and step tables stay hidden and unchanged while a
+  calculation runs, so polling does not rebuild content under a screen reader.
+- Completed jobs name their result (minimum found or not, transition structure
+  confirmed or not, spectrum calculated). Symmetry-equivalent input reports the
+  existing structure by its chemical name instead of “Struktur erstellt”.
+- Atom labels name the ring (“C2′ im zweiten Ring”), and accessible-mode
+  substituent options name the group (“Methoxy (OCH₃)”), so chemical identity does
+  not depend on how a prime or subscript digit is spoken or brailled.
+- Enter starts the absorption query. Report files include the step and a creation
+  time, and saving is announced. App tables expose a named region only while they
+  scroll horizontally. English method names carry `lang="en"`.
+
+All 90 JavaScript tests and 196 Python tests passed (21 skipped). These changes
+were not checked in a browser or with a screen reader.

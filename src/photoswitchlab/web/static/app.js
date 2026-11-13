@@ -33,6 +33,15 @@ function summarizeSubstituents() {
   $("substituent-count").textContent = count ? `${count} gewählt` : "keine";
 }
 $("rings").addEventListener("change", summarizeSubstituents);
+// Subscript digits and formulas may be spoken or brailled ambiguously; name the groups.
+const SUBSTITUENT_NAMES = { Me: "Methyl", OMe: "Methoxy", NMe2: "Dimethylamino", CF3: "Trifluormethyl", CN: "Cyano", NO2: "Nitro" };
+function labelSubstituentOptions(named) {
+  for (const select of $("rings").querySelectorAll("select"))
+    for (const option of select.options)
+      option.text = named && option.value in SUBSTITUENT_NAMES
+        ? `${SUBSTITUENT_NAMES[option.value]} (${substituentLabel(option.value)})`
+        : substituentLabel(option.value);
+}
 const state = {
   molecules: [],
   selected: null,
@@ -925,7 +934,18 @@ function displayJob(job) {
     cancelled: "Strukturerstellung abgebrochen",
     timeout: "Zeitlimit für die Strukturerstellung erreicht",
   };
+  const result = job.status === "complete" ? job.result?.molecule : null;
+  // The server returns an existing structure for symmetry-equivalent input.
+  const existing = job.kind === "template" && result && displayJob.knownIds?.has(result.id);
+  const verified = result?.converged === true && result?.ts_search?.connectivity?.verified === true;
+  const completed = result && {
+    template: existing ? `Bereits vorhanden: ${structureLabel(result)} ausgewählt` : structureStatus.complete,
+    minimum: result.converged === false ? "Optimierung nicht abgeschlossen" : "Minimumstruktur gefunden",
+    ts: verified ? "Übergangsstruktur gefunden und geprüft" : "Suche beendet, keine bestätigte Übergangsstruktur",
+    uvvis: "Spektrum berechnet",
+  }[job.kind];
   $("job-title").textContent =
+    completed ||
     (job.kind === "template"
       ? structureStatus[job.status]
       : terminal[job.status]) || JOBS[job.kind];
@@ -1022,6 +1042,7 @@ async function startJob(payload) {
     throw new Error("Eine Minimumsuche ausgehend von einer Übergangsstruktur ist hier nicht möglich. Wählen Sie eine Startstruktur.");
   if (state.busy)
     throw new Error("Warten Sie, bis die laufende Berechnung abgeschlossen ist.");
+  displayJob.knownIds = new Set(state.molecules?.map((m) => m.id));
   const focusOrigin = document.activeElement;
   const followFocus = !!focusOrigin && ["create", "optimize", "calculate-spectrum"].includes(focusOrigin.id);
   let userMovedFocus = false;
@@ -1496,7 +1517,7 @@ async function guide(step, focus = true, {openGraphical = true, retry = false} =
   $("guide-retry").setAttribute("aria-disabled", "true");
   try {
     if (!guideCache.has(source)) {
-      const response = await fetch(`static/${source}?v=ui-78`);
+      const response = await fetch(`static/${source}?v=ui-79`);
       if (!response.ok) throw new Error("Task loading failed");
       guideCache.set(source, await response.text());
     }
@@ -1558,8 +1579,12 @@ globalThis.AccessibilityView?.initialize({
   label: structureLabel, substituentLabel, download, filename,
   selectableMolecules,
   selectMolecule: (id) => { state.live = null; selectMolecule(id, state.step !== "build" || id !== state.selected); error(""); renderState(); },
-  presentationChanged: refreshGuidePresentation,
+  presentationChanged: () => {
+    labelSubstituentOptions(globalThis.AccessibilityView?.prefersText);
+    return refreshGuidePresentation();
+  },
 });
+labelSubstituentOptions(globalThis.AccessibilityView?.prefersText);
 boot();
 // Optional browser-native agent interface; uses the same actions as the UI.
 if (document.modelContext?.registerTool) {

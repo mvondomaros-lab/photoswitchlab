@@ -37,8 +37,8 @@ test("atom references carry chemical positions through substituent connectivity"
     {number: 2, element: "O", neighbors: [{number: 1}, {number: 3}]},
     {number: 3, element: "C", neighbors: [{number: 2}]},
   ];
-  assert.equal(data.atomLabel(graph, 0), "Atom 1 (C, Ringposition C2′)");
-  assert.equal(data.atomLabel(graph, 2), "Atom 3 (C, Ringbezug C2′)");
+  assert.equal(data.atomLabel(graph, 0), "Atom 1 (C, Ringposition C2′ im zweiten Ring)");
+  assert.equal(data.atomLabel(graph, 2), "Atom 3 (C, Ringbezug C2′ im zweiten Ring)");
   const settings = {substituents: ["H", "H", "H", "H", "H", "OMe", "H", "H", "H", "H"]};
   assert.ok(data.atomLabel(graph, 2, settings).includes("zugeordnet: Methoxygruppe"));
   assert.ok(data.atomLabel(graph, 0, settings).includes("trägt Methoxygruppe"));
@@ -169,7 +169,9 @@ test("automatic in-app result and optional export share one escaped report model
   assert.ok(displayed.includes("Stärkste elektronische Übergänge"));
   assert.ok(displayed.includes("Zugehöriges cis/trans-Paar"));
   lab.node("data-report").onclick();
-  assert.equal(lab.exported().filename, "result.html");
+  assert.equal(lab.exported().filename, "result-Spektrum.html"); // Reports of different steps keep distinct names.
+  assert.equal(lab.node("accessible-status").textContent, "Ergebnisbericht gespeichert: result-Spektrum.html");
+  assert.match(lab.exported().content, /<p>Erstellt am [^<]+\.<\/p>/);
   assert.ok(lab.exported().content.replaceAll(' tabindex="0"', "").includes(displayed));
   assert.ok(!lab.exported().content.includes("Beobachtung 1"));
   assert.ok(!lab.exported().content.includes("Vollständige Spektraldaten"));
@@ -597,13 +599,20 @@ test("all positive visible transitions supplement the strongest five without dup
 test("short tables do not add tab stops and overflowing tables remain keyboard reachable after opening or zoom", () => {
   const lab = accessibleLab("?text=1"), region = lab.node("test-region");
   lab.regions.push(region);
+  region.dataset = {};
+  region.setAttribute("role", "region");
+  region.setAttribute("aria-label", "Energiedaten");
   region.clientWidth = 600;
   region.scrollWidth = 550;
   lab.view.updateTableFocus();
   assert.equal(region.hasAttribute("tabindex"), false);
+  assert.equal(region.hasAttribute("role"), false); // No landmark for a table without scrolling.
+  assert.equal(region.hasAttribute("aria-label"), false);
   region.clientWidth = 250;
   lab.events.get("resize")();
   assert.equal(region.getAttribute("tabindex"), "0");
+  assert.equal(region.getAttribute("role"), "region");
+  assert.equal(region.getAttribute("aria-label"), "Energiedaten");
   region.clientWidth = region.scrollWidth = 0;
   lab.events.get("toggle")();
   assert.equal(region.hasAttribute("tabindex"), false);
@@ -661,4 +670,37 @@ test("close paired maxima and absorption values keep distinguishable displays wi
   assert.equal(exported.molecule.properties.energy_ev, -1234.567812345);
   assert.equal(exported.molecule.spectrum.oscillator_strengths[0], 1.23e-28);
   assert.deepEqual(exported.molecule.spectrum.excitations_ev, [3.0011, 3.0012]);
+});
+
+test("Enter queries absorption and atom list changes update text without live announcements", () => {
+  const lab = accessibleLab("?text=1");
+  lab.view.render();
+  lab.node("curve-energy").value = "1,5";
+  let prevented = false;
+  lab.node("curve-energy").onkeydown({key: "Enter", preventDefault: () => { prevented = true; }});
+  assert.ok(prevented);
+  assert.ok(lab.node("curve-value").innerHTML.includes("Relative Absorption bei 1,5 eV"));
+  lab.node("accessible-status").textContent = "";
+  lab.node("atom-second").value = "2";
+  lab.node("atom-second").onchange();
+  assert.ok(lab.node("atom-distance").textContent.startsWith("Abstand"));
+  assert.equal(lab.node("accessible-status").textContent, ""); // The result follows the list directly.
+});
+
+test("running optimizations keep step tables hidden and unchanged until the result is complete", () => {
+  const lab = accessibleLab("?text=1");
+  lab.state.step = "optimize";
+  lab.records.push({step: 0, energy_ev: -10, positions: [0, 0, 0, 1, 0, 0, 1, 2, 0]});
+  lab.state.busy = true;
+  lab.view.render();
+  assert.equal(lab.node("accessible-path").hidden, true);
+  const before = lab.mutations();
+  lab.records.push({step: 1, energy_ev: -10.2, positions: [0, 0, 0, 1, 0, 0, 1, 2, 0]});
+  lab.view.render();
+  assert.equal(lab.node("path-point").options.length, 0); // Not rebuilt for each live step.
+  assert.ok(lab.mutations() - before < 5);
+  lab.state.busy = false;
+  lab.view.render();
+  assert.equal(lab.node("accessible-path").hidden, false);
+  assert.equal(lab.node("path-point").options.length, 3);
 });

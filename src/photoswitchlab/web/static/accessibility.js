@@ -127,7 +127,9 @@ globalThis.AccessibleData = {
     const substituent = site && settings?.substituents?.[Number(site[1]) - 2 + (site[2] ? 5 : 0)];
     const group = substituent && substituent !== "H" ? `, ${atom.position ? "trägt " : "zugeordnet: "}${this.substituentName(substituent)}` : "";
     const azo = atom.element === "N" && atom.neighbors?.some((neighbor) => graph[neighbor.number - 1]?.element === "N" && neighbor.bond_order === 2) ? ", Azogruppe" : "";
-    return `Atom ${atom.number} (${atom.element}${position ? `, ${atom.position ? "Ringposition" : "Ringbezug"} ${position}` : ""}${group}${azo})`;
+    // Name the ring explicitly: screen readers may not speak the prime of C2′.
+    const ring = position ? (position.endsWith("′") ? " im zweiten Ring" : " im ersten Ring") : "";
+    return `Atom ${atom.number} (${atom.element}${position ? `, ${atom.position ? "Ringposition" : "Ringbezug"} ${position}${ring}` : ""}${group}${azo})`;
   },
   outputMethods: [
     "Kurvenabfragen: Zwischen gespeicherten Kurvenpunkten wird die relative Absorption linear interpoliert.",
@@ -247,8 +249,8 @@ globalThis.AccessibleData = {
       return optional ? `<details><summary>${ScientificDisplay.html(title)}</summary>${body}</details>` : `<section><h3>${ScientificDisplay.html(title)}</h3>${body}</section>`;
     }).join("");
   },
-  report(sections) {
-    return `<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PhotoSwitchLab Ergebnisbericht</title><style>body{font:1rem/1.6 system-ui,sans-serif;max-width:90ch;margin:2rem auto;padding:0 1rem;color:#192d43;background:white}h1,h2,h3{line-height:1.3}section{margin:2rem 0}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%}caption{text-align:left;font-weight:600}th,td{border:1px solid #b8c4d0;padding:.5rem;text-align:left;overflow-wrap:anywhere}thead{background:#edf2f7}@media(max-width:400px){th,td{padding:.3rem}}@media print{body{max-width:none;margin:0}}</style><main><h1>PhotoSwitchLab Ergebnisbericht</h1><p>Aktuelle Rechenergebnisse und zugehörige Vergleiche. Wissenschaftliche Deutungen ergänzen Sie selbst im Protokoll.</p>${this.reportBody(sections, true)}</main></html>`;
+  report(sections, created) {
+    return `<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PhotoSwitchLab Ergebnisbericht</title><style>body{font:1rem/1.6 system-ui,sans-serif;max-width:90ch;margin:2rem auto;padding:0 1rem;color:#192d43;background:white}h1,h2,h3{line-height:1.3}section{margin:2rem 0}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%}caption{text-align:left;font-weight:600}th,td{border:1px solid #b8c4d0;padding:.5rem;text-align:left;overflow-wrap:anywhere}thead{background:#edf2f7}@media(max-width:400px){th,td{padding:.3rem}}@media print{body{max-width:none;margin:0}}</style><main><h1>PhotoSwitchLab Ergebnisbericht</h1>${created ? `<p>Erstellt am ${created.toLocaleString("de-DE", {dateStyle: "long", timeStyle: "short"})}.</p>` : ""}<p>Aktuelle Rechenergebnisse und zugehörige Vergleiche. Wissenschaftliche Deutungen ergänzen Sie selbst im Protokoll.</p>${this.reportBody(sections, true)}</main></html>`;
   },
   csv(rows) {
     return rows.map((row) => row.map((value) => {
@@ -301,8 +303,17 @@ globalThis.AccessibilityView = {
       document.querySelectorAll?.(".table-scroll").forEach((region) => {
         if (!Number.isFinite(region.clientWidth) || !Number.isFinite(region.scrollWidth)) return;
         const overflow = region.clientWidth > 0 && region.scrollWidth > region.clientWidth + 1;
-        if (overflow && region.getAttribute("tabindex") !== "0") region.setAttribute("tabindex", "0");
-        else if (!overflow && region.hasAttribute("tabindex")) region.removeAttribute("tabindex");
+        // A non-scrolling table needs no extra landmark; its caption already names it.
+        if (region.dataset && region.hasAttribute("aria-label")) region.dataset.regionLabel = region.getAttribute("aria-label");
+        if (overflow && region.getAttribute("tabindex") !== "0") {
+          region.setAttribute("tabindex", "0");
+          region.setAttribute("role", "region");
+          if (region.dataset?.regionLabel) region.setAttribute("aria-label", region.dataset.regionLabel);
+        } else if (!overflow && (region.hasAttribute("tabindex") || region.hasAttribute("role"))) {
+          region.removeAttribute("tabindex");
+          region.removeAttribute("role");
+          region.removeAttribute("aria-label");
+        }
       });
     };
     document.addEventListener?.("toggle", updateTableFocus, true);
@@ -356,7 +367,6 @@ globalThis.AccessibilityView = {
     $("atom-first").onchange = $("atom-second").onchange = $("atom-third").onchange = () => {
       measurementSelected = true;
       measurement();
-      this.announce($("atom-distance").textContent + (this.prefersText ? "" : " " + $("atom-angle").textContent));
     };
     $("accessible-molecule-select").onchange = () => context.selectMolecule?.($("accessible-molecule-select").value);
     $("path-point").onchange = () => {
@@ -396,9 +406,16 @@ globalThis.AccessibilityView = {
       curveQuery = {energy: data.decimal($("curve-energy").value)};
       updateQuery();
     };
+    $("curve-energy").onkeydown = (event) => {
+      if (event.key === "Enter") { event.preventDefault(); $("curve-query").onclick(); }
+    };
     $("data-report").onclick = () => {
       this.render();
-      if (reportSections.length) context.download(data.report([...reportSections, ...querySections, ...measurementSections, ...methodSections]), context.filename("html"), "text/html;charset=utf-8");
+      if (!reportSections.length) return;
+      const step = {build: "Struktur", optimize: "Optimierung", spectrum: "Spektrum"}[context.state.step] || context.state.step;
+      const name = context.filename("html").replace(/\.html$/, `-${step}.html`);
+      context.download(data.report([...reportSections, ...querySections, ...measurementSections, ...methodSections], new Date()), name, "text/html;charset=utf-8");
+      this.announce(`Ergebnisbericht gespeichert: ${name}`);
     };
     $("data-json").onclick = () => context.download(JSON.stringify({molecule: context.current(), displayed_record: points[pointIndex] || null,
       optimization_records: context.records(), color_comparison: colorComparisonRecord}, null, 2), context.filename("json"), "application/json");
@@ -486,7 +503,8 @@ globalThis.AccessibilityView = {
         setText("atom-scaffold", "Grundgerüst: C1–N=N–C1′. Erster Ring: C1–C2–C3–C4–C5–C6–C1. Zweiter Ring: C1′–C2′–C3′–C4′–C5′–C6′–C1′. Diese Positionsnummern bezeichnen Ringatome; die zusätzlichen Atomnummern gelten für die gespeicherten Koordinaten.");
       }
       measurement();
-      $("accessible-path").hidden = step !== "optimize" || !points.length;
+      // Live steps arrive every poll; rebuilding tables then would move a screen reader's reading position.
+      $("accessible-path").hidden = step !== "optimize" || !points.length || !!context.state.busy;
       $("accessible-path-summary").hidden = this.prefersText && path;
       $("accessible-path-title").hidden = !this.prefersText || !path;
       if (this.prefersText && path) $("accessible-path").open = true;
@@ -500,7 +518,7 @@ globalThis.AccessibilityView = {
           indices ? data.angle(point.positions, ...indices.slice(0, 3)) : null, indices ? data.angle(point.positions, ...indices.slice(1, 4)) : null];
       });
       const spectrum = m.spectrum, tableKey = JSON.stringify([m.id, energyRows, spectrum]);
-      if (tableKey !== tableSignature) {
+      if (tableKey !== tableSignature && !context.state.busy) {
         tableSignature = tableKey;
         fillSelect($("path-point"), [["Gespeicherte Struktur", ""], ...energyRows.map((row, index) => [`${path ? "Pfadstruktur" : "Rechenschritt"} ${row[0]}`, index])], pointIndex ?? "");
         const table = (id, rows, formats) => $(id).replaceChildren(...rows.map((row) => {
