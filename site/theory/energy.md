@@ -69,6 +69,13 @@ die hier am Maximum des Energieprofils liegt.
 </figure>
 
 Eine Übergangsstruktur liegt an einem Sattelpunkt erster Ordnung der Energiefläche.
+<details class="text-alternative" markdown="1">
+<summary>Energieprofil als Text</summary>
+
+Im schematischen Profil liegt links die trans-Minimumstruktur, rechts die höher liegende cis-Minimumstruktur. Dazwischen steigt die Kurve zum Maximum bei der Übergangsstruktur an und fällt anschließend wieder ab. Die vertikalen Abstände von den beiden Minimumenergien zur Energie der Übergangsstruktur sind die elektronischen Energiebarrieren der jeweiligen Richtung. Die horizontale Achse beschreibt den Reaktionspfad, keine Zeit. Die Skizze enthält keine numerischen Rechenergebnisse.
+
+</details>
+
 Entlang einer Richtung der Strukturänderung fällt die Energie auf beiden Seiten ab;
 in den übrigen unabhängigen Richtungen steigt sie bei kleinen Änderungen an.
 Ein Maximum auf einem beliebig gewählten Pfad reicht deshalb nicht aus, um eine Übergangsstruktur zu erkennen.

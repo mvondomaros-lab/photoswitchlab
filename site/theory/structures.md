@@ -112,6 +112,12 @@ Das Drehen der Ansicht verändert die Molekülstruktur nicht.
 </div>
 </figure>
 
+<details class="text-alternative" markdown="1">
+<summary>Räumliche Darstellung als Text</summary>
+
+Das Modell zeigt trans-Azobenzol mit zwei sechsgliedrigen Kohlenstoffringen und der verbindenden N=N-Gruppe. Bei Blick entlang der N=N-Bindung liegen die beiden an Stickstoff gebundenen Ringkohlenstoffatome auf entgegengesetzten Seiten. Die Atome werden als Kugeln, die Bindungen als Stäbe dargestellt. Die Drehung der Ansicht ändert weder die Verknüpfung noch die Konfiguration. Für eigene berechnete Strukturen bietet die App eine Erkundung der Bindungen, Abstände und Winkel.
+
+</details>
 
 </details>
 

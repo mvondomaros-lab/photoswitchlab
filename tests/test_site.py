@@ -82,7 +82,10 @@ class SiteBuildTests(unittest.TestCase):
         )
         page = Document(text)
         self.assertEqual(
-            page.tags.count("details") - text.count('class="image-credit"'), 12
+            page.tags.count("details")
+            - text.count('class="image-credit"')
+            - text.count('class="text-alternative"'),
+            12,
         )  # Twelve optional explanations across five chapters.
         self.assertEqual(page.tags.count("figure"), 18)
         self.assertEqual(page.tags.count("math"), 23)

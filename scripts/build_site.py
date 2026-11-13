@@ -106,7 +106,7 @@ def build(output: Path = OUTPUT, *, course: str = "public") -> None:
             stage / "assets/header.css",
         )
         shutil.copy2(
-            ROOT / "src/achprak/web/static/brand-mark.svg",
+            ROOT / "src/photoswitchlab/web/static/brand-mark.svg",
             stage / "assets/brand-mark.svg",
         )
         vendor = stage / "assets/vendor"
@@ -164,29 +164,11 @@ def build(output: Path = OUTPUT, *, course: str = "public") -> None:
                     + f">{html.escape(titles[key])}</a>"
                 )
 
-            navigation = nav_link("index", "Versuchsüberblick")
-            navigation += '<section class="nav-group"><h2>Grundlagen</h2>'
-            navigation += "<ul>"
-            for key, text in PAGES:
-                if key.startswith("theory/"):
-                    navigation += "<li>" + nav_link(key, text) + "</li>"
-            navigation += (
-                '</ul></section><section class="nav-group"><h2>Durchführung</h2><ul>'
-            )
-            navigation += "<li>" + nav_link("installation", "Webapp starten") + "</li>"
-            navigation += (
-                "<li>" + nav_link("tasks", "Aufgaben und Protokoll") + "</li>"
-                "</ul></section>"
-            )
-            chapter_keys = [key for key, _ in PAGES if key.startswith("theory/")]
-            if slug in chapter_keys:
-                eyebrow = "Grundlagen"
-            else:
-                eyebrow = {
-                    "index": "ACh-Pr · TC Versuch",
-                    "installation": "Durchführung",
-                    "tasks": "Durchführung",
-                }[slug]
+            navigation = nav_link("index")
+            for group_title, keys in PAGE_GROUPS:
+                navigation += f'<section class="nav-group"><h2>{html.escape(group_title)}</h2><ul>'
+                navigation += "".join("<li>" + nav_link(key) + "</li>" for key in keys)
+                navigation += "</ul></section>"
             pagination = []
             # Course requirements and legal information are separate entry points,
             # outside the public learning sequence.

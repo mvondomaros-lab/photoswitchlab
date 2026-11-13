@@ -64,6 +64,11 @@ Trägt man ihre Energien und Stärken auf, erhält man das folgende Linienspektr
 
 <figure markdown="1">
 <img src="../../figures/outputs/spectrum_lines.svg" alt="Das Spektrum eines Moleküls, das Licht mit 3,0 eV und 4,0 eV absorbiert." width="600" loading="lazy">
+<details class="text-alternative" markdown="1"><summary>Linienspektrum als Text</summary>
+
+Die horizontale Achse zeigt die Photonenenergie. Zwei einzelne Absorptionslinien stehen bei 3,0 eV und 4,0 eV. Zwischen diesen Linien wird in dieser schematischen Darstellung kein Übergang eingezeichnet. Die Skizze zeigt ein Beispiel und kein berechnetes Azobenzolspektrum.
+
+</details>
 
 <figcaption markdown="1">
 Schematisches Linienspektrum mit elektronischen Übergängen bei 3,0 eV und 4,0 eV.

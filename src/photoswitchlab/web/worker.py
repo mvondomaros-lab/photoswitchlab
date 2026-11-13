@@ -76,6 +76,13 @@ def molecule(atoms, name, kind="initial", mol=None, parent_id=None):
 
     svg = draw_structure(mol)
     geometry = azobenzene.Properties(atoms.copy(), mol=mol)
+    from photoswitchlab.conformation import scaffold
+
+    _, indices = scaffold(mol)
+    position_labels = {}
+    for sites, suffix in (([5, 0, 1, 2, 3, 4], ""), ([8, 9, 10, 11, 12, 13], "′")):
+        for number, site in enumerate(sites, 1):
+            position_labels[indices[site]] = f"C{number}{suffix}"
     return {
         "geometry_definition": {
             "dihedral_indices": geometry.cnnc_dihedral_indices(),
@@ -94,6 +101,23 @@ def molecule(atoms, name, kind="initial", mol=None, parent_id=None):
         "svg": svg,
         "formula": rdMolDescriptors.CalcMolFormula(mol),
         "atom_count": len(atoms),
+        "atom_graph": [
+            {
+                "number": atom.GetIdx() + 1,
+                "element": atom.GetSymbol(),
+                "position": position_labels.get(atom.GetIdx()),
+                "neighbors": [
+                    {
+                        "number": other.GetIdx() + 1,
+                        "bond_order": mol.GetBondBetweenAtoms(
+                            atom.GetIdx(), other.GetIdx()
+                        ).GetBondTypeAsDouble(),
+                    }
+                    for other in atom.GetNeighbors()
+                ],
+            }
+            for atom in mol.GetAtoms()
+        ],
     }
 
 

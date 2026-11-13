@@ -1,5 +1,24 @@
 /* Optional enhancements; navigation, disclosures and equations work without JS. */
 const root = new URL('../', document.currentScript.src);
+// This preference affects presentation only; all descriptions remain available.
+const textPreference = document.querySelector('#text-preference');
+if (textPreference) {
+  const query = new URLSearchParams(location.search).get('text');
+  let saved = false;
+  try { saved = localStorage.getItem('photoswitchlab.textPreferred') === 'true'; } catch (_) {}
+  textPreference.checked = query === '1' || (query !== '0' && saved);
+  const apply = () => {
+    document.body.classList.toggle('text-preferred', textPreference.checked);
+    for (const description of document.querySelectorAll('details.text-alternative')) {
+      if (textPreference.checked) description.open = true;
+    }
+  };
+  apply();
+  textPreference.addEventListener('change', () => {
+    apply();
+    try { localStorage.setItem('photoswitchlab.textPreferred', String(textPreference.checked)); } catch (_) {}
+  });
+}
 const mobileNavigation = matchMedia('(max-width: 700px)');
 const siteMenu = document.querySelector('.site-menu');
 siteMenu.open = !mobileNavigation.matches;

@@ -200,7 +200,7 @@ function renderPlaybackControls() {
 }
 function showFrame(index) {
   const data = playbackData();
-  if (state.busy || !component || !data.frames[index]) return;
+  if (state.busy || !data.frames[index]) return;
   if (data.kind === "optimization" && index === data.frames.length - 1) {
     showResult();
     return;
@@ -217,6 +217,7 @@ function showFrame(index) {
   applyLiveGeometry();
   renderEnergyHistory(data.records[index]?.step);
   renderPlaybackControls();
+  globalThis.AccessibilityView?.render?.();
 }
 function showResult() {
   stopAnimation();
@@ -264,6 +265,7 @@ async function renderMolecule() {
   const image = svgURL(m.svg);
   if ($("structure-image").getAttribute("src") !== image)
     $("structure-image").src = image;
+  if (globalThis.AccessibilityView?.prefersText && !globalThis.AccessibilityView?.showGraphics) return;
   if (state.mode !== "3d" || state.step === "spectrum") return;
   if (component && renderedMolecule === m.id) {
     if (state.live && state.step === "optimize") applyLiveGeometry();
@@ -487,6 +489,7 @@ function renderState() {
   renderSpectrum();
   renderEnergyHistory(state.live?.step);
   renderMolecule();
+  globalThis.AccessibilityView?.render?.();
 }
 function navigate(step) {
   if (!(step in TITLES)) throw new Error("Unbekannter Versuchsschritt.");
@@ -518,6 +521,7 @@ function navigate(step) {
   state.live = null;
   state.previewIndex = null;
   renderState();
+  $("step-title").focus?.();
 }
 async function refresh(selected, finishCalculation = false) {
   const data = await api("session");
@@ -969,6 +973,12 @@ function displayJob(job) {
     }
   }
   renderEnergyHistory(state.live?.step);
+  const announcement = `${job.id}:${job.status}:${$("job-title").textContent}`;
+  if (displayJob.lastAnnouncement !== announcement) {
+    displayJob.lastAnnouncement = announcement;
+    globalThis.AccessibilityView?.announce?.($("job-title").textContent);
+  }
+  globalThis.AccessibilityView?.render?.();
 }
 async function monitor(jobId) {
   state.busy = true;
@@ -1435,6 +1445,8 @@ async function guide(step, focus = true) {
     $("guide-content").innerHTML = await response.text(); // Trusted, bundled teaching material.
   }
   updateGuide(state.step);
+  if (globalThis.AccessibilityView?.prefersText)
+    $("guide-content").querySelectorAll(".nonvisual-alternative").forEach((detail) => { detail.open = true; });
   $("guide").hidden = false;
   $("guide-open").setAttribute("aria-expanded", "true");
   if (focus) $("guide-title").focus();
@@ -1467,6 +1479,11 @@ async function boot() {
     error(exc.message);
   }
 }
+globalThis.AccessibilityView?.initialize({
+  state, current, records: energyRecords, playback: playbackData,
+  selectFrame: selectPlaybackFrame, showResult, render: renderState,
+  label: structureLabel, substituentLabel, download, filename,
+});
 boot();
 // Optional browser-native agent interface; uses the same actions as the UI.
 if (document.modelContext?.registerTool) {

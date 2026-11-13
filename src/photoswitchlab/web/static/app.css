@@ -1466,3 +1466,25 @@ select {
 .solution-color-value > span {
   font-variant-numeric: tabular-nums;
 }
+:root { scroll-padding-top: 1rem; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.text-preference { display: flex; align-items: center; gap: .45rem; font-size: .8rem; line-height: 1.4; max-width: 13rem; }
+.text-preference input { width: 1.15rem; height: 1.15rem; flex-shrink: 0; accent-color: #165de1; }
+.accessible-results { margin: 0 0 1rem; border: 1px solid var(--line, #dce4ed); border-radius: 10px; padding: .8rem 1rem; background: #fff; min-width: 0; }
+.accessible-results > summary { cursor: pointer; font-weight: 600; }
+.accessible-results p { line-height: 1.6; }
+.accessible-results label { display: block; margin-top: .8rem; }
+.accessible-results select { width: 100%; max-width: 100%; }
+.accessible-results section, .accessible-results details { margin-top: 1rem; }
+.accessible-results table { border-collapse: collapse; width: 100%; font-size: .9rem; }
+.accessible-results caption { text-align: left; font-weight: 600; margin-bottom: .5rem; }
+.accessible-results th, .accessible-results td { padding: .5rem; border-bottom: 1px solid #dce4ed; text-align: left; }
+.accessible-results thead { background: #f3f6fa; }
+.table-scroll { overflow-x: auto; max-width: 100%; margin: 1rem 0; }
+.text-preferred:not(.show-graphics) .viewer-wrap, .text-preferred:not(.show-graphics) #viewer-toolbar, .text-preferred:not(.show-graphics) #build-view-toggle,
+.text-preferred:not(.show-graphics) .energy-canvas, .text-preferred:not(.show-graphics) .spectrum-canvas, .text-preferred:not(.show-graphics) #play, .text-preferred:not(.show-graphics) #energy-play { display: none !important; }
+.text-graphics-option { display: none !important; }
+.text-preferred .text-graphics-option { display: flex !important; gap: .5rem; align-items: center; }
+.text-preferred .accessible-results { border-color: #165de1; }
+@media (max-width: 720px) { .header { flex-wrap: wrap; height: auto; } .header-actions { flex-wrap: wrap; } .text-preference { max-width: none; } }
+@media (forced-colors: active) { button, select, input, summary { forced-color-adjust: auto; } :focus-visible { outline: 3px solid Highlight; } }

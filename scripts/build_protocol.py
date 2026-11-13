@@ -5,6 +5,7 @@ Render and visually inspect the DOCX after running this script; see docs/develop
 """
 
 from pathlib import Path
+import argparse
 import json
 import re
 
@@ -19,7 +20,7 @@ STATIC = ROOT / "src/photoswitchlab/web/static"
 OUTPUT = STATIC / "materials/protokollvorlage.docx"
 
 
-def build():
+def build(text_based=False):
     branding = json.loads((STATIC / "branding.json").read_text())
     course_subtitle = branding["subtitle"] + branding["course_suffixes"]["marburg"]
     source = html.fromstring((STATIC / "guide.html").read_text())
@@ -70,6 +71,20 @@ def build():
         run.font.color.rgb = RGBColor.from_string("586B80")
 
     def p(text):
+        if text_based:
+            replacements = {
+                "Fügen Sie gleich ausgerichtete 3D-Ansichten der substituierten Start- und Minimumstruktur ein.": "Dokumentieren Sie ausgewählte Abstände zwischen benannten Atomen oder Gruppen in der substituierten Start- und Minimumstruktur.",
+                "[gleich ausgerichtete 3D-Ansicht einfügen und beschriften]": "[Benannte Atompaare und Abstände / pm dokumentieren]",
+                "[Energieprofil einfügen und beschriften]": "[Pfadtabellen mit Energiebezug und ausgewählten Strukturgrößen einfügen oder als CSV beilegen]",
+                "Fügen Sie das Energieprofil ein.": "Dokumentieren Sie das Energieprofil als beschriftete Datentabelle oder CSV-Datei.",
+                "Fügen Sie die Spektren der Derivate mit dem kleinsten und dem größten Wert von ΔEmax ein.": "Legen Sie die beschrifteten Kurvendaten der Derivate mit dem kleinsten und dem größten Wert von ΔEmax bei.",
+                "fügen Sie beide Spektren ein": "legen Sie beide beschrifteten Kurvendatensätze bei",
+                "[Abbildung einfügen und beschriften]": "[Beschriftete Kurvendaten oder CSV-Datei beilegen]",
+                "[Spektrum einfügen und beschriften]": "[Beschriftete Kurvendaten oder CSV-Datei beilegen]",
+                "fügen Sie gespeicherte Abbildungen mit Beschriftungen ein": "fügen Sie beschriftete Ergebnistabellen ein oder legen Sie die zugehörigen CSV-Dateien bei",
+            }
+            for old, new in replacements.items():
+                text = text.replace(old, new)
         para = doc.add_paragraph()
         for part in re.split(r"(E(?:trans|cis|TS|max)|ΔE(?:‡|max))", text):
             if part in ("Etrans", "Ecis", "ETS", "Emax"):
@@ -153,7 +168,7 @@ def build():
 
     doc.add_heading("Molekulare Photoschalter", 0)
     doc.add_paragraph(course_subtitle, "Subtitle")
-    p("Praktikumsprotokoll")
+    p("Praktikumsprotokoll" + (" für textbasierte Auswertung" if text_based else ""))
     p("Name: [Name]    Gruppe: [Gruppe]    Datum: [Datum]")
     p(
         "Dokumentieren Sie Ihre Berechnungen und deren Interpretation. Bearbeiten Sie die Aufgaben in der Webapp. Ersetzen Sie die Angaben in eckigen Klammern und fügen Sie gespeicherte Abbildungen mit Beschriftungen ein. Die Überschriften entsprechen den Aufgaben in der Webapp. Die Felder erweitern sich beim Schreiben."
@@ -343,10 +358,17 @@ def build():
     answer(
         "Stärkster vorhergesagter cis/trans-Farbunterschied: [Positionen, Gruppen und Farben]"
     )
-    OUTPUT.parent.mkdir(parents=True, exist_ok=True)
-    doc.save(OUTPUT)
-    print(OUTPUT)
+    output = OUTPUT.with_name("protokollvorlage-text.docx") if text_based else OUTPUT
+    output.parent.mkdir(parents=True, exist_ok=True)
+    doc.save(output)
+    print(output)
 
 
 if __name__ == "__main__":
-    build()
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--text",
+        action="store_true",
+        help="Build the text-based equivalent instead of the visual protocol.",
+    )
+    build(text_based=parser.parse_args().text)

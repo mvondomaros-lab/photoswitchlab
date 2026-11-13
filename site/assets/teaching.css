@@ -7,6 +7,10 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; }
+.text-preference { display: flex; align-items: center; gap: .4rem; font-size: .8rem; max-width: 13rem; line-height: 1.4; }
+.text-preference input { flex-shrink: 0; width: 1.1rem; height: 1.1rem; }
+.text-preferred [data-ngl-viewer] { display: none; }
+@media (max-width: 700px) { .header { flex-wrap: wrap; height: auto; } .header-actions { flex-wrap: wrap; } }
 [hidden] { display: none !important; }
 a { color: var(--blue); text-underline-offset: .2em; }
 button, input { font: inherit; }

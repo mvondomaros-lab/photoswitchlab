@@ -17,19 +17,21 @@ document their own choices.
     <meta name="description" content="$brand_title · $brand_subtitle"/>
     <link rel="icon" type="image/svg+xml" href="static/brand-mark.svg"/>
     <link rel="stylesheet" href="static/header.css?v=6"/>
-    <link rel="stylesheet" href="static/app.css?v=ui-62"/>
+    <link rel="stylesheet" href="static/app.css?v=ui-63"/>
     <script src="static/vendor/ngl.js" defer></script>
     <script src="static/vendor/chart.js" defer></script>
     <script src="static/progress.js?v=ui-36" defer></script>
     <script src="static/vendor/cie-color.js?v=1" defer></script>
     <script src="static/solution-color.js?v=1" defer></script>
-    <script src="static/app.js?v=ui-93" defer></script>
+    <script src="static/accessibility.js?v=1" defer></script>
+    <script src="static/app.js?v=ui-94" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
 <header class="header">
     <a class="brand" href="./"><img class="brand-mark" src="static/brand-mark.svg" alt="" width="44" height="44"><span class="brand-text">$brand_title<small>$brand_subtitle</small></span></a>
     <div class="header-actions">
+        <label class="text-preference"><input id="text-preference" type="checkbox"/> Text und Tabellen bevorzugen</label>
         <a class="quiet" href="$guide_url" target="_blank" rel="noreferrer">Grundlagen</a>
         <button class="quiet" id="guide-open" aria-expanded="false" aria-controls="guide">Aufgaben</button>
         <button class="quiet" id="converter-open">Einheiten</button>
@@ -47,11 +49,12 @@ document their own choices.
         <span>03</span> Spektrum berechnen
     </button>
 </nav>
-<main id="workspace">
+<main id="workspace" tabindex="-1">
+    <p id="accessible-status" class="sr-only" role="status" aria-atomic="true"></p>
     <div id="alert" class="alert" role="alert" hidden></div>
     <div class="workspace-heading">
         <div>
-            <h1 id="step-title">Struktur erstellen</h1>
+            <h1 id="step-title" tabindex="-1">Struktur erstellen</h1>
             <p id="step-description">
                 Wählen Sie die cis/trans-Konfiguration sowie Art und Position der
                 Substituenten.
@@ -410,13 +413,59 @@ document their own choices.
                     Abspielen
                 </button>
             </div>
-            <div id="job-status" class="job-status" role="status" hidden>
+            <div id="job-status" class="job-status" hidden>
                 <div>
                     <strong id="job-title"></strong><span id="job-time"></span>
                     <p id="job-detail" hidden></p>
                 </div>
                 <button id="cancel" class="small-button">Abbrechen</button>
             </div>
+            <details id="accessible-results" class="accessible-results" hidden>
+                <summary>Struktur und Ergebnisse als Text und Tabellen</summary>
+                <label class="text-graphics-option"><input id="text-show-graphics" type="checkbox"/> Grafiken zusätzlich anzeigen</label>
+                <p id="accessible-identity"></p>
+                <p id="accessible-geometry"></p>
+                <div class="inline-actions">
+                    <button id="data-json" type="button">Ergebnisse als JSON speichern</button>
+                    <button id="data-csv" type="button">Tabellendaten als CSV speichern</button>
+                </div>
+                <details id="atom-explorer">
+                    <summary>Atome, Bindungen und Abstände untersuchen</summary>
+                    <p class="note">Atomnummern gelten innerhalb dieser Struktur und ihrer gespeicherten Rechenschritte. Sie sind keine chemischen Positionsnummern. Abstände werden aus den dargestellten Koordinaten berechnet.</p>
+                    <label for="atom-first">Erstes Atom</label><select id="atom-first"></select>
+                    <p id="atom-neighbors"></p>
+                    <label for="atom-second">Zweites Atom</label><select id="atom-second"></select>
+                    <p id="atom-distance" role="status"></p>
+                    <label for="atom-third">Drittes Atom für den Winkel am zweiten Atom</label><select id="atom-third"></select>
+                    <p id="atom-angle" role="status"></p>
+                    <p id="atom-rings" class="note"></p>
+                </details>
+                <section id="accessible-path" hidden>
+                    <h3>Rechenschritte untersuchen</h3>
+                    <p id="accessible-path-note" class="note"></p>
+                    <label for="path-point">Schritt oder Pfadstruktur</label><select id="path-point"></select>
+                    <p id="accessible-point" role="status" aria-atomic="true"></p>
+                    <div class="table-scroll" tabindex="0" role="region" aria-label="Energiedaten"><table>
+                        <caption id="energy-table-caption">Energiedaten</caption>
+                        <thead><tr><th scope="col">Schritt / Pfadstruktur</th><th scope="col">E / eV</th><th scope="col">ΔE / eV</th><th scope="col">Diederwinkel / °</th><th scope="col">Ringabstand / pm</th></tr></thead>
+                        <tbody id="energy-table-body"></tbody>
+                    </table></div>
+                </section>
+                <section id="accessible-spectrum" hidden>
+                    <h3>Spektrum untersuchen</h3>
+                    <p id="accessible-spectrum-note" class="note"></p>
+                    <div class="table-scroll" tabindex="0" role="region" aria-label="Elektronische Übergänge"><table>
+                        <caption>Berechnete elektronische Übergänge</caption>
+                        <thead><tr><th scope="col">Übergang</th><th scope="col">E / eV</th><th scope="col">λ / nm</th><th scope="col">Oszillatorstärke</th></tr></thead>
+                        <tbody id="transition-table-body"></tbody>
+                    </table></div>
+                    <label for="curve-energy">Absorptionskurve abfragen: Energie / eV</label>
+                    <input id="curve-energy" type="number" step="any"/>
+                    <button id="curve-query" type="button">Absorption bestimmen</button>
+                    <p id="curve-value" role="status"></p>
+                    <p id="accessible-color"></p>
+                </section>
+            </details>
             <div id="molecular-panel">
                 <div class="viewer-toolbar" id="viewer-toolbar" hidden>
                     <span id="geometry-badge" class="badge" hidden></span>

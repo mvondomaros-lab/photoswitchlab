@@ -44,6 +44,28 @@ test on a real Hub.
 
 ### Chemistry regression tests
 
+### Accessible presentation
+
+The app and website offer an optional text-first presentation, persisted locally
+and selectable directly with `?text=1` (`?text=0` overrides the stored choice).
+This preference changes presentation; both views use the same calculation data.
+The app's `accessibility.js` provides atom/bond exploration, distances and angles,
+search/path tables, spectrum transitions, interpolated curve queries and CSV/JSON
+exports. Atom numbers are one-based indices of the stored geometry, distinct
+from the chemical ring positions supplied alongside them. Old stored sessions
+without `atom_graph` require recreating their structures for bond exploration.
+
+Keep the graphical tasks and `protokollvorlage.docx` unchanged when adjusting
+nonvisual guidance. Build the equivalent text protocol with
+`scripts/build_protocol.py --text` using the document-authoring runtime and
+render every page for verification. Both downloads are available in the Marburg
+course. No voice service or generative model is required for text presentation.
+
+Run `node --test tests/test_accessibility.cjs` and
+`pytest tests/test_accessibility.py` alongside the routine checks. Manual
+keyboard, screen-reader, zoom and graphical presentation checks remain necessary;
+the automated tests do not establish WCAG conformance.
+
 These longer-running calculations are excluded from routine runs and are run
 explicitly:
 

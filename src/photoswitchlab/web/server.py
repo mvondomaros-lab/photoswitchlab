@@ -498,9 +498,29 @@ def create_app(
     @app.get("/")
     async def index():
         # Revalidate the HTML so its asset versions cannot lag behind the API.
-        return FileResponse(
-            STATIC / "index.html", headers={"Cache-Control": "no-cache"}
+        return HTMLResponse(
+            Template((STATIC / "index.html").read_text()).substitute(
+                brand_title=html.escape(brand_title),
+                brand_subtitle=html.escape(brand_subtitle),
+                project_name=html.escape(branding["project_name"]),
+                guide_url="https://mvondomaros-lab.github.io/photoswitchlab/"
+                + ("kurse/marburg/" if course == "marburg" else ""),
+            ),
+            headers={"Cache-Control": "no-cache"},
         )
+
+    @app.get("/static/guide.html")
+    async def guide():
+        return HTMLResponse(course_content((STATIC / "guide.html").read_text(), course))
+
+    @app.get("/static/materials/{filename}")
+    async def teaching_material(filename: str):
+        if course != "marburg" or filename not in {
+            "protokollvorlage.docx",
+            "protokollvorlage-text.docx",
+        }:
+            raise HTTPException(404, "Material nicht gefunden.")
+        return FileResponse(STATIC / "materials" / filename)
 
     app.mount("/static", StaticFiles(directory=STATIC), name="static")
     return app
