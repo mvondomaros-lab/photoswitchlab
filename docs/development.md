@@ -61,6 +61,9 @@ scalar queries, with visible-range coverage and raw relative heights. Plateau
 locations remain intervals of stored samples; edge maxima are identified as
 boundary values rather than fitted band peaks. A short overview prioritizes up
 to four visible-range maxima and two others, explicitly noting omitted maxima.
+The existing full-spectral-data disclosure lists every stored-curve maximum
+separately from the discrete electronic transitions, including weak maxima
+omitted from the short overview.
 Remembering the spectrum retains this overview with its source context.
 The app's `accessibility.js` provides atom/bond exploration, distances and angles,
 search/path tables, spectrum transitions, interpolated curve queries and compact

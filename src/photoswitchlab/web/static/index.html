@@ -24,7 +24,7 @@ document their own choices.
     <script src="static/vendor/cie-color.js?v=1" defer></script>
     <script src="static/solution-color.js?v=1" defer></script>
     <script src="static/presentation.js?v=2" defer></script>
-    <script src="static/accessibility.js?v=6" defer></script>
+    <script src="static/accessibility.js?v=7" defer></script>
     <script src="static/app.js?v=ui-98" defer></script>
 </head>
 <body>
@@ -461,7 +461,11 @@ document their own choices.
                     <input id="curve-energy" type="text" inputmode="decimal" autocomplete="off" aria-describedby="curve-value"/>
                     <button id="curve-query" class="text-button" type="button">Absorption bestimmen</button>
                     <p id="curve-value" role="status"></p>
-                    <details><summary>Vollständige Übergangstabelle</summary>
+                    <details id="full-spectrum-data"><summary>Vollständige Spektraldaten</summary>
+                    <h4>Lokale Maxima der verbreiterten Kurve</h4>
+                    <ul id="spectrum-all-band-list"></ul>
+                    <p id="spectrum-all-band-note" class="note"></p>
+                    <h4>Diskrete elektronische Übergänge</h4>
                     <div class="table-scroll" tabindex="0" role="region" aria-label="Elektronische Übergänge"><table>
                         <caption>Berechnete elektronische Übergänge</caption>
                         <thead><tr><th scope="col">Übergang</th><th scope="col">E / eV</th><th scope="col">λ / nm</th><th scope="col">Oszillatorstärke</th></tr></thead>

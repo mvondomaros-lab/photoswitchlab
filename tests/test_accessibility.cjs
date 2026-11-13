@@ -168,7 +168,7 @@ test("readable report escapes data and includes chosen information without full 
   assert.ok(output.content.includes("1,5000 eV"));
   assert.ok(output.content.includes("Farbabstand"));
   assert.ok(output.content.includes("feste Absorbanzskalierung"));
-  assert.ok(!output.content.includes("Vollständige Übergangstabelle"));
+  assert.ok(!output.content.includes("Vollständige Spektraldaten"));
 });
 
 test("invalid and out-of-range curve input remain distinct", () => {
@@ -367,6 +367,35 @@ test("curve overview treats plateaus, clipped boundaries, flat curves and partia
   assert.equal(data.curveOverview({energy_ev: [4, 5], absorption: [1, 2]}).visible.coverage, "none");
   assert.equal(data.curveOverview({energy_ev: [2, 2], absorption: [0, 1]}), null);
   assert.equal(data.curveOverview({energy_ev: [2, 3], absorption: [0, -1]}), null);
+});
+
+test("full spectral data exposes every broadened-curve maximum when the compact overview omits weak peaks", () => {
+  const energy_ev = Array.from({length: 41}, (_value, i) => Number((1.4 + i * 0.1).toFixed(1)));
+  const absorption = energy_ev.map(() => 0);
+  [3, 5, 7, 9, 11, 21, 25, 29].forEach((index, i) => { absorption[index] = (i + 1) / 10; });
+  const spectrum = {energy_ev, absorption, excitations_ev: [2.1], oscillator_strengths: [0.2]};
+  const overview = data.describeCurve(spectrum);
+  assert.equal(overview.bands.length, 6);
+  assert.equal(overview.allBands.length, 8);
+  assert.ok(!overview.bands.some((band) => band.includes("1,7000 eV")));
+  assert.ok(!overview.bands.some((band) => band.includes("3,5000 eV")));
+  assert.ok(overview.allBands.some((band) => band.includes("1,7000 eV")));
+  assert.ok(overview.allBands.some((band) => band.includes("3,5000 eV")));
+  assert.ok(overview.note.includes("2 weitere lokale Maxima sind"));
+  const fewer = {...spectrum, absorption: [...absorption]};
+  fewer.absorption[21] = 0;
+  assert.ok(data.describeCurve(fewer).note.includes("1 weiteres lokales Maximum ist"));
+  const lab = accessibleLab();
+  lab.molecule.spectrum = spectrum;
+  lab.view.render();
+  assert.equal(lab.node("spectrum-band-list").options.length, 6);
+  assert.equal(lab.node("spectrum-all-band-list").options.length, 8);
+  assert.ok(lab.node("spectrum-all-band-list").options[0].textContent.includes("1,7000 eV"));
+  lab.node("curve-energy").value = "1,7";
+  lab.node("curve-query").onclick();
+  lab.node("remember-observation").onclick();
+  lab.node("data-report").onclick();
+  assert.ok(lab.exported().content.includes("1,7000 eV"));
 });
 
 test("remembering a spectrum retains the factual band overview with its source context", () => {

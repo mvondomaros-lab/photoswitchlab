@@ -35,7 +35,7 @@ globalThis.AccessibleData = {
   outputMethods: [
     "Kurvenabfragen: Zwischen gespeicherten Kurvenpunkten wird die relative Absorption linear interpoliert.",
     "Farbvergleich: CIE76 ist der Abstand der berechneten sRGB-Bildschirmfarben im CIE-L*a*b*-Farbraum mit D65-Referenzweiß. Größere Werte bedeuten größere Modellabstände, keine proportional empfundenen Unterschiede. Die Umrechnung begrenzt die Farben auf sRGB. Beide Farben verwenden dieselbe feste Absorbanzskalierung.",
-    "Bandenübersicht: Lokale Maxima werden an den gespeicherten Kurvenpunkten bestimmt; gleich hohe benachbarte Punkte erscheinen als Intervall. Randwerte werden nicht als innere Bandenmaxima ausgegeben. Bei vielen Maxima nennt die Kurzansicht die vier höchsten im sichtbaren Bereich und zwei weitere; die Kurvenabfrage bleibt für alle gespeicherten Energien verfügbar.",
+    "Bandenübersicht: Lokale Maxima werden an den gespeicherten Kurvenpunkten bestimmt; gleich hohe benachbarte Punkte erscheinen als Intervall. Randwerte werden nicht als innere Bandenmaxima ausgegeben. Bei vielen Maxima nennt die Kurzansicht die vier höchsten im sichtbaren Bereich und zwei weitere. Die vollständigen Spektraldaten enthalten alle lokalen Maxima; die Kurvenabfrage bleibt für alle gespeicherten Energien verfügbar.",
   ],
   curveOverview(spectrum) {
     const energy = spectrum?.energy_ev, values = spectrum?.absorption;
@@ -59,7 +59,7 @@ globalThis.AccessibleData = {
   },
   describeCurve(spectrum) {
     const curve = this.curveOverview(spectrum);
-    if (!curve) return {summary: "Für die Bandenübersicht fehlen gültige Kurvenwerte.", coverage: "", bands: [], note: ""};
+    if (!curve) return {summary: "Für die Bandenübersicht fehlen gültige Kurvenwerte.", coverage: "", bands: [], allBands: [], note: ""};
     const fmt = (value, digits) => value.toLocaleString("de-DE", {minimumFractionDigits: digits, maximumFractionDigits: digits});
     const height = (value) => value.toLocaleString("de-DE", {maximumSignificantDigits: 3});
     const coverage = curve.visible.coverage === "full" ? "Sichtbarer Bereich (380–780 nm): vollständig abgedeckt."
@@ -68,11 +68,12 @@ globalThis.AccessibleData = {
     const inVisible = curve.peaks.filter((peak) => peak.visible), elsewhere = curve.peaks.filter((peak) => !peak.visible);
     const select = (peaks, count) => [...peaks].sort((a, b) => b.height - a.height).slice(0, count).sort((a, b) => a.low - b.low);
     const selected = [...select(inVisible, 4), ...select(elsewhere, 2)];
-    const bands = selected.map((peak) => {
+    const describePeak = (peak) => {
       const range = peak.first === peak.last ? `${fmt(peak.low, 4)} eV (${fmt(1239.8419843320026 / peak.low, 1)} nm)`
         : `${fmt(peak.low, 4)}–${fmt(peak.high, 4)} eV (${fmt(1239.8419843320026 / peak.high, 1)}–${fmt(1239.8419843320026 / peak.low, 1)} nm), Plateau`;
       return `${peak.visible ? "Sichtbarer Bereich" : "Außerhalb des sichtbaren Bereichs"}: lokales Maximum bei ${range}; relative Absorption ${height(peak.height)}.`;
-    });
+    };
+    const bands = selected.map(describePeak), allBands = curve.peaks.map(describePeak);
     const notes = [];
     if (curve.flat) notes.push("Die gespeicherte Kurve ist konstant; es gibt kein abgegrenztes Maximum.");
     else {
@@ -85,8 +86,9 @@ globalThis.AccessibleData = {
       }
       if (curve.lowerBoundaryHighest || curve.upperBoundaryHighest) notes.push(`Der höchste gespeicherte Wert liegt ${curve.lowerBoundaryHighest && curve.upperBoundaryHighest ? "an beiden Rändern" : curve.lowerBoundaryHighest ? "am unteren Rand" : "am oberen Rand"} des Energiebereichs; dort ist kein inneres Bandenmaximum bestimmt.`);
     }
-    if (selected.length < curve.peaks.length) notes.push(`${curve.peaks.length - selected.length} weitere lokale Maxima sind in der Kurzansicht nicht aufgeführt.`);
-    return {summary: `Höchste gespeicherte relative Absorption: ${height(curve.maximum)}.`, coverage, bands, note: notes.join(" ")};
+    const omitted = curve.peaks.length - selected.length;
+    if (omitted) notes.push(`${omitted === 1 ? "1 weiteres lokales Maximum ist" : `${omitted} weitere lokale Maxima sind`} in der Kurzansicht nicht aufgeführt. Die vollständige Übersicht steht in den Spektraldaten der App.`);
+    return {summary: `Höchste gespeicherte relative Absorption: ${height(curve.maximum)}.`, coverage, bands, allBands, note: notes.join(" ")};
   },
   coordinates(xyz) {
     return (xyz || "").trim().split("\n").slice(2).flatMap((line) =>
@@ -545,7 +547,7 @@ globalThis.AccessibilityView = {
         setText("spectrum-visible-coverage", overview.coverage);
         setText("spectrum-band-note", overview.note);
         spectrumOverview = [overview.coverage, ...overview.bands, overview.note].filter(Boolean);
-        const signature = JSON.stringify(overview.bands);
+        const signature = JSON.stringify([overview.bands, overview.allBands]);
         if (signature !== bandSignature) {
           bandSignature = signature;
           $("spectrum-band-list").replaceChildren(...overview.bands.map((text) => {
@@ -553,7 +555,13 @@ globalThis.AccessibilityView = {
             item.textContent = text;
             return item;
           }));
+          $("spectrum-all-band-list").replaceChildren(...overview.allBands.map((text) => {
+            const item = document.createElement("li");
+            item.textContent = text;
+            return item;
+          }));
         }
+        setText("spectrum-all-band-note", overview.allBands.length ? "" : "Keine inneren lokalen Maxima in der gespeicherten Kurve.");
         setText("accessible-spectrum-note", `INDO/S–CIS. Relative Absorption in willkürlichen Einheiten. Kurvenbereich ${fmt(spec.energy_ev[0])} bis ${fmt(spec.energy_ev.at(-1))} eV.${spec.coverage_complete === false ? " Am oberen Rand fehlen möglicherweise Beiträge weiterer Übergänge; die Absorption kann dort unterschätzt werden." : ""}`);
         $("transition-point").value = selectedTransition == null ? "" : String(selectedTransition);
         const transition = spec.excitations_ev[selectedTransition];
