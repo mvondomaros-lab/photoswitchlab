@@ -1,9 +1,10 @@
 # Accessibility implementation and review
 
-This report records the initial implementation and four review/correction cycles
-requested for PhotoSwitchLab. The developer implements changes; independent
-reviewers inspect nonvisual access (B) and the sighted student experience (S).
-The coordinating agent consolidates findings before each correction round.
+This report records the initial implementation, four review/correction cycles,
+and the subsequent workflow revision requested for PhotoSwitchLab. The developer
+implements changes; independent reviewers inspect nonvisual access (B), the
+sighted student experience (S), and scientific learning goals (R). The
+coordinating agent consolidates findings before each correction round.
 
 ## Scope and design constraints
 
@@ -226,7 +227,7 @@ for B4-1. R reviewed all nine tasks and the native workflow evidence, distinguis
 access to scientific observations from automatically completing interpretations.
 No agent claimed actual JAWS or Braille hardware testing.
 
-## Final verification
+## Cycle 4 final verification
 
 The fourth correction was committed as `5f68c54`. It resolves the focus and
 website presentation defects, distinguishes selected from newly entered
@@ -292,3 +293,166 @@ The implementation does not include a generative chatbot, speech recognition,
 application-owned speech synthesis, or newly manufactured tactile materials.
 These were discussed as possible additions, not silently substituted for the
 accessible core. The branch has not been pushed or deployed.
+
+## Workflow revision after the four cycles
+
+The user subsequently asked for fewer controls, direct readable results instead
+of a manual observation collection, independent task wording, and a better mode
+selector. This is a targeted follow-up to the four recorded cycles. D implemented
+the revision; B, S, and R critically reviewed the frozen commit `b381cc9` in
+parallel, followed by a consolidated correction.
+
+The revision makes these substantive changes:
+
+- A styled native radio group selects `Grafisch` or `Barrierearm`, with the
+  accessible name `Barrierearmer Arbeitsmodus`. Existing stored preferences and
+  `?text=1` / `?text=0` links remain supported in the application and website.
+- One inline native structure selector replaces the application dialog in the
+  accessible workflow. The unit converter uses its existing fields inline;
+  the former utility menu containing two actions is removed.
+- Results and relevant comparisons appear directly in the application. Manual
+  remembering, collecting, removing, and clearing observations are removed.
+  Saving the readable HTML report is optional and uses the same report model.
+- The primary spectrum table contains up to five positive-strength electronic
+  transitions within the observation window, selected by oscillator strength
+  and displayed in energy order. The full transition data remain optional.
+  If the strongest visible transition is absent from the selection, a short
+  additional observation preserves access to it.
+- Comparisons use converged cis/trans minimum structures of the same derivative.
+  Ring exchange and reversal are accounted for; ambiguous partners are not
+  silently selected. A shared energy query provides both absorption values.
+- Chemical names and structure types identify results. Full technical identifiers
+  are optional metadata rather than repeated screenreader output.
+- All nine accessible tasks are complete exercises. Their maintained HTML source
+  also supplies the text protocol; there are no references to remembering
+  results, mandatory exports, unavailable controls, or required image production.
+  Public and Marburg deployments retain their separate course-content behavior.
+
+Five transitions were chosen after inspecting the real unsubstituted cis
+spectrum: its three strongest lines in the observation window are all in the UV,
+whereas the fifth is a visible transition at approximately 2.8424 eV. Five is a
+concise initial selection, not a claim that all relevant transitions fit in five
+rows. A line graphic alone is insufficient for nonvisual access; the structured
+energy/wavelength/oscillator-strength table carries the primary information.
+The broadened curve still supplies the existing curve maximum, absorption at a
+common energy, and optional color calculations. These quantities are not
+silently replaced by the energy or oscillator strength of the strongest line.
+
+### Frozen review findings
+
+| ID | Priority | Demonstrated finding and agreed correction |
+| --- | --- | --- |
+| BR-1 | Medium | Automatically included partner spectra can be incomplete without their limitation appearing next to their numerical maximum or queried absorption. Add a short, structure-specific coverage note and explain unavailable queries using that structure's energy range. Retain valid stored curve values. |
+| SR-1 | Low | Report tables display the same title as both an adjacent heading and a visible caption. Show one title while retaining the accessible table name, including in the HTML report. |
+| SR-2 | Low | The inline converter repeats two long explanation paragraphs in every step. Keep the three fields and shorten the text to practical use and the necessary distinction between an energy difference and a photon excitation. |
+
+B reproduced BR-1 with the production color module and CIE data: a complete
+selected spectrum was paired with an incomplete partner. The partner's numeric
+results remained available, but its coverage limitation was omitted. B also
+checked missing selections and partner deletion. S confirmed SR-1 in source and
+reviewed all eight rendered protocol pages without finding clipping or overflow.
+The coordinator independently observed the duplicate headings in Safari.
+R found the frozen exercises scientifically coherent and self-contained.
+Reviewers did not edit product files or claim actual JAWS/Braille testing.
+
+### User-confirmed change to the color learning objective
+
+After the frozen review, the user questioned whether color comparison should be
+required merely because it can be made accessible, and confirmed making it
+optional. R supplied complete revised wording for spectrum tasks 6–9 and their
+protocol deliverables. Color names, color distance, and weighted light
+transmission become optional additions. Required work focuses on transition
+energies, oscillator strengths, absorption maxima, and absorption at the same
+photon energy. The UV/visible distinction remains a physical spectral range.
+
+Task 9 retains its independent design hypothesis and the group comparison of
+the smallest absorption-maximum energy. Its second group comparison now uses
+one photon energy chosen jointly by the group: students determine which of
+their derivatives has the largest difference between the cis and trans relative
+absorption values at that energy. They report the energy and both values;
+the application does not choose the energy, rank derivatives, or provide the
+scientific interpretation. This is a comparison at the chosen energy, not a
+global optimum over the spectrum.
+
+Optional color information remains available within the existing additional
+spectral data, rather than introducing another navigation menu. The decision
+does not assume that blind students cannot understand color concepts: research
+has found shared causal color understanding in congenitally blind and sighted
+adults ([Kim et al., PNAS, 2021](https://pmc.ncbi.nlm.nih.gov/articles/PMC8379969/)).
+The pedagogical judgment is to prioritize the experiment's spectral quantities.
+The original graphical tasks and visual protocol remain unchanged.
+
+### Correction and follow-up verification
+
+Commit `3f18c4e` implements the consolidated correction and the user-confirmed
+optional color objective. B reproduced the original incomplete-partner case with
+the production color module and confirmed the structure-specific note in both
+the application report and HTML output. Tests with different energy windows
+preserve an available value while naming the unavailable structure and its
+window; an entirely out-of-range query does not export a stale numerical table.
+The note is not repeatedly duplicated beside each query.
+
+S verified that each table has one visible title and retains its accessible
+caption, the converter is concise, and all nine final protocol pages have clean
+layout. R checked all revised task and deliverable paragraphs against the
+generated DOCX: color-related terms appear only in the single optional addition,
+and task 9 has the required common-energy and absorption-value answer fields.
+All three reviewers reported no remaining findings in the targeted follow-up.
+
+The coordinator's final website check found one additional cache defect: a
+returning Safari session displayed unstyled native radios because the shared
+header stylesheet retained its old URL. Reloading from the origin immediately
+restored the intended segmented control. Commit `1a694ff` versions the website's
+header stylesheet URL; D confirmed all ten built pages reference the existing
+stylesheet with the new radio styles. This is an integration completion, not
+another full review cycle.
+
+| Check | Result for the completed workflow revision |
+| --- | --- |
+| Full Python suite after the consolidated correction | 196 passed, 21 skipped; one existing Starlette/httpx deprecation warning. |
+| Full JavaScript suite after the consolidated correction | 73 passed, none skipped. |
+| Configured Ruff rules and formatting | Passed for D's changed Python files. |
+| Diff whitespace check | Passed. |
+| Teaching website | Ten pages built successfully; versioned header stylesheet present on all pages. |
+| Final text protocol | Nine pages rendered and individually inspected by D and S. |
+| Original visual protocol | Byte-identical to `main`; SHA-256 `2cb086188c2eb203f1ee64d953b5f1bb6f0dec41a50350042a397327b2316711`. |
+| Original nine graphical tasks | Paragraph and list sequences identical to `main`. |
+
+Native Safari and artifact checks confirmed:
+
+- Real converged unsubstituted cis/trans minimum structures and INDO/S-CIS
+  spectra remain available across mode changes. The graphical return restores
+  the original broadened curve and discrete lines with the selected structure.
+- Both application mode radios work with keyboard arrow navigation and retain
+  focus. Safari's Option+Tab was used to reach all HTML controls under its local
+  keyboard-navigation preference; this is not a claim about Windows behavior.
+- The inline structure list is keyboard reachable and exposes chemical names
+  with structure types. Selecting cis produces five lines including the visible
+  transition at 2.8424 eV; trans has only four positive-strength lines in the
+  observation window and is not padded with zero-strength entries.
+- A keyboard query at 3.0 eV produces cis/trans relative absorption values of
+  0.0207 and 0.0133. German comma input is accepted, malformed input is explained,
+  and keyboard focus remains on the query button after activation.
+- The final primary report excludes color columns. The existing additional-data
+  disclosure contains the explicitly voluntary color analysis. Downloading the
+  readable HTML report succeeds; the downloaded artifact contains the same
+  current spectrum, pair, and query values, with color in a closed optional
+  section and no manual observation collection.
+- Representative mode controls, navigation, and primary spectrum tables remain
+  readable at 200% and 300% zoom. Safari offers no 400% page-zoom option in this
+  environment. Zoom was verified restored to 100% afterward.
+- Website mode radios work in both directions, restoring graphical sidebars or
+  a compact inline contents control. The accessible preference persists when
+  navigating to a fundamentals page without an explicit `text` URL parameter.
+
+The website preview process was restarted after its previous local connection
+failed; no application session or calculation data was reset. Its error was an
+environment issue, separate from the subsequently demonstrated stylesheet cache
+defect. Generated previews, downloaded reports, and render images remain outside
+version control.
+
+The verification limits above still apply. This follow-up did not manually
+switch modes during a running calculation or run a transition-structure search;
+the relevant state handling has source and regression-test coverage. There was
+no actual JAWS/NVDA/Braille trial or student usability test. No chatbot or
+application-owned speech input/output was added. No push or deployment occurred.
