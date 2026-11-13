@@ -26,6 +26,7 @@
   }
 
   async function initialize(viewer) {
+    if (document.body.classList.contains('text-preferred')) return;
     if (viewer.dataset.viewerState) return;
     viewer.dataset.viewerState = 'loading';
     const status = viewer.querySelector('[data-viewer-status]');
@@ -69,6 +70,7 @@
     const initializeWhenOpen = () => {
       if (!disclosure || disclosure.open) initialize(viewer);
     };
+    document.addEventListener('photoswitchlab-presentation', initializeWhenOpen);
     disclosure?.addEventListener('toggle', initializeWhenOpen);
     initializeWhenOpen();
   }

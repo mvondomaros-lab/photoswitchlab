@@ -17,13 +17,14 @@ document their own choices.
     <meta name="description" content="$brand_title · $brand_subtitle"/>
     <link rel="icon" type="image/svg+xml" href="static/brand-mark.svg"/>
     <link rel="stylesheet" href="static/header.css?v=6"/>
-    <link rel="stylesheet" href="static/app.css?v=ui-65"/>
+    <link rel="stylesheet" href="static/app.css?v=ui-66"/>
     <script src="static/vendor/ngl.js" defer></script>
     <script src="static/vendor/chart.js" defer></script>
     <script src="static/progress.js?v=ui-36" defer></script>
     <script src="static/vendor/cie-color.js?v=1" defer></script>
     <script src="static/solution-color.js?v=1" defer></script>
-    <script src="static/accessibility.js?v=4" defer></script>
+    <script src="static/presentation.js?v=1" defer></script>
+    <script src="static/accessibility.js?v=5" defer></script>
     <script src="static/app.js?v=ui-97" defer></script>
 </head>
 <body>
@@ -31,8 +32,8 @@ document their own choices.
 <header class="header">
     <a class="brand" href="./"><img class="brand-mark" src="static/brand-mark.svg" alt="" width="44" height="44"><span class="brand-text">$brand_title<small>$brand_subtitle</small></span></a>
     <div class="header-actions">
-        <label class="text-preference"><input id="text-preference" type="checkbox"/> Text und Tabellen bevorzugen</label>
-        <a class="quiet" href="$guide_url" target="_blank" rel="noreferrer">Grundlagen</a>
+        <label class="text-preference"><input id="text-preference" type="checkbox"/> Vereinfachte Ansicht</label>
+        <a class="quiet" id="fundamentals-link" href="$guide_url" target="_blank" rel="noreferrer">Grundlagen</a>
         <button class="quiet" id="guide-open" aria-expanded="false" aria-controls="guide">Aufgaben</button>
         <button class="quiet" id="converter-open">Einheiten</button>
         <a class="quiet" id="hub-logout" hidden>Abmelden</a>
@@ -61,6 +62,7 @@ document their own choices.
             </p>
         </div>
     </div>
+    <div id="simple-task-access" class="simple-only"></div>
 <div class="learning-layout">
 <aside id="guide" class="task-panel" aria-labelledby="guide-title" hidden>
     <div class="task-heading">
@@ -365,6 +367,7 @@ document their own choices.
                 </details>
             </section>
         </aside>
+        <div id="simple-calculation-status" class="simple-only"></div>
         <section class="results" aria-label="Struktur und Ergebnisse">
             <div class="result-heading" id="result-heading" hidden>
                 <div>
@@ -421,10 +424,14 @@ document their own choices.
                 <button id="cancel" class="small-button">Abbrechen</button>
             </div>
             <details id="accessible-results" class="accessible-results" hidden>
-                <summary>Struktur und Ergebnisse als Text und Tabellen</summary>
+                <summary id="accessible-results-summary">Struktur und Ergebnisse als Text und Tabellen</summary>
+                <h2 id="simple-collection-title" class="simple-only" hidden>Gemerkte Ergebnisse</h2>
                 <div id="accessible-current">
                     <p id="accessible-identity"></p>
+                    <p id="accessible-structure-facts" hidden></p>
                     <p id="accessible-geometry"></p>
+                    <p id="accessible-validation" hidden></p>
+                    <div id="simple-validation" class="simple-only"></div>
                     <details id="accessible-path" hidden>
                     <summary>Rechenschritte untersuchen</summary>
                     <p id="accessible-path-note" class="note"></p>
@@ -456,12 +463,18 @@ document their own choices.
                         <tbody id="transition-table-body"></tbody>
                     </table></div>
                     </details>
-                    <details><summary>Farben zweier Strukturen vergleichen</summary>
+                    <details><summary>Farbunterschied vergleichen</summary>
                         <label for="color-comparison">Zweite Struktur</label><select id="color-comparison"></select>
                         <p id="color-comparison-value"></p>
                     </details>
                 </section>
                 </div>
+                <div id="simple-default-capture" class="simple-only"></div>
+                <div id="simple-collection" class="simple-only"></div>
+                <figure id="simple-structure-figure" class="simple-only" hidden>
+                    <img id="simple-structure-image" alt=""/>
+                    <figcaption>Strukturformel der ausgewählten Struktur</figcaption>
+                </figure>
                 <div class="inline-actions">
                     <button id="remember-observation" class="text-button" type="button">Auswahl merken</button>
                     <button id="data-report" class="text-button" type="button">Ergebnisbericht speichern</button>
@@ -469,6 +482,7 @@ document their own choices.
                 <details id="atom-explorer">
                     <summary>Atome, Bindungen und Abstände untersuchen</summary>
                     <p id="accessible-spectrum-geometry" hidden></p>
+                    <p id="atom-scaffold" class="note"></p>
                     <p class="note">Atomnummern gelten innerhalb dieser Struktur und ihrer gespeicherten Rechenschritte. Sie sind keine chemischen Positionsnummern. Bei Atomen außerhalb der Ringe nennt der Ringbezug die nächste Ringposition in der Bindungsfolge. Abstände werden aus den dargestellten Koordinaten berechnet.</p>
                     <label for="atom-first">Erstes Atom</label><select id="atom-first"></select>
                     <p id="atom-neighbors"></p>
@@ -479,7 +493,7 @@ document their own choices.
                     <p id="atom-rings" class="note"></p>
                     <p id="accessible-azo-angles"></p>
                 </details>
-                <details><summary id="observations-summary">Gemerkte Beobachtungen (0)</summary>
+                <details id="observations-collection"><summary id="observations-summary">Gemerkte Beobachtungen (0)</summary>
                     <p class="note">Merken Sie ausgewählte Pfadstrukturen, Atomabstände oder Kurvenabfragen für den Bericht. Die Sammlung gilt bis zum Neuladen; speichern Sie Ihren Bericht rechtzeitig.</p>
                     <ol id="observations-list"></ol>
                     <button id="clear-observations" class="text-button" type="button" disabled>Sammlung leeren</button>
@@ -640,6 +654,8 @@ document their own choices.
                 </div>
             </div>
         </section>
+        <section id="simple-methods" class="simple-only" aria-label="Methoden und Prüfung"></section>
+        <details id="simple-tools" class="simple-only"><summary>Grundlagen und Einheiten</summary></details>
     </div>
 </div>
     <footer>

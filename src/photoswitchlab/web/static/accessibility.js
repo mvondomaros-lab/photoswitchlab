@@ -7,7 +7,10 @@ globalThis.AccessibleData = {
     const parsed = Number(value.replace(",", "."));
     return Number.isFinite(parsed) ? parsed : null;
   },
-  atomLabel(graph, index) {
+  substituentName(value) {
+    return {Me: "Methylgruppe", OMe: "Methoxygruppe", NMe2: "Dimethylaminogruppe", CF3: "Trifluormethylgruppe", CN: "Cyanogruppe", NO2: "Nitrogruppe"}[value] || value;
+  },
+  atomLabel(graph, index, settings) {
     const atom = graph[index];
     if (!atom) return "Atom nicht verfügbar";
     let position = atom.position;
@@ -23,7 +26,11 @@ globalThis.AccessibleData = {
         if (!position) pending.push(...neighbor.neighbors.map((n) => n.number));
       }
     }
-    return `Atom ${atom.number} (${atom.element}${position ? `, ${atom.position ? "Ringposition" : "Ringbezug"} ${position}` : ""})`;
+    const site = position?.match(/^C([2-6])(′)?$/);
+    const substituent = site && settings?.substituents?.[Number(site[1]) - 2 + (site[2] ? 5 : 0)];
+    const group = substituent && substituent !== "H" ? `, ${atom.position ? "trägt " : "zugeordnet: "}${this.substituentName(substituent)}` : "";
+    const azo = atom.element === "N" && atom.neighbors?.some((neighbor) => graph[neighbor.number - 1]?.element === "N" && neighbor.bond_order === 2) ? ", Azogruppe" : "";
+    return `Atom ${atom.number} (${atom.element}${position ? `, ${atom.position ? "Ringposition" : "Ringbezug"} ${position}` : ""}${group}${azo})`;
   },
   outputMethods: [
     "Kurvenabfragen: Zwischen gespeicherten Kurvenpunkten wird die relative Absorption linear interpoliert.",
@@ -104,6 +111,7 @@ globalThis.AccessibilityView = {
   initialize(context) {
     const $ = (id) => document.getElementById(id);
     const data = AccessibleData;
+    const layout = globalThis.PresentationLayout?.create(document);
     const setText = (id, text) => {
       if ($(id).textContent !== text) $(id).textContent = text;
     };
@@ -123,6 +131,7 @@ globalThis.AccessibilityView = {
       this.prefersText = preference.checked;
       document.body.classList.toggle("text-preferred", this.prefersText);
       $("accessible-results").open = disclosurePreference[this.prefersText ? "text" : "graphical"];
+      layout?.apply(this.prefersText, context.state.step);
     };
     applyPreference();
     preference.onchange = () => {
@@ -130,7 +139,7 @@ globalThis.AccessibilityView = {
       applyPreference();
       try { localStorage.setItem("photoswitchlab.textPreferred", String(preference.checked)); } catch { /* Optional persistence. */ }
       context.render();
-      this.announce(preference.checked ? "Text und Tabellen werden bevorzugt." : "Grafische Ansicht wird bevorzugt.");
+      this.announce(preference.checked ? "Vereinfachte Ansicht aktiviert." : "Grafische Ansicht aktiviert.");
     };
     this.announce = (message) => { setText("accessible-status", message); };
     let moleculeKey = null, pointIndex = null, points = [], path = false;
@@ -138,6 +147,15 @@ globalThis.AccessibilityView = {
     let selectedTransition = null, curveQuery = null, comparison = null, comparisonSignature = "";
     let measurementSelected = false;
     let reportSections = [], colorComparisonRecord = null;
+    let captureKind = "result";
+    const captureLabels = {result: "Ergebnis merken", geometry: "Messung merken", path: "Pfadstruktur merken", transition: "Übergang merken", curve: "Kurvenwert merken", color: "Farbvergleich merken", invalid: "Kurvenwert merken"};
+    const setCapture = (kind, anchor) => {
+      captureKind = kind;
+      setText("remember-observation", captureLabels[kind]);
+      $("remember-observation").disabled = !context.current() || kind === "invalid";
+      if (anchor) layout?.captureAfter(anchor);
+      else layout?.resetCapture();
+    };
     const observations = [];
     let observationNumber = 0;
     function fillSelect(select, options, value) {
@@ -147,24 +165,28 @@ globalThis.AccessibilityView = {
     const measurement = () => {
       const first = Number($("atom-first").value), second = Number($("atom-second").value), third = Number($("atom-third").value);
       const atom = graph[first];
-      setText("atom-neighbors", atom ? `${data.atomLabel(graph, first)}: ` +
+      const atomLabel = (index) => data.atomLabel(graph, index, context.current()?.settings);
+      setText("atom-neighbors", atom ? `${atomLabel(first)}: ` +
         (atom.neighbors?.length ? atom.neighbors.map((neighbor) => {
           const bond = neighbor.bond_order === 1.5 ? "aromatische Bindung" : neighbor.bond_order === 1 ? "Einfachbindung" : neighbor.bond_order === 2 ? "Doppelbindung" : `Bindungsordnung ${fmt(neighbor.bond_order, 1)}`;
-          return `${data.atomLabel(graph, neighbor.number - 1)}, ${bond}`;
+          return `${atomLabel(neighbor.number - 1)}, ${bond}`;
         }).join("; ") : "keine gespeicherten Bindungen") + "." : "Für diese gespeicherte Struktur fehlen Atom- und Bindungsdaten. Erstellen Sie die Struktur erneut.");
       const distance = data.distance(positions, first, second);
-      setText("atom-distance", graph.length ? `Abstand ${data.atomLabel(graph, first)} zu ${data.atomLabel(graph, second)}: ${fmt(distance, 1)} pm.` : "");
-      setText("atom-angle", graph.length ? `Winkel ${[first, second, third].map((index) => data.atomLabel(graph, index)).join(" – ")}: ${fmt(data.angle(positions, first, second, third), 1)} °.` : "");
+      setText("atom-distance", graph.length ? `Abstand ${atomLabel(first)} zu ${atomLabel(second)}: ${fmt(distance, 1)} pm.` : "");
+      setText("atom-angle", graph.length ? `Winkel ${[first, second, third].map(atomLabel).join(" – ")}: ${fmt(data.angle(positions, first, second, third), 1)} °.` : "");
     };
     $("atom-first").onchange = $("atom-second").onchange = $("atom-third").onchange = () => {
       measurementSelected = true;
       measurement();
+      setCapture("geometry", "atom-angle");
       this.announce($("atom-distance").textContent + " " + $("atom-angle").textContent);
     };
     $("path-point").onchange = () => {
       if ($("path-point").value === "") {
         pointIndex = null;
         context.showResult();
+        this.render();
+        setCapture("result");
         this.announce("Gespeicherte Struktur ausgewählt.");
         return;
       }
@@ -173,16 +195,19 @@ globalThis.AccessibilityView = {
       const i = playback.records.findIndex((p) => path ? p.image === point.image : p.step === point.step);
       if (i >= 0 && !context.state.busy) context.selectFrame(i);
       this.render();
+      setCapture("path", "accessible-point");
       this.announce($("accessible-point").textContent);
     };
     $("transition-point").onchange = () => {
       selectedTransition = $("transition-point").value === "" ? null : Number($("transition-point").value);
       this.render();
+      setCapture(selectedTransition == null ? "result" : "transition", selectedTransition == null ? null : "transition-value");
       this.announce($("transition-value").textContent);
     };
     $("color-comparison").onchange = () => {
       comparison = $("color-comparison").value || null;
       this.render();
+      setCapture(colorComparisonRecord ? "color" : "result", colorComparisonRecord ? "color-comparison-value" : null);
       this.announce($("color-comparison-value").textContent);
     };
     $("curve-query").onclick = () => {
@@ -194,6 +219,7 @@ globalThis.AccessibilityView = {
         : value == null
         ? `Geben Sie eine Energie zwischen ${fmt(spec?.energy_ev?.[0])} und ${fmt(spec?.energy_ev?.at(-1))} eV ein.`
         : `${fmt(energy)} eV · ${fmt(1239.8419843320026 / energy, 1)} nm · relative Absorption ${fmt(value)}.`);
+      setCapture(value == null ? "invalid" : "curve", "curve-value");
     };
     const sourceContext = (m, spectral = false, color = false) => {
       const paragraphs = [`Elektronische Energien: GFN1-xTB.`];
@@ -202,6 +228,7 @@ globalThis.AccessibilityView = {
       else rows.push(["Optimierung abgeschlossen", m.converged === true ? "ja" : m.converged === false ? "nein" : "nicht angegeben"]);
       if (spectral) {
         paragraphs.push("UV/Vis-Spektrum: INDO/S–CIS. Relative Absorption in willkürlichen Einheiten.");
+        if (m.spectrum?.energy_ev?.length) paragraphs.push(`Berechneter Energiebereich: ${fmt(m.spectrum.energy_ev[0])} bis ${fmt(m.spectrum.energy_ev.at(-1))} eV.`);
         if (m.spectrum?.coverage_complete === false) paragraphs.push("Am oberen Rand des berechneten Energiebereichs fehlen möglicherweise Beiträge weiterer Übergänge; die Absorption kann dort unterschätzt werden.");
       }
       if (color) paragraphs.push("Farbmodell ohne festgelegte Konzentration oder Schichtdicke.");
@@ -218,30 +245,33 @@ globalThis.AccessibilityView = {
     };
     const snapshot = (force = false) => {
       const m = context.current();
-      if (!m) return null;
+      if (!m || captureKind === "invalid") return null;
       const spectral = context.state.step === "spectrum";
-      const paragraphs = spectral ? [] : [$("accessible-geometry").textContent];
+      const paragraphs = [];
       const selected = points[pointIndex];
       let hasSelection = false;
-      if (selected && context.state.step === "optimize") {
-        paragraphs.push($("accessible-point").textContent, $("accessible-path-note").textContent, $("accessible-azo-angles").textContent);
+      if (captureKind === "path" && selected && context.state.step === "optimize") {
+        paragraphs.push($("accessible-geometry").textContent, $("accessible-point").textContent, $("accessible-path-note").textContent, $("accessible-azo-angles").textContent);
         hasSelection = true;
       }
-      if (measurementSelected && $("atom-explorer").open && graph.length) {
-        if (spectral) paragraphs.push($("accessible-geometry").textContent);
-        paragraphs.push($("atom-distance").textContent, $("atom-angle").textContent);
+      if (captureKind === "geometry" && measurementSelected && graph.length) {
+        paragraphs.push($("accessible-geometry").textContent, $("atom-distance").textContent, $("atom-angle").textContent);
         hasSelection = true;
       }
-      if (curveQuery) {
+      if (captureKind === "curve" && curveQuery) {
         paragraphs.push($("curve-value").textContent);
         hasSelection = true;
       }
-      if (selectedTransition != null) { paragraphs.push($("transition-value").textContent); hasSelection = true; }
-      if (colorComparisonRecord) { paragraphs.push($("color-comparison-value").textContent); hasSelection = true; }
+      if (captureKind === "transition" && selectedTransition != null) { paragraphs.push($("transition-value").textContent); hasSelection = true; }
+      if (captureKind === "color" && colorComparisonRecord) { paragraphs.push($("color-comparison-value").textContent); hasSelection = true; }
       if (!force && !hasSelection) return null;
-      if (spectral && !hasSelection) paragraphs.push($("accessible-spectrum-summary").textContent, $("accessible-color").textContent);
-      const source = sourceContext(m, spectral, spectral && (!hasSelection || !!colorComparisonRecord));
-      return {key: JSON.stringify([m.id, paragraphs]), source, hasColor: !!colorComparisonRecord, hasCurve: !!curveQuery, section: {title: "Aktuelle Auswahl", paragraphs}};
+      if (!hasSelection) {
+        if (spectral) paragraphs.push($("accessible-spectrum-summary").textContent, $("accessible-color").textContent);
+        else if (context.state.step === "build") paragraphs.push($("accessible-structure-facts").textContent);
+        else paragraphs.push($("accessible-geometry").textContent);
+      }
+      const source = sourceContext(m, spectral && captureKind !== "geometry", spectral && (!hasSelection || captureKind === "color"));
+      return {key: JSON.stringify([m.id, captureKind, paragraphs]), source, hasColor: captureKind === "color", hasCurve: captureKind === "curve", section: {title: "Aktuelle Auswahl", paragraphs}};
     };
     const renderObservations = () => {
       setText("observations-summary", `Gemerkte Beobachtungen (${observations.length})`);
@@ -318,14 +348,17 @@ globalThis.AccessibilityView = {
     $("data-csv").onclick = () => context.download(data.csv(csvRows), context.filename("csv"), "text/csv;charset=utf-8");
     this.render = () => {
       const m = context.current();
+      layout?.apply(this.prefersText, context.state.step);
       $("accessible-results").hidden = !m && !observations.length;
+      $("simple-collection-title").hidden = !!m || !observations.length;
       $("accessible-current").hidden = !m;
       $("accessible-context").hidden = !m;
       $("atom-explorer").hidden = !m;
       $("accessible-raw").hidden = !m;
-      $("remember-observation").disabled = !m;
+      $("remember-observation").disabled = !m || captureKind === "invalid";
       $("data-report").disabled = !m && !observations.length;
       if (!m) {
+        $("simple-structure-figure").hidden = true;
         reportSections = [];
         csvRows = [];
         moleculeKey = graphKey = null;
@@ -339,6 +372,7 @@ globalThis.AccessibilityView = {
         curveQuery = null;
         comparison = null;
         measurementSelected = false;
+        setCapture("result");
         setText("curve-value", "");
       }
       const labels = { initial: "Startstruktur", minimum: "Minimumstruktur", ts: "Übergangsstruktur", unconverged: "Optimierung nicht abgeschlossen" };
@@ -347,6 +381,19 @@ globalThis.AccessibilityView = {
       const assumptions = `Substituenten: ${subs.join("; ") || "keine"}. Elektronische Energien: GFN1-xTB.${m.kind === "initial" ? " Generierte, noch nicht quantenchemisch optimierte Startstruktur." : ""}${m.converged === false ? " Optimierung nicht abgeschlossen." : ""}${m.ts_search ? m.ts_search.connectivity?.verified ? " Verbindung zwischen cis und trans bestätigt." : " Verbindung zwischen cis und trans nicht bestätigt." : ""}`;
       setText("accessible-identity", identity);
       setText("accessible-assumptions", assumptions);
+      setText("accessible-structure-facts", `Konfiguration: ${m.settings?.configuration || "nicht angegeben"}. Substituenten: ${subs.join("; ") || "keine"}.`);
+      $("accessible-structure-facts").hidden = !this.prefersText || context.state.step !== "build";
+      const validation = m.kind === "initial" ? "" : m.ts_search
+        ? `${m.kind === "ts" ? "Übergangsstruktur bestätigt." : "Übergangsstruktur noch nicht bestätigt."} ${m.ts_search.connectivity?.verified ? "Verbindung zwischen cis und trans bestätigt." : "Verbindung zwischen cis und trans nicht bestätigt."}`
+        : m.converged === false ? "Optimierung nicht abgeschlossen." : m.converged === true ? "Minimumsuche abgeschlossen." : "Status der Optimierung nicht angegeben.";
+      setText("accessible-validation", validation);
+      $("accessible-validation").hidden = !validation || context.state.step === "build";
+      $("simple-structure-figure").hidden = !m.svg;
+      if (m.svg) {
+        const source = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(m.svg);
+        if ($("simple-structure-image").getAttribute?.("src") !== source) $("simple-structure-image").setAttribute?.("src", source);
+        $("simple-structure-image").alt = `Strukturformel von ${context.label(m)}. Bindungen und Ringpositionen können Sie auch als Text untersuchen.`;
+      }
       path = !!m.ts_search?.path?.length;
       points = path ? m.ts_search.path : context.records().filter((p) => Number.isFinite(p.energy_ev));
       if (context.state.live?.replay) {
@@ -360,7 +407,7 @@ globalThis.AccessibilityView = {
       const props = preview ? { ...OptimizationProgress.geometryProperties(positions, m.geometry_definition), energy_ev: selected.energy_ev } : m.properties;
       const geometryText = `${preview ? path ? `Pfadstruktur ${pointIndex + 1}` : `Rechenschritt ${selected.step}` : "Gespeicherte Struktur"}: elektronische Energie ${fmt(props?.energy_ev)} eV; Diederwinkel C–N=N–C ${fmt(props?.dihedral_deg, 1)} °; Ringabstand ${fmt(props?.ring_distance_pm, 1)} pm.`;
       setText("accessible-geometry", geometryText);
-      $("accessible-geometry").hidden = context.state.step === "spectrum";
+      $("accessible-geometry").hidden = context.state.step === "spectrum" || (this.prefersText && context.state.step === "build");
       $("accessible-spectrum-geometry").hidden = context.state.step !== "spectrum";
       setText("accessible-spectrum-geometry", geometryText);
       let azoAngles = "";
@@ -372,12 +419,13 @@ globalThis.AccessibilityView = {
       graph = m.atom_graph || [];
       if (graphKey !== m.id) {
         graphKey = m.id;
-        const options = graph.map((_atom, i) => [data.atomLabel(graph, i), i]);
+        const options = graph.map((_atom, i) => [data.atomLabel(graph, i, m.settings), i]);
         fillSelect($("atom-first"), options, 0);
         fillSelect($("atom-second"), options, Math.min(1, graph.length - 1));
         fillSelect($("atom-third"), options, Math.min(2, graph.length - 1));
         $("atom-first").disabled = $("atom-second").disabled = $("atom-third").disabled = !graph.length;
         setText("atom-rings", m.geometry_definition ? `Diederwinkel: Atome ${m.geometry_definition.dihedral_indices.map((i) => i + 1).join("–")}. Phenylringe: ${m.geometry_definition.rings.map((ring) => ring.map((i) => i + 1).join(", ")).join("; ")}.` : "");
+        setText("atom-scaffold", "Grundgerüst: C1–N=N–C1′. Erster Ring: C1–C2–C3–C4–C5–C6–C1. Zweiter Ring: C1′–C2′–C3′–C4′–C5′–C6′–C1′. Diese Positionsnummern bezeichnen Ringatome; die zusätzlichen Atomnummern gelten für die gespeicherten Koordinaten.");
       }
       measurement();
       $("accessible-path").hidden = context.state.step !== "optimize" || !points.length;
@@ -459,7 +507,7 @@ globalThis.AccessibilityView = {
         const second = other && SolutionColor.estimate(other.spectrum);
         const distance = color && second ? data.colorDistance(color.rgb, second.rgb) : null;
         const comparisonText = distance == null ? "Wählen Sie zwei Strukturen mit auswertbarer Farbschätzung aus." :
-          `${context.label(m)} (${data.color(color.rgb)}) und ${context.label(other)} (${data.color(second.rgb)}): CIE76-Farbabstand ${fmt(distance, 1)}.`;
+          `${context.label(m)} (${data.color(color.rgb)}) und ${context.label(other)} (${data.color(second.rgb)}): Farbabstand ${fmt(distance, 1)}. Größere Werte bedeuten stärker unterschiedliche berechnete Farben.`;
         setText("color-comparison-value", comparisonText);
         if (distance != null) {
           colorComparisonRecord = {first_id: m.id, second_id: other.id, first_rgb: color.rgb, second_rgb: second.rgb, cie76_distance: distance, reference_white: "D65", gamut: "clipped_sRGB", color_assumption: "fixed_absorbance_scale_no_concentration_or_path_length"};

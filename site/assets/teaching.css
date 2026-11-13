@@ -158,3 +158,9 @@ dialog input { width: 100%; padding: .5rem; border: 1px solid var(--line); borde
 @media (max-width: 700px) {
   .site-menu > summary { display: list-item; padding: .4rem .55rem; font-weight: 600; }
 }
+.text-preferred .layout { display: block; max-width: 80ch; margin-inline: auto; }
+.text-preferred main { padding: 1.5rem 1.25rem; }
+.text-preferred main > .sidebar { display: block; position: static; height: auto; max-height: none; overflow: visible; border: 1px solid var(--line); border-radius: 8px; margin: 0 0 1.5rem; padding: .75rem 1rem; }
+.text-preferred .outline { display: none; }
+.text-preferred .header { position: static; }
+.text-preferred article img { max-width: 100%; height: auto; }

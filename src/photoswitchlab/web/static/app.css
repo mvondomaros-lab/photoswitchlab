@@ -1491,3 +1491,48 @@ select {
 .text-preferred .accessible-results { border-color: #165de1; }
 @media (max-width: 720px) { .header { flex-wrap: wrap; height: auto; } .header-actions { flex-wrap: wrap; } .text-preference { max-width: none; } }
 @media (forced-colors: active) { button, select, input, summary { forced-color-adjust: auto; } :focus-visible { outline: 3px solid Highlight; } }
+
+/* A linear workflow using the same controls and calculation state. */
+.simple-only { display: none; }
+.text-preferred .simple-only { display: block; }
+.text-preferred .header { position: static; }
+.text-preferred main#workspace { max-width: 58rem; margin-inline: auto; padding: 1.5rem 1.25rem; }
+.text-preferred .learning-layout,
+.text-preferred .learning-layout:has(.task-panel:not([hidden])),
+.text-preferred .workbench,
+.text-preferred .learning-layout:has(.task-panel:not([hidden])) .workbench { display: block; }
+.text-preferred .controls { margin-bottom: 1.25rem; overflow: visible; }
+.text-preferred .controls .step-panel { padding: 1.25rem; }
+.text-preferred .library { padding: 1rem 1.25rem; }
+.text-preferred .results { border: 0; border-radius: 0; overflow: visible; background: transparent; }
+.text-preferred .results:has(#accessible-results[hidden]) { display: none; }
+.text-preferred .result-heading { padding: 0 0 .75rem; }
+.text-preferred #active-meta { display: none; }
+.text-preferred .accessible-results { margin: 0; padding: 1.25rem; border-color: var(--line); }
+.text-preferred .accessible-results > #accessible-current > p:first-child { margin-top: 0; }
+.text-preferred #molecular-panel,
+.text-preferred #spectrum-panel { display: none !important; }
+.text-preferred #simple-task-access { margin-bottom: 1rem; }
+.text-preferred #simple-task-access > button { min-height: 44px; margin-bottom: .75rem; padding: .6rem 1rem; color: var(--blue); border: 1px solid var(--line); border-radius: 7px; background: white; }
+.text-preferred .task-panel { position: static; max-height: none; height: auto; overflow: visible; margin: 0 0 1rem; }
+.text-preferred #simple-calculation-status { margin-bottom: 1rem; }
+.text-preferred #simple-calculation-status:empty { display: none; }
+.text-preferred #job-status { margin: 0; }
+.text-preferred #simple-methods { margin-top: 1.25rem; }
+.text-preferred #simple-methods > details { margin: .75rem 0; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 8px; background: white; }
+.text-preferred #simple-tools { margin-top: 1rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 8px; background: white; }
+.text-preferred #simple-tools > :not(summary) { margin: .75rem .75rem 0 0; }
+.text-preferred #simple-default-capture:empty { display: none; }
+.text-preferred #simple-collection { margin-top: .75rem; }
+.text-preferred #simple-collection > button { margin-top: .75rem; }
+.text-preferred #simple-structure-figure { margin: 1.25rem 0; }
+.text-preferred #simple-structure-image { display: block; width: 100%; max-width: 20rem; max-height: 15rem; object-fit: contain; }
+.text-preferred #simple-structure-figure figcaption { margin-top: .5rem; color: var(--muted); font-size: .875rem; }
+.text-preferred #simple-validation .ts-summary { margin: .75rem 0; }
+.text-preferred .table-scroll { overflow-x: auto; }
+@media (max-width: 480px) {
+  .text-preferred main#workspace { padding-inline: .75rem; }
+  .text-preferred .accessible-results { padding: 1rem; }
+  .text-preferred .steps { flex-wrap: wrap; overflow: visible; }
+  .text-preferred .step { flex: 1 1 9rem; text-align: left; }
+}

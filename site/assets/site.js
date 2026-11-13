@@ -15,14 +15,35 @@ if (textPreference) {
     graphical: descriptions.map(description => description.open),
     text: descriptions.map(() => true),
   };
+  const sidebar = document.querySelector('.sidebar');
+  const main = document.querySelector('main');
+  const article = main?.querySelector?.('article');
+  const navigation = sidebar?.querySelector?.('.site-menu');
+  const outlinePanel = document.querySelector('.outline');
+  let sidebarOrigin;
+  const navigationStates = {graphical: navigation ? !matchMedia('(max-width: 700px)').matches : undefined, text: false};
+  const originalOutlineHidden = outlinePanel?.hidden;
   let activeMode = textPreference.checked ? 'text' : 'graphical';
   const apply = () => {
     document.body.classList.toggle('text-preferred', activeMode === 'text');
     descriptions.forEach((description, index) => { description.open = disclosureStates[activeMode][index]; });
+    if (sidebar?.parentNode && article) {
+      if (activeMode === 'text') {
+        if (!sidebarOrigin) {
+          sidebarOrigin = document.createComment('Original site navigation position');
+          sidebar.parentNode.insertBefore(sidebarOrigin, sidebar);
+        }
+        main.insertBefore(sidebar, article);
+      } else if (sidebarOrigin) sidebarOrigin.parentNode.insertBefore(sidebar, sidebarOrigin.nextSibling);
+      navigation.open = navigationStates[activeMode];
+      if (outlinePanel) outlinePanel.hidden = activeMode === 'text' || originalOutlineHidden;
+    }
+    if (typeof Event === 'function') document.dispatchEvent?.(new Event('photoswitchlab-presentation'));
   };
   apply();
   textPreference.addEventListener('change', () => {
     disclosureStates[activeMode] = descriptions.map(description => description.open);
+    navigationStates[activeMode] = navigation?.open;
     activeMode = textPreference.checked ? 'text' : 'graphical';
     apply();
     try { localStorage.setItem('photoswitchlab.textPreferred', String(textPreference.checked)); } catch (_) {}
@@ -30,8 +51,8 @@ if (textPreference) {
 }
 const mobileNavigation = matchMedia('(max-width: 700px)');
 const siteMenu = document.querySelector('.site-menu');
-siteMenu.open = !mobileNavigation.matches;
-mobileNavigation.addEventListener('change', event => { siteMenu.open = !event.matches; });
+siteMenu.open = textPreference?.checked ? false : !mobileNavigation.matches;
+mobileNavigation.addEventListener('change', event => { if (!textPreference?.checked) siteMenu.open = !event.matches; });
 const outline = document.querySelector('.outline details');
 if (outline && matchMedia('(max-width: 1150px)').matches) outline.open = false;
 

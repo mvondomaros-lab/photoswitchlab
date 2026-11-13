@@ -44,9 +44,18 @@ test on a real Hub.
 
 ### Accessible presentation
 
-The app and website offer an optional text-first presentation, persisted locally
+The app and website offer an optional **Vereinfachte Ansicht**, persisted locally
 and selectable directly with `?text=1` (`?text=0` overrides the stored choice).
-This preference changes presentation; both views use the same calculation data.
+Both views use the same calculation data and controls. The simplified app is a
+linear, single-column workflow: current task access, structure and inputs,
+calculation/status, operation-specific result, observation collection/report,
+then optional exploration and methods. `presentation.js` relocates the original
+nodes with restoration markers; it does not duplicate forms or reset selections.
+Repeated updates must not reparent focused controls. The concise result stays
+open without an additional disclosure, and a modest supporting 2D formula avoids
+initializing WebGL in simplified mode. The default graphical layout is restored
+when switching back. The website similarly places its existing compact navigation
+in the reading flow and omits the duplicate outline in simplified mode.
 The app's `accessibility.js` provides atom/bond exploration, distances and angles,
 search/path tables, spectrum transitions, interpolated curve queries and compact
 readable HTML reports. Full CSV/JSON exports and full tables are optional details.
@@ -75,7 +84,9 @@ course. No voice service or generative model is required for text presentation.
 Run `node --test tests/test_accessibility.cjs` and
 `pytest tests/test_accessibility.py` alongside the routine checks. Manual
 keyboard, screen-reader, zoom and graphical presentation checks remain necessary;
-the automated tests do not establish WCAG conformance.
+the automated tests do not establish WCAG conformance. The presentation tests
+parse the maintained templates and exercise actual node relocation/restoration,
+control identity, linear order, and capture placement without a second form tree.
 
 The optional color comparison uses the CIE76 Euclidean distance in CIELAB with
 D65 reference white, calculated from the same clipped sRGB triples as the swatch.

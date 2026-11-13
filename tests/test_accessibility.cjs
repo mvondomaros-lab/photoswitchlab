@@ -39,6 +39,9 @@ test("atom references carry chemical positions through substituent connectivity"
   ];
   assert.equal(data.atomLabel(graph, 0), "Atom 1 (C, Ringposition C2′)");
   assert.equal(data.atomLabel(graph, 2), "Atom 3 (C, Ringbezug C2′)");
+  const settings = {substituents: ["H", "H", "H", "H", "H", "OMe", "H", "H", "H", "H"]};
+  assert.ok(data.atomLabel(graph, 2, settings).includes("zugeordnet: Methoxygruppe"));
+  assert.ok(data.atomLabel(graph, 0, settings).includes("trägt Methoxygruppe"));
 });
 test("approximate color words distinguish achromatic, dark and selective colors", () => {
   assert.equal(data.color([255, 255, 255]), "annähernd weiß");
@@ -147,17 +150,19 @@ test("readable report escapes data and includes chosen information without full 
   lab.view.render();
   lab.node("curve-energy").value = "1,5";
   lab.node("curve-query").onclick();
+  lab.node("remember-observation").onclick();
   lab.node("color-comparison").value = "b";
   lab.node("color-comparison").onchange();
+  lab.node("remember-observation").onclick();
   lab.node("data-report").onclick();
   const output = lab.exported();
-  assert.equal(output.filename, "result.html");
+  assert.equal(output.filename, "photoswitchlab-beobachtungen.html");
   assert.ok(output.content.includes('lang="de"'));
   assert.ok(output.content.includes("&lt;script&gt;"));
   assert.ok(!output.content.includes("<script>"));
-  assert.ok(output.content.includes("Aktuelle Auswahl"));
+  assert.ok(output.content.includes("Beobachtung 1"));
   assert.ok(output.content.includes("1,5000 eV"));
-  assert.ok(output.content.includes("CIE76-Farbabstand"));
+  assert.ok(output.content.includes("Farbabstand"));
   assert.ok(output.content.includes("feste Absorbanzskalierung"));
   assert.ok(!output.content.includes("Vollständige Übergangstabelle"));
 });
@@ -171,6 +176,30 @@ test("invalid and out-of-range curve input remain distinct", () => {
   lab.node("curve-energy").value = "1,5.1";
   lab.node("curve-query").onclick();
   assert.ok(lab.node("curve-value").textContent.includes("Dezimalkomma oder Dezimalpunkt"));
+});
+
+test("the shared capture action remembers only its explicit current scope and cannot capture a failed query", () => {
+  const lab = accessibleLab();
+  lab.view.render();
+  lab.node("curve-energy").value = "1,2";
+  lab.node("curve-query").onclick();
+  assert.equal(lab.node("remember-observation").textContent, "Kurvenwert merken");
+  lab.node("atom-explorer").open = true;
+  lab.node("atom-first").onchange();
+  assert.equal(lab.node("remember-observation").textContent, "Messung merken");
+  lab.node("remember-observation").onclick();
+  lab.node("data-report").onclick();
+  assert.ok(lab.exported().content.includes("Ringposition C1"));
+  assert.ok(!lab.exported().content.includes("1,2000 eV"));
+  lab.node("curve-energy").value = "1,8";
+  lab.node("curve-query").onclick();
+  lab.node("curve-energy").value = "0,3";
+  lab.node("curve-query").onclick();
+  assert.equal(lab.node("remember-observation").disabled, true);
+  lab.node("remember-observation").onclick(); // Even a programmatic invocation adds no stale datum.
+  assert.equal(lab.node("observations-summary").textContent, "Gemerkte Beobachtungen (1)");
+  lab.node("data-report").onclick();
+  assert.ok(!lab.exported().content.includes("1,8000 eV"));
 });
 
 test("explicit observation collection retains several named probes and geometries without collecting every selection", () => {
@@ -199,11 +228,13 @@ test("explicit observation collection retains several named probes and geometrie
     lab.node("path-point").value = index;
     lab.node("path-point").onchange();
     lab.node("remember-observation").onclick();
+    lab.node("atom-first").onchange();
+    lab.node("remember-observation").onclick();
   }
   lab.node("data-report").onclick();
   const report = lab.exported().content;
   for (const text of ["1,2000 eV", "1,8000 eV", "Pfadstruktur 1", "Pfadstruktur 2", "Ringposition C1", "100,0 pm", "200,0 pm"]) assert.ok(report.includes(text), text);
-  assert.equal((report.match(/<h3>Beobachtung /g) || []).length, 4);
+  assert.equal((report.match(/<h3>Beobachtung /g) || []).length, 6);
   lab.node("clear-observations").onclick();
   lab.node("data-report").onclick();
   assert.ok(!lab.exported().content.includes("Beobachtung 1"));

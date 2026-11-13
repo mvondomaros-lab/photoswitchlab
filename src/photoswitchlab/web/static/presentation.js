@@ -1,0 +1,59 @@
+/* Reuse the same controls in a linear workflow; restore their original positions. */
+"use strict";
+globalThis.PresentationLayout = {
+  create(document) {
+    if (!document.createComment) return null;
+    const $ = (id) => document.getElementById(id);
+    const origins = new Map();
+    let simple = false, captureTarget = null;
+    function move(node, destination, after = false) {
+      if (!node?.parentNode || !destination) return;
+      if (after ? node.parentNode === destination.parentNode && node.previousSibling === destination : node.parentNode === destination) return;
+      if (!origins.has(node)) {
+        const marker = document.createComment(`Original position: ${node.id}`);
+        node.parentNode.insertBefore(marker, node);
+        origins.set(node, marker);
+      }
+      if (after) destination.parentNode.insertBefore(node, destination.nextSibling);
+      else destination.append(node);
+    }
+    function restore() {
+      for (const [node, marker] of origins) if (marker.nextSibling !== node) marker.parentNode.insertBefore(node, marker.nextSibling);
+    }
+    function positionCapture() {
+      if (!simple) return;
+      if (captureTarget) move($("remember-observation"), $(captureTarget), true);
+      else move($("remember-observation"), $("simple-default-capture"));
+    }
+    return {
+      apply(enabled, step) {
+        simple = enabled;
+        $("accessible-results-summary").hidden = enabled;
+        if (enabled) {
+          $("accessible-results").open = true;
+          move($("guide-open"), $("simple-task-access"));
+          move($("guide"), $("simple-task-access"));
+          move($("job-status"), $("simple-calculation-status"));
+          move($("fundamentals-link"), $("simple-tools"));
+          move($("converter-open"), $("simple-tools"));
+          for (const key of ["build", "optimize", "spectrum"]) {
+            const method = $(`method-${key}`);
+            move(method, $("simple-methods"));
+            method.hidden = key !== step;
+          }
+          move($("ts-summary"), $("simple-validation"));
+          move($("ts-details"), $("simple-methods"));
+          move($("observations-collection"), $("simple-collection"));
+          move($("data-report"), $("simple-collection"));
+          if ($("active-name").textContent !== "Ergebnis") $("active-name").textContent = "Ergebnis";
+          positionCapture();
+        } else {
+          restore();
+          for (const key of ["build", "optimize", "spectrum"]) $(`method-${key}`).hidden = false;
+        }
+      },
+      resetCapture() { captureTarget = null; positionCapture(); },
+      captureAfter(id) { captureTarget = id; positionCapture(); },
+    };
+  },
+};
