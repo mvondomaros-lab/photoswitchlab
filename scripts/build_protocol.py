@@ -223,22 +223,21 @@ def build(text_based=False):
         )
         table(
             ["Benanntes Atompaar", "Startstruktur / pm", "Minimumstruktur / pm"],
-            [["[Atome und Gruppen]", "[Wert]", "[Wert]"] for _ in range(2)],
+            [["[Atome und Gruppen]", "[Wert]", "[Wert]"]],
             [8, 4.5, 4.5],
         )
-        answer("Auswahl der Atompaare und sterischer Einfluss: [höchstens vier Sätze]")
+        answer("Sterischer Einfluss: [höchstens vier Sätze]")
 
         doc.add_page_break()
         doc.add_heading("Reaktionspfad und Energiebarrieren", 1)
         task("task-analyze-reaction-path")
-        answer("Energiebezug der Pfadstrukturen: [Bezug]")
         table(
-            ["Pfadstruktur", "ΔE / eV", "C–N=N–C / °", "C–N=N / °", "N=N–C / °"],
+            ["Pfadstruktur", "ΔE zum Anfang / eV", "C–N=N–C / °"],
             [
-                [label, "[Wert]", "[Wert]", "[Wert]", "[Wert]"]
-                for label in ["Anfang", "Energiemaximum", "Ende", "[weitere]"]
+                [label, "[Wert]", "[Wert]"]
+                for label in ["Anfang", "Energiemaximum", "Ende"]
             ],
-            [4.2, 3.2, 3.2, 3.2, 3.2],
+            [5, 6, 6],
         )
         table(
             ["Richtung", "ΔE‡ / (kJ/mol)", "ΔE‡ / RT bei 298 K"],
@@ -246,7 +245,7 @@ def build(text_based=False):
             [5, 6, 6],
         )
         answer(
-            "Pfad, Verbindungsprüfung, Geometrie und Barrieren: [höchstens drei Sätze]"
+            "Pfad, Verbindungsprüfung, Barrieren- und RT-Vergleich: [höchstens drei Sätze]"
         )
 
         doc.add_page_break()
@@ -267,11 +266,6 @@ def build(text_based=False):
                 ["trans", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"],
             ],
             [2.8, 3.0, 3.1, 3.8, 4.3],
-        )
-        table(
-            ["Energie / eV", "Absorption cis", "Absorption trans"],
-            [["[Energie]", "[Wert]", "[Wert]"] for _ in range(2)],
-            [5, 6, 6],
         )
         answer("Energiebereich und Grenze der Vorhersage: [höchstens drei Sätze]")
 
@@ -295,9 +289,7 @@ def build(text_based=False):
             [2.0, 2.7, 2.8, 2.7, 3.2, 3.6],
         )
         answer("Kleinstes und größtes ΔEmax: [Derivate und Werte]")
-        answer(
-            "Sichtbare Übergänge der beiden Derivate mit E und f sowie sichtbare Absorptionsbanden: [Werte]"
-        )
+        answer("Sichtbare Übergänge der beiden Derivate mit E und f: [Werte]")
         answer("Trend und Abweichung: [höchstens vier Sätze]")
 
         doc.add_page_break()

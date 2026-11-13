@@ -569,3 +569,13 @@ Both protocols were regenerated. A paragraph-level text comparison against the
 previous binaries shows only the intended changes; the rendered pages 7 (visual)
 and 5, 6, 8 and 9 (text) were inspected without layout defects. All 86 JavaScript
 tests and 196 Python tests passed (21 skipped). No screen-reader test was performed.
+
+### Proportionate accessible deliverables
+
+Following user feedback that sighted tasks must not become more complicated and that
+the course aims at engagement rather than formal equivalence, the accessible
+deliverables were reduced to the scope of the graphical tasks instead: one named
+atom pair in task 4, a three-row path table (relative energy and C–N=N–C dihedral)
+in task 5, no additional absorption-value table in task 6, and no band-position
+list in task 7. The app still shows these data. The graphical tasks and visual
+protocol are unchanged. Rendered text-protocol pages 3–6 were inspected.
