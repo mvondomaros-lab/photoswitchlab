@@ -1285,6 +1285,13 @@ test("spectrum preserves bands and stick strengths with reciprocal wavelength ti
   context.renderSpectrumChart({ energy_ev: [1.5, 3, 5.5], absorption: [0, 1, 0.2],
     excitations_ev: [1, 3, 5, 6], oscillator_strengths: [2, 0.7, 0.1, 3] });
   assert.deepEqual(Array.from(chart.data.datasets[0].data, (p) => p.y), [0, 1, 0.2]);
+  // Dense stored curves are thinned for drawing only, keeping both window edges.
+  const dense = { energy_ev: Array.from({length: 1000}, (_, i) => 1.5 + 4 * i / 999), absorption: Array(1000).fill(0.5) };
+  const drawn = context.curvePoints(dense);
+  assert.ok(drawn.length <= 401 && drawn.length >= 300);
+  assert.equal(drawn[0].x, 1.5);
+  assert.equal(drawn.at(-1).x, dense.energy_ev.at(-1));
+  assert.equal(chart.data.datasets[0].borderJoinStyle, "round");
   assert.deepEqual(Array.from(chart.data.datasets[1].data, (p) => p.y), [0, 0.7, null, 0, 0.1, null]);
   assert.equal(chart.options.scales.x.min, 1.5);
   assert.equal(chart.options.scales.wavelength.max, 5.5);

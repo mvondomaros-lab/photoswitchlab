@@ -790,7 +790,7 @@ function renderSpectrumChart(spec) {
       type: "line",
       data: { datasets: [
         { label: "Verbreiterte Banden", order: 1, data: [], borderColor: plotStyle.primary,
-          borderWidth: plotStyle.curveWidth, pointRadius: 0, tension: 0 },
+          borderWidth: plotStyle.curveWidth, borderJoinStyle: "round", pointRadius: 0, tension: 0 },
         { label: "Diskrete Übergänge", data: [], borderColor: plotStyle.accent,
           borderWidth: plotStyle.stickWidth, backgroundColor: plotStyle.accent,
           pointRadius: (context) => context.dataIndex % 3 === 1 ? 3 : 0,
@@ -800,7 +800,7 @@ function renderSpectrumChart(spec) {
           backgroundColor: plotStyle.selected, borderWidth: 3, pointRadius: [0, 4] },
         // The other configuration of the same derivative, dashed so it does not rely on color.
         { label: "Andere Konfiguration", order: 2, data: [], borderColor: plotStyle.text,
-          borderWidth: plotStyle.curveWidth, borderDash: [7, 5], pointRadius: 0, tension: 0 },
+          borderWidth: plotStyle.curveWidth, borderJoinStyle: "round", borderDash: [7, 5], pointRadius: 0, tension: 0 },
       ] },
       options: {
         locale: "de-DE", color: plotStyle.text, font: plotStyle.font,
@@ -830,13 +830,11 @@ function renderSpectrumChart(spec) {
     $("spectrum-selection-strength").textContent = " abzulesen.";
   }
   spectrumChart.spectrumData = spec;
-  spectrumChart.data.datasets[0].data = spec.energy_ev.map((x, i) => ({ x, y: spec.absorption[i] }));
+  spectrumChart.data.datasets[0].data = curvePoints(spec);
   spectrumChart.data.datasets[1].data = spec.excitations_ev.flatMap((x, i) =>
     x < min || x > max ? [] : [{ x, y: 0 }, { x, y: spec.oscillator_strengths[i] }, { x, y: null }]);
   const partner = spectrumPartner();
-  spectrumChart.data.datasets[3].data = partner
-    ? partner.spectrum.energy_ev.map((x, i) => ({ x, y: partner.spectrum.absorption[i] }))
-    : [];
+  spectrumChart.data.datasets[3].data = partner ? curvePoints(partner.spectrum) : [];
   $("spectrum-key-partner").hidden = !partner;
   if (partner) $("spectrum-key-partner").textContent = `Gestrichelte Kurve: ${structureLabel(partner)}`;
   for (const id of ["x", "wavelength"]) {
@@ -844,6 +842,14 @@ function renderSpectrumChart(spec) {
     spectrumChart.options.scales[id].max = max;
   }
   spectrumChart.update("none");
+}
+// 1000 stored points are narrower than a screen pixel; their miter joins render as a
+// serrated edge. Drawing at most 400 points keeps the smooth bands sharp. Display only:
+// maxima, queries and exports use all stored values.
+function curvePoints(spec, limit = 400) {
+  const step = Math.max(1, Math.ceil(spec.energy_ev.length / limit));
+  return spec.energy_ev.flatMap((x, i) =>
+    i % step === 0 || i === spec.energy_ev.length - 1 ? [{ x, y: spec.absorption[i] }] : []);
 }
 // Chart2Music makes the broadened curves explorable by keyboard, speech and pitch.
 // Accessible mode only: sound in a shared lab room must never start by accident.
