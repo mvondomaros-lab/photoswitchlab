@@ -115,7 +115,7 @@ def test_validation_and_csrf(client):
     assert "no-store" in client.get("/api/session").headers["cache-control"]
     index = client.get("/")
     assert "no-cache" in index.headers["cache-control"]
-    assert "static/app.js?v=ui-99" in index.text
+    assert "static/app.js?v=ui-100" in index.text
     client.cookies.clear()
     assert (
         client.post("/api/jobs", headers=HEADERS, json={"kind": "template"}).status_code

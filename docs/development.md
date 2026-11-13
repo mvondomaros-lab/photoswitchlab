@@ -79,11 +79,17 @@ broadened spectrum, matching the graphical task quantity, with flat, tied and
 boundary cases identified. The same-energy probe automatically compares both
 configurations of a uniquely matching pair at an energy chosen by the student.
 Interpolation and color estimation use the full broadened data, not just the
-five displayed transitions. Local curve maxima and visible-range coverage remain
+five displayed transitions. Every automatically paired spectrum keeps its own
+coverage warning and observation window. A probe outside one window explains
+that source-specific gap while retaining values available for the other source. Local curve maxima and visible-range coverage remain
 in additional spectral data; plateau locations are intervals of stored samples,
 and edge values are not described as inner peaks.
 
-Solution-color words and the graphical swatch use the same color calculation.
+In accessible mode, solution color, weighted transmission and color distance
+are voluntary supplements in the existing additional-spectral-data disclosure,
+not primary result or required protocol columns. HTML exports mark this same
+section as optional. Solution-color words and the graphical swatch use the same
+color calculation.
 Near-white transmission is described as nearly colorless. The result states once
 that its fixed absorbance scale has no specified concentration or path length.
 Color-space details belong to optional methods. Atom/bond exploration, named
@@ -101,7 +107,11 @@ accessible app and `scripts/build_protocol.py --text`. Both task routes apply
 course filtering. Preserve the graphical tasks and `protokollvorlage.docx` when
 adjusting the accessible workflow. The text protocol requires selected numeric
 evidence and student interpretation, without requiring report or raw-data
-exports. Build it using the document-authoring runtime and render and inspect
+exports. Required spectral tasks use transition energies/strengths, curve maxima,
+same-energy absorption and student interpretation. The group comparison of the
+free derivatives uses one photon energy chosen by the group and available for
+all investigated pairs; the app does not choose or rank them. Color-related
+quantities are introduced once as optional extensions. Build the protocol using the document-authoring runtime and render and inspect
 every page. Both protocol downloads are available in the Marburg course. No voice
 service or generative model is required.
 

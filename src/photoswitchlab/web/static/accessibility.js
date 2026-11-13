@@ -184,12 +184,12 @@ globalThis.AccessibleData = {
     return sections.map(({title, paragraphs = [], rows = [], columns, optional = false}) => {
       const body =
       paragraphs.map((p) => `<p>${escape(p)}</p>`).join("") +
-      (rows.length ? `<div class="table-scroll" tabindex="0" role="region" aria-label="${escape(title)}"><table><caption>${escape(title)}</caption><thead><tr>${(columns || ["Größe oder Angabe", "Wert"]).map((label) => `<th scope="col">${escape(label)}</th>`).join("")}</tr></thead><tbody>` + rows.map((row) => `<tr>${row.map((value, index) => index ? `<td>${escape(value)}</td>` : `<th scope="row">${escape(value)}</th>`).join("")}</tr>`).join("") + "</tbody></table></div>" : "");
+      (rows.length ? `<div class="table-scroll" tabindex="0" role="region" aria-label="${escape(title)}"><table><caption class="sr-only">${escape(title)}</caption><thead><tr>${(columns || ["Größe oder Angabe", "Wert"]).map((label) => `<th scope="col">${escape(label)}</th>`).join("")}</tr></thead><tbody>` + rows.map((row) => `<tr>${row.map((value, index) => index ? `<td>${escape(value)}</td>` : `<th scope="row">${escape(value)}</th>`).join("")}</tr>`).join("") + "</tbody></table></div>" : "");
       return optional ? `<details><summary>${escape(title)}</summary>${body}</details>` : `<section><h3>${escape(title)}</h3>${body}</section>`;
     }).join("");
   },
   report(sections) {
-    return `<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PhotoSwitchLab Ergebnisbericht</title><style>body{font:1rem/1.6 system-ui,sans-serif;max-width:90ch;margin:2rem auto;padding:0 1rem;color:#192d43;background:white}h1,h2,h3{line-height:1.3}section{margin:2rem 0}.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%}caption{text-align:left;font-weight:600}th,td{border:1px solid #b8c4d0;padding:.5rem;text-align:left;overflow-wrap:anywhere}thead{background:#edf2f7}@media(max-width:400px){th,td{padding:.3rem}}@media print{body{max-width:none;margin:0}}</style><main><h1>PhotoSwitchLab Ergebnisbericht</h1><p>Aktuelle Rechenergebnisse und zugehörige Vergleiche. Wissenschaftliche Deutungen ergänzen Sie selbst im Protokoll.</p>${this.reportBody(sections)}</main></html>`;
+    return `<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PhotoSwitchLab Ergebnisbericht</title><style>body{font:1rem/1.6 system-ui,sans-serif;max-width:90ch;margin:2rem auto;padding:0 1rem;color:#192d43;background:white}h1,h2,h3{line-height:1.3}section{margin:2rem 0}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%}caption{text-align:left;font-weight:600}th,td{border:1px solid #b8c4d0;padding:.5rem;text-align:left;overflow-wrap:anywhere}thead{background:#edf2f7}@media(max-width:400px){th,td{padding:.3rem}}@media print{body{max-width:none;margin:0}}</style><main><h1>PhotoSwitchLab Ergebnisbericht</h1><p>Aktuelle Rechenergebnisse und zugehörige Vergleiche. Wissenschaftliche Deutungen ergänzen Sie selbst im Protokoll.</p>${this.reportBody(sections)}</main></html>`;
   },
   csv(rows) {
     return rows.map((row) => row.map((value) => {
@@ -235,7 +235,7 @@ globalThis.AccessibilityView = {
     preference.onchange = graphicPreference.onchange = changePreference;
     let moleculeKey = null, graphKey = null, pointIndex = null, points = [], path = false;
     let positions = [], graph = [], csvRows = [], tableSignature = "", selectorSignature = "";
-    let curveQuery = null, measurementSelected = false, reportSections = [], querySections = [], measurementSections = [], methodSections = [];
+    let curveQuery = null, measurementSelected = false, reportSections = [], querySections = [], measurementSections = [], methodSections = [], colorSections = [];
     let colorComparisonRecord = null;
     const rendered = new Map();
     function display(id, sections) {
@@ -258,6 +258,9 @@ globalThis.AccessibilityView = {
     const kind = (m) => ({initial: "Startstruktur", minimum: "Minimumstruktur", ts: "Übergangsstruktur", unconverged: "Optimierung nicht abgeschlossen"})[m.kind] || m.kind;
     const recordLabel = (m) => `${identity(m)} · ${kind(m)}`;
     const source = (m) => context.state.molecules.find((other) => other.id === m.parent_id);
+    const windowText = (m) => `${fmt(m.spectrum?.energy_ev?.[0])} bis ${fmt(m.spectrum?.energy_ev?.at(-1))} eV`;
+    const coverageWarning = (m) => m.spectrum?.coverage_complete === false
+      ? `${recordLabel(m)}: Am oberen Rand des Beobachtungsfensters fehlen möglicherweise Beiträge weiterer Übergänge; die relative Absorption kann dort unterschätzt werden.` : null;
     const geometryRows = (m) => [identity(m), kind(m), fmt(m.properties?.energy_ev), fmt(m.properties?.dihedral_deg, 1), fmt(m.properties?.ring_distance_pm, 1)];
     const geometryColumns = ["Struktur", "Strukturart", "E / eV", "C–N=N–C / °", "Ringabstand / pm"];
     const maximumText = (spectrum) => {
@@ -297,21 +300,25 @@ globalThis.AccessibilityView = {
       this.announce($("accessible-point").textContent || "Gespeicherte Struktur ausgewählt.");
     };
     function updateQuery() {
-      const m = context.current(), spectrum = m?.spectrum;
+      const m = context.current();
       querySections = [];
       if (!curveQuery) { display("curve-value", []); return; }
-      const energy = curveQuery.energy, value = energy == null ? null : data.absorption(spectrum, energy);
-      if (energy == null || value == null) {
-        display("curve-value", [{title: "Absorptionsabfrage", paragraphs: [energy == null ? "Geben Sie eine Zahl mit Dezimalkomma oder Dezimalpunkt ein, zum Beispiel 3,5."
-          : `Geben Sie eine Energie zwischen ${fmt(spectrum?.energy_ev?.[0])} und ${fmt(spectrum?.energy_ev?.at(-1))} eV ein.`]}]);
+      const energy = curveQuery.energy;
+      if (energy == null) {
+        display("curve-value", [{title: "Absorptionsabfrage", paragraphs: ["Geben Sie eine Zahl mit Dezimalkomma oder Dezimalpunkt ein, zum Beispiel 3,5."]}]);
         return;
       }
       const partner = data.partner(m, context.state.molecules, true);
-      const partners = [m, ...(partner ? [partner] : [])].sort((a, b) => a.settings.configuration.localeCompare(b.settings.configuration));
-      querySections = [{title: `Relative Absorption bei ${fmt(energy)} eV (${fmt(1239.8419843320026 / energy, 1)} nm)`,
-        paragraphs: ["Werte der verbreiterten Spektren bei derselben Energie.", ...(!partner ? ["Kein eindeutig zuordenbares cis/trans-Paar mit abgeschlossenen Minimumsuchen und Spektren gespeichert."] : [])],
-        columns: ["Struktur", "Konfiguration", "Relative Absorption"], rows: partners.map((other) => [recordLabel(other), other.settings?.configuration || "nicht angegeben", fmt(data.absorption(other.spectrum, energy))])}];
-      display("curve-value", querySections);
+      const partners = [m, ...(partner ? [partner] : [])].sort((a, b) => (a.settings?.configuration || "").localeCompare(b.settings?.configuration || ""));
+      const values = partners.map((other) => data.absorption(other.spectrum, energy));
+      const unavailable = partners.flatMap((other, index) => values[index] == null
+        ? [`${recordLabel(other)}: Bei ${fmt(energy)} eV ist kein Kurvenwert verfügbar. Das Beobachtungsfenster reicht von ${windowText(other)}.`] : []);
+      const sections = [{title: values.some((value) => value != null) ? `Relative Absorption bei ${fmt(energy)} eV (${fmt(1239.8419843320026 / energy, 1)} nm)` : "Absorptionsabfrage",
+        paragraphs: ["Werte der verbreiterten Spektren bei derselben Energie.", ...unavailable, ...(!partner ? ["Kein eindeutig zuordenbares cis/trans-Paar mit abgeschlossenen Minimumsuchen und Spektren gespeichert."] : [])],
+        columns: ["Struktur", "Konfiguration", "Relative Absorption"], rows: values.some((value) => value != null)
+          ? partners.map((other, index) => [recordLabel(other), other.settings?.configuration || "nicht angegeben", fmt(values[index])]) : []}];
+      if (values.some((value) => value != null)) querySections = sections;
+      display("curve-value", sections);
     }
     $("curve-query").onclick = () => {
       curveQuery = {energy: data.decimal($("curve-energy").value)};
@@ -319,7 +326,7 @@ globalThis.AccessibilityView = {
     };
     $("data-report").onclick = () => {
       this.render();
-      if (reportSections.length) context.download(data.report([...reportSections, ...querySections, ...measurementSections, ...methodSections]), context.filename("html"), "text/html;charset=utf-8");
+      if (reportSections.length) context.download(data.report([...reportSections, ...querySections, ...measurementSections, ...colorSections, ...methodSections]), context.filename("html"), "text/html;charset=utf-8");
     };
     $("data-json").onclick = () => context.download(JSON.stringify({molecule: context.current(), displayed_record: points[pointIndex] || null,
       optimization_records: context.records(), color_comparison: colorComparisonRecord}, null, 2), context.filename("json"), "application/json");
@@ -339,7 +346,7 @@ globalThis.AccessibilityView = {
       $("data-report").disabled = !m;
       if (!m) {
         $("simple-structure-figure").hidden = true;
-        reportSections = querySections = measurementSections = methodSections = [];
+        reportSections = querySections = measurementSections = methodSections = colorSections = [];
         csvRows = [];
         moleculeKey = graphKey = null;
         return;
@@ -436,6 +443,7 @@ globalThis.AccessibilityView = {
       setText("accessible-point", selected ? `${path ? "Pfadstruktur" : "Rechenschritt"} ${path ? pointIndex + 1 : selected.step}: E = ${fmt(selected.energy_ev)} eV; ΔE = ${fmt(selected.energy_ev - points[0].energy_ev)} eV. ${azoAngles}` : "");
       $("accessible-spectrum").hidden = step !== "spectrum" || !spectrum;
       colorComparisonRecord = null;
+      colorSections = [];
       if (step === "spectrum" && spectrum) {
         const overview = data.describeCurve(spectrum), transitions = data.strongestTransitions(spectrum), color = SolutionColor.estimate(spectrum);
         const transitionRows = transitions.map((transition) => [transition.index, fmt(transition.energy), fmt(1239.8419843320026 / transition.energy, 1), strength(transition.strength)]);
@@ -451,24 +459,30 @@ globalThis.AccessibilityView = {
           ...(strongestVisible && !transitions.some((transition) => transition.index === strongestVisible.index + 1) ? [`Stärkster weiterer Übergang im sichtbaren Bereich: ${fmt(strongestVisible.energy)} eV (${fmt(1239.8419843320026 / strongestVisible.energy, 1)} nm), f = ${strength(strongestVisible.strength)}.`] : [])],
           columns: ["Übergang", "E / eV", "λ / nm", "Oszillatorstärke f"], rows: transitionRows});
         reportSections.push({title: "UV/Vis-Spektrum", paragraphs: [maximumText(spectrum), overview.coverage, spectralNote]});
-        reportSections.push({title: "Geschätzte Lösungsfarbe", paragraphs: [color ? `${data.color(color.rgb)}. Gewichtete Lichtdurchlässigkeit: ${fmt(100 * color.luminance, 1)} %. Feste Absorbanzskalierung, keiner bestimmten Konzentration oder Schichtdicke zugeordnet.`
-          : "Keine Farbschätzung verfügbar: Das Spektrum ist unvollständig oder enthält keine auswertbaren Absorptionsdaten."]});
         const partner = data.partner(m, context.state.molecules, true);
+        const paired = [m, ...(partner ? [partner] : [])].sort((a, b) => (a.settings?.configuration || "").localeCompare(b.settings?.configuration || ""));
         if (partner) {
-          const paired = [m, partner].sort((a, b) => a.settings.configuration.localeCompare(b.settings.configuration));
-          reportSections.push({title: "Zugehöriges cis/trans-Paar", columns: ["Struktur", "Konfiguration", "Emax / eV", "Lösungsfarbe", "Lichtdurchlässigkeit / %"],
-            rows: paired.map((other) => { const result = SolutionColor.estimate(other.spectrum); return [identity(other), other.settings.configuration, fmt(data.curveMaximum(other.spectrum)?.energy), result ? data.color(result.rgb) : "nicht verfügbar", result ? fmt(100 * result.luminance, 1) : "nicht verfügbar"]; })});
-          const second = SolutionColor.estimate(partner.spectrum), distance = color && second ? data.colorDistance(color.rgb, second.rgb) : null;
-          if (distance != null) {
-            colorComparisonRecord = {first_id: m.id, second_id: partner.id, first_rgb: color.rgb, second_rgb: second.rgb, cie76_distance: distance, reference_white: "D65", gamut: "clipped_sRGB", color_assumption: "fixed_absorbance_scale_no_concentration_or_path_length"};
-            reportSections.push({title: "cis/trans-Farbabstand", paragraphs: [`Farbabstand der berechneten Farben: ${fmt(distance, 1)}. Größere Werte bedeuten größere Modellabstände, keine proportional empfundenen Unterschiede.`]});
-          }
+          const differentWindow = spectrum.energy_ev[0] !== partner.spectrum.energy_ev[0] || spectrum.energy_ev.at(-1) !== partner.spectrum.energy_ev.at(-1);
+          reportSections.push({title: "Zugehöriges cis/trans-Paar", paragraphs: [coverageWarning(partner), ...(differentWindow ? [`${recordLabel(partner)}: Beobachtungsfenster ${windowText(partner)}.`] : [])].filter(Boolean),
+            columns: ["Struktur", "Konfiguration", "Emax / eV"],
+            rows: paired.map((other) => [identity(other), other.settings.configuration, fmt(data.curveMaximum(other.spectrum)?.energy)])});
         } else reportSections.push({title: "cis/trans-Vergleich", paragraphs: ["Kein eindeutig zuordenbares cis/trans-Paar mit abgeschlossenen Minimumsuchen und Spektren gespeichert. Berechnen Sie beide Konfigurationen desselben Substitutionsmusters."]});
+        const second = partner && SolutionColor.estimate(partner.spectrum), distance = color && second ? data.colorDistance(color.rgb, second.rgb) : null;
+        if (distance != null) colorComparisonRecord = {first_id: m.id, second_id: partner.id, first_rgb: color.rgb, second_rgb: second.rgb, cie76_distance: distance, reference_white: "D65", gamut: "clipped_sRGB", color_assumption: "fixed_absorbance_scale_no_concentration_or_path_length"};
+        colorSections = [{title: "Freiwillige Farbauswertung", optional: true,
+          paragraphs: ["Diese Schätzung ergänzt die elektronischen Übergänge und Absorptionswerte.",
+            "Feste Absorbanzskalierung, keiner bestimmten Konzentration oder Schichtdicke zugeordnet.",
+            ...(distance != null ? [`cis/trans-Farbabstand: ${fmt(distance, 1)}. ${data.outputMethods[1]}`] : [])],
+          columns: ["Struktur", "Konfiguration", "Geschätzte Lösungsfarbe", "Gewichtete Lichtdurchlässigkeit / %"],
+          rows: paired.map((other) => { const result = SolutionColor.estimate(other.spectrum); return [identity(other), other.settings?.configuration || "nicht angegeben", result ? data.color(result.rgb) : "nicht verfügbar: unvollständige oder nicht auswertbare Spektraldaten", result ? fmt(100 * result.luminance, 1) : "nicht verfügbar"]; })}];
+
       }
       const sources = [m, source(m), data.partner(m, context.state.molecules, step === "spectrum")].filter(Boolean);
       methodSections = [{title: "Weitere Angaben zum Ergebnis", optional: true,
-        paragraphs: [...(step === "spectrum" && spectrum ? [data.outputMethods[0], ...(colorComparisonRecord ? [data.outputMethods[1]] : [])] : [])],
+        paragraphs: [...(step === "spectrum" && spectrum ? [data.outputMethods[0]] : [])],
         columns: ["Struktur", "Gespeicherte Kennung"], rows: sources.map((other) => [recordLabel(other), other.id])}];
+      // The surrounding spectral-data disclosure already makes this section optional.
+      display("optional-color-data", colorSections.map((section) => ({...section, optional: false})));
       display("accessible-context", methodSections);
       display("result-report-content", reportSections);
       updateQuery();

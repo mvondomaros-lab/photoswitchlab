@@ -24,8 +24,8 @@ document their own choices.
     <script src="static/vendor/cie-color.js?v=1" defer></script>
     <script src="static/solution-color.js?v=1" defer></script>
     <script src="static/presentation.js?v=3" defer></script>
-    <script src="static/accessibility.js?v=8" defer></script>
-    <script src="static/app.js?v=ui-99" defer></script>
+    <script src="static/accessibility.js?v=9" defer></script>
+    <script src="static/app.js?v=ui-100" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
@@ -466,6 +466,7 @@ document their own choices.
                             <ul id="spectrum-all-band-list"></ul>
                             <p id="spectrum-all-band-note" class="note"></p>
                             <p class="note">Maxima werden an den gespeicherten Kurvenpunkten bestimmt; gleich hohe benachbarte Punkte erscheinen als Intervall. Randwerte sind keine inneren Bandenmaxima.</p>
+                            <div id="optional-color-data"></div>
                         </details>
                     </section>
                 </div>
@@ -691,11 +692,7 @@ document their own choices.
         </button>
     </div>
     <div id="converter-content">
-    <p>
-        Die Energie E eines Photons und seine Wellenlänge λ hängen über E = hc / λ
-        zusammen. Dabei ist h die Planck-Konstante und c die Lichtgeschwindigkeit
-        im Vakuum. 1,0000 eV pro Molekül entspricht etwa 96,49 kJ/mol.
-    </p>
+    <p>Geben Sie einen Wert ein; die beiden anderen Werte werden automatisch umgerechnet.</p>
     <div class="conversion-fields">
         <label
         >Energie / eV<input
@@ -711,13 +708,7 @@ document their own choices.
     /></label>
     </div>
     <p id="conversion-status" role="status"></p>
-    <p class="note">
-        Für Energiedifferenzen sind auch negative Werte möglich. Eine
-        Wellenlänge wird nur für positive Energien angegeben. Eine Energiedifferenz
-        zwischen cis und trans oder eine Energiebarriere ist keine elektronische
-        Anregungsenergie; die daraus umgerechnete Wellenlänge lässt daher keine Aussage
-        über das Absorptionsspektrum des Moleküls zu.
-    </p>
+    <p class="note">Für Energiedifferenzen sind negative Werte möglich. Wellenlängen werden nur für positive Energien berechnet. Aus cis/trans-Energiedifferenzen oder elektronischen Energiebarrieren lässt sich keine Absorptionswellenlänge ableiten.</p>
     </div>
 </dialog>
 <div id="energy-help" class="property-help" popover role="dialog"

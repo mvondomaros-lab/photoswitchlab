@@ -83,6 +83,23 @@ def test_autonomous_accessible_tasks_are_shared_with_text_protocol_and_course_fi
     assert "Emax bezeichnet" in source
     assert "gemerkten" not in document_text
     assert "zusätzlich speichern" in document_text
+    for task_id, task in tasks:
+        if task_id in {
+            "task-compare-isomer-spectra",
+            "task-compare-substituent-spectra",
+            "task-compare-substituent-series",
+            "task-plan-experiment-series",
+        }:
+            assert "Farb" not in task
+            assert "Lichtdurchlässigkeit" not in task
+    assert "Diese Angaben gehören nicht zu den Pflichtabgaben" in document_text
+    table_text = " ".join(
+        "".join(table.itertext()) for table in tree.findall(".//w:tbl", ns)
+    )
+    assert "Farb" not in table_text
+    assert "Lichtdurchlässigkeit" not in table_text
+    assert "Gemeinsame Photonenenergie" in table_text
+    assert "Absorption cis" in table_text and "Absorption trans" in table_text
     with TestClient(create_app(course="marburg")) as client:
         course_response = client.get("/static/guide-accessible.html")
     assert course_response.status_code == 200

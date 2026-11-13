@@ -196,13 +196,61 @@ test("invalid and out-of-range probes show clear messages and do not export stal
   lab.view.render();
   lab.node("curve-energy").value = "1,8";
   lab.node("curve-query").onclick();
-  for (const [value, expected] of [["0,3", "zwischen 1,0000 und 2,0000"], ["1,5.1", "Dezimalkomma oder Dezimalpunkt"]]) {
+  for (const [value, expected] of [["0,3", "von 1,0000 bis 2,0000"], ["1,5.1", "Dezimalkomma oder Dezimalpunkt"]]) {
     lab.node("curve-energy").value = value;
     lab.node("curve-query").onclick();
     assert.ok(lab.node("curve-value").innerHTML.includes(expected));
     lab.node("data-report").onclick();
     assert.ok(!lab.exported().content.includes("1,8000 eV ("));
   }
+});
+
+test("paired spectra retain source-specific coverage warnings and explain unavailable samples without dropping valid ones", () => {
+  const lab = accessibleLab("?text=1");
+  lab.molecule.name = "cis-Azobenzol";
+  lab.molecule.spectrum = {...lab.molecule.spectrum, energy_ev: [1, 2, 3], absorption: [0, 1, 0], coverage_complete: true};
+  const partner = lab.state.molecules[1];
+  partner.name = "trans-Azobenzol";
+  partner.spectrum = {...partner.spectrum, energy_ev: [2, 3, 4], absorption: [0, 2, 0], coverage_complete: false};
+  lab.view.render();
+  const main = lab.node("result-report-content").innerHTML;
+  assert.ok(main.includes("trans-Azobenzol · Minimumstruktur: Am oberen Rand des Beobachtungsfensters"));
+  assert.ok(main.includes("trans-Azobenzol · Minimumstruktur: Beobachtungsfenster 2,0000 bis 4,0000 eV"));
+  assert.ok(!main.includes("cis-Azobenzol · Minimumstruktur: Am oberen Rand"));
+  lab.node("curve-energy").value = "1,5";
+  lab.node("curve-query").onclick();
+  let probe = lab.node("curve-value").innerHTML;
+  assert.ok(probe.includes("trans-Azobenzol · Minimumstruktur: Bei 1,5000 eV ist kein Kurvenwert verfügbar"));
+  assert.ok(probe.includes("von 2,0000 bis 4,0000 eV"));
+  assert.ok(probe.includes("0,5000")); // cis remains valid.
+  // A value outside the selected spectrum can still be available in its partner.
+  lab.node("curve-energy").value = "3,5";
+  lab.node("curve-query").onclick();
+  probe = lab.node("curve-value").innerHTML;
+  assert.ok(probe.includes("cis-Azobenzol · Minimumstruktur: Bei 3,5000 eV ist kein Kurvenwert verfügbar"));
+  assert.ok(probe.includes("1,0000</td>")); // trans remains available despite incomplete high-edge coverage.
+  lab.node("data-report").onclick();
+  assert.ok(lab.exported().content.includes(probe));
+  assert.ok(lab.exported().content.includes("trans-Azobenzol · Minimumstruktur: Am oberen Rand"));
+});
+
+test("color analysis is an optional supplement and tables keep one visible title plus an accessible caption", () => {
+  const lab = accessibleLab("?text=1");
+  lab.view.render();
+  const main = lab.node("result-report-content").innerHTML;
+  for (const optionalQuantity of ["Lösungsfarbe", "Lichtdurchlässigkeit", "Farbabstand"]) assert.ok(!main.includes(optionalQuantity));
+  const colors = lab.node("optional-color-data").innerHTML;
+  assert.ok(colors.includes("Freiwillige Farbauswertung"));
+  assert.ok(colors.includes("Lichtdurchlässigkeit"));
+  assert.ok(!colors.includes("<details>")); // Reuses the existing spectral-data disclosure.
+  lab.node("data-report").onclick();
+  const exported = lab.exported().content;
+  assert.ok(exported.includes("<details><summary>Freiwillige Farbauswertung</summary>"));
+  assert.ok(exported.includes(".sr-only{position:absolute"));
+  const body = data.reportBody([{title: "Testtabelle", columns: ["Struktur", "Wert"], rows: [["cis", "1"]]}]);
+  assert.equal((body.match(/<h3>Testtabelle<\/h3>/g) || []).length, 1);
+  assert.ok(body.includes('<caption class="sr-only">Testtabelle</caption>'));
+  assert.ok(!body.includes("<caption>"));
 });
 
 test("automatic matching accepts all eight independent ring orientations and never crosses derivatives", () => {

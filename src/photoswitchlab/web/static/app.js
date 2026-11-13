@@ -1464,7 +1464,7 @@ async function guide(step, focus = true) {
   const request = ++guideRequest;
   if (loadedGuide !== source) {
     if (!guideCache.has(source)) {
-      const response = await fetch(`static/${source}?v=ui-76`);
+      const response = await fetch(`static/${source}?v=ui-77`);
       if (!response.ok) throw new Error("Aufgaben konnten nicht geladen werden. Öffnen Sie die Aufgaben erneut.");
       guideCache.set(source, await response.text());
     }
