@@ -685,14 +685,17 @@ test("sonification series share one coarse energy grid within the common window"
   assert.deepEqual(data.sonificationSeries([{name: "x", spectrum: {energy_ev: [1], absorption: [1]}}]), []);
 });
 
-test("close contacts skip atoms within three bonds and list the shortest remaining pairs", () => {
-  // Chain 1–2–3–4–5 folded so that atom 1 and atom 5 come close; atom 6 is unbound.
-  const bonded = (number, ...others) => ({number, element: "C", neighbors: others.map((other) => ({number: other, bond_order: 1}))});
-  const graph = [bonded(1, 2), bonded(2, 1, 3), bonded(3, 2, 4), bonded(4, 3, 5), bonded(5, 4), bonded(6)];
-  const positions = [0, 0, 0, 1.5, 0, 0, 2, 1.4, 0, 1.5, 2.8, 0, 0, 2, 0, 10, 0, 0];
-  const contacts = data.closeContacts(graph, positions, 2);
-  assert.deepEqual([contacts[0].first, contacts[0].second], [0, 4]);
-  assert.equal(Math.round(contacts[0].distance), 200);
-  assert.ok(contacts.every((contact) => !(contact.first === 0 && contact.second === 3)));
-  assert.ok(data.closeContacts(graph, positions, 20).every(({first, second}) => second - first > 3 || first === 5 || second === 5));
+test("close contacts pair atoms across both molecule halves and skip atoms within three bonds", () => {
+  // C1–N=N–C1′ with one substituent atom O on each ring position C2 and C2′.
+  const atom = (number, element, position, ...others) => ({number, element, position, neighbors: others.map((other) => ({number: other, bond_order: 1}))});
+  const graph = [atom(1, "C", "C1", 2, 5), atom(2, "N", undefined, 1, 3), atom(3, "N", undefined, 2, 4), atom(4, "C", "C1′", 3, 6),
+    atom(5, "C", "C2", 1, 7), atom(6, "C", "C2′", 4, 8), atom(7, "O", undefined, 5), atom(8, "O", undefined, 6)];
+  const positions = [0, 0, 0, 1.4, 0, 0, 2, 1, 0, 3.4, 1, 0, -0.7, 1.2, 0, 4, 2.2, 0, 0, 2.4, 0, 2.2, 2.6, 0];
+  const contacts = data.closeContacts(graph, positions, 20);
+  const pairs = contacts.map((contact) => `${contact.first + 1}-${contact.second + 1}`);
+  assert.ok(!pairs.includes("1-5") && !pairs.includes("5-7"), "same half");
+  assert.ok(!pairs.includes("1-4") && !pairs.includes("2-4") && !pairs.includes("1-3"), "within three bonds");
+  assert.ok(pairs.includes("3-7") && pairs.includes("7-8"));
+  assert.deepEqual(contacts.map((contact) => contact.distance), [...contacts.map((contact) => contact.distance)].sort((a, b) => a - b));
+  assert.equal(data.closeContacts(graph, positions, 2).length, 2);
 });
