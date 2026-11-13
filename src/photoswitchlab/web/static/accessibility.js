@@ -1,5 +1,65 @@
 /* Shared result data for visual and nonvisual exploration. No network services. */
 "use strict";
+/* Display precision never changes stored values or scientific decisions. */
+globalThis.ScientificDisplay = {
+  note: "Die Anzeige ist gerundet; Berechnungen und Rohdaten behalten die ungerundeten Werte. Absolute elektronische Energien haben bis zu vier Nachkommastellen, damit Sie Energiedifferenzen bestimmen können. Nahe Vergleichswerte können zusätzliche Stellen erhalten.",
+  fixed(value, digits = 2) {
+    if (!Number.isFinite(value)) return "nicht verfügbar";
+    const rounded = Number(value.toFixed(digits));
+    return (rounded === 0 ? 0 : rounded).toLocaleString("de-DE", {useGrouping: false, maximumFractionDigits: digits});
+  },
+  significant(value, digits = 2) {
+    if (!Number.isFinite(value)) return "nicht verfügbar";
+    if (value === 0) return "0";
+    const rounded = Number(value.toPrecision(digits));
+    if (Math.abs(rounded) >= 0.001 && Math.abs(rounded) < 100000) return rounded.toLocaleString("de-DE", {useGrouping: false, maximumSignificantDigits: digits});
+    const [mantissa, exponent] = value.toExponential(digits - 1).split("e");
+    const power = String(Number(exponent)).replace(/[-0-9]/g, (character) => "⁻⁰¹²³⁴⁵⁶⁷⁸⁹"["-0123456789".indexOf(character)]);
+    return `${Number(mantissa).toLocaleString("de-DE", {useGrouping: false, maximumSignificantDigits: digits})} × 10${power}`;
+  },
+  compare(values, kind = "energy") {
+    const format = kind === "energy" ? this.fixed.bind(this) : this.significant.bind(this);
+    return values.map((value) => {
+      if (!Number.isFinite(value)) return "nicht verfügbar";
+      let digits = 2;
+      const collides = () => values.some((other) => Number.isFinite(other) && other !== value && format(other, digits) === format(value, digits));
+      while (digits < 4 && collides()) digits++;
+      return format(value, digits) + (collides() ? " (gerundet gleich)" : "");
+    });
+  },
+  percent(value) {
+    if (!Number.isFinite(value)) return "nicht verfügbar";
+    const text = this.fixed(value, 1);
+    if (value > 0 && value < 100 && text === "0") return "<0,1";
+    if (value > 0 && value < 100 && text === "100") return ">99,9";
+    return text;
+  },
+  frequency(value) {
+    if (!Number.isFinite(value)) return "nicht verfügbar";
+    const magnitude = Math.abs(value);
+    if (Math.round(magnitude) === 20 && magnitude !== 20) return magnitude < 20 ? "knapp unter 20" : "knapp über 20";
+    return this.fixed(magnitude, 0);
+  },
+  converter(value) {
+    return Number.isFinite(value) ? (value === 0 ? 0 : value).toLocaleString("de-DE", {useGrouping: false, maximumSignificantDigits: 4}) : "";
+  },
+  spoken(text) {
+    return String(text).replace(/(-?\d+(?:,\d+)?) × 10([⁻⁰¹²³⁴⁵⁶⁷⁸⁹]+)/g, (_match, coefficient, power) => {
+      const exponent = power.replace(/[⁻⁰¹²³⁴⁵⁶⁷⁸⁹]/g, (character) => "-0123456789"["⁻⁰¹²³⁴⁵⁶⁷⁸⁹".indexOf(character)]);
+      return `${coefficient.replace(/^-/, "minus ")} mal zehn hoch ${exponent.replace(/^-/, "minus ")}`;
+    });
+  },
+  html(text) {
+    const escaped = String(text ?? "").replace(/[&<>"']/g, (character) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"})[character]);
+    return escaped.replace(/-?\d+(?:,\d+)? × 10[⁻⁰¹²³⁴⁵⁶⁷⁸⁹]+/g, (value) => `<span role="math" aria-label="${this.spoken(value)}">${value}</span>`);
+  },
+  setText(element, text) {
+    if (element.textContent === text) return;
+    element.textContent = text;
+    if (this.spoken(text) !== text) element.innerHTML = this.html(text);
+  },
+};
+
 globalThis.AccessibleData = {
   decimal(text) {
     const value = String(text).trim();
@@ -34,8 +94,7 @@ globalThis.AccessibleData = {
     const low = spectrum.energy_ev[0], high = spectrum.energy_ev.at(-1);
     return (spectrum.excitations_ev || []).map((energy, index) => ({index: index + 1, energy, strength: spectrum.oscillator_strengths?.[index]}))
       .filter(({energy, strength}) => Number.isFinite(energy) && energy >= low && energy <= high && Number.isFinite(strength) && strength > 0)
-      .sort((a, b) => b.strength - a.strength || a.index - b.index).slice(0, count)
-      .sort((a, b) => a.energy - b.energy || a.index - b.index);
+      .sort((a, b) => b.strength - a.strength || a.energy - b.energy || a.index - b.index).slice(0, count);
   },
   curveMaximum(spectrum) {
     const curve = this.curveOverview(spectrum);
@@ -98,17 +157,17 @@ globalThis.AccessibleData = {
   describeCurve(spectrum) {
     const curve = this.curveOverview(spectrum);
     if (!curve) return {summary: "Für die Bandenübersicht fehlen gültige Kurvenwerte.", coverage: "", bands: [], allBands: [], note: ""};
-    const fmt = (value, digits) => value.toLocaleString("de-DE", {minimumFractionDigits: digits, maximumFractionDigits: digits});
-    const height = (value) => value.toLocaleString("de-DE", {maximumSignificantDigits: 3});
+    const fmt = (value, digits = 2) => ScientificDisplay.fixed(value, digits);
+    const height = (value) => ScientificDisplay.significant(value, 2);
     const coverage = curve.visible.coverage === "full" ? "Sichtbarer Bereich (380–780 nm): vollständig abgedeckt."
       : curve.visible.coverage === "none" ? "Der sichtbare Bereich (380–780 nm) liegt außerhalb des berechneten Energiebereichs."
-      : `Sichtbarer Bereich (380–780 nm): nur von ${fmt(1239.8419843320026 / curve.visible.high, 1)} bis ${fmt(1239.8419843320026 / curve.visible.low, 1)} nm abgedeckt.`;
+      : `Sichtbarer Bereich (380–780 nm): nur von ${fmt(1239.8419843320026 / curve.visible.high, 0)} bis ${fmt(1239.8419843320026 / curve.visible.low, 0)} nm abgedeckt.`;
     const inVisible = curve.peaks.filter((peak) => peak.visible), elsewhere = curve.peaks.filter((peak) => !peak.visible);
     const select = (peaks, count) => [...peaks].sort((a, b) => b.height - a.height).slice(0, count).sort((a, b) => a.low - b.low);
     const selected = [...select(inVisible, 4), ...select(elsewhere, 2)];
     const describePeak = (peak) => {
-      const range = peak.first === peak.last ? `${fmt(peak.low, 4)} eV (${fmt(1239.8419843320026 / peak.low, 1)} nm)`
-        : `${fmt(peak.low, 4)}–${fmt(peak.high, 4)} eV (${fmt(1239.8419843320026 / peak.high, 1)}–${fmt(1239.8419843320026 / peak.low, 1)} nm), Plateau`;
+      const range = peak.first === peak.last ? `${fmt(peak.low, 2)} eV (${fmt(1239.8419843320026 / peak.low, 0)} nm)`
+        : `${fmt(peak.low, 2)}–${fmt(peak.high, 2)} eV (${fmt(1239.8419843320026 / peak.high, 0)}–${fmt(1239.8419843320026 / peak.low, 0)} nm), Plateau`;
       return `${peak.visible ? "Sichtbarer Bereich" : "Außerhalb des sichtbaren Bereichs"}: lokales Maximum bei ${range}; relative Absorption ${height(peak.height)}.`;
     };
     const bands = selected.map(describePeak), allBands = curve.peaks.map(describePeak);
@@ -179,17 +238,17 @@ globalThis.AccessibleData = {
     const a = this.lab(first), b = this.lab(second);
     return a && b ? Math.hypot(...a.map((v, i) => v - b[i])) : null;
   },
-  reportBody(sections) {
+  reportBody(sections, focusTables = false) {
     const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"})[c]);
     return sections.map(({title, paragraphs = [], rows = [], columns, optional = false}) => {
       const body =
-      paragraphs.map((p) => `<p>${escape(p)}</p>`).join("") +
-      (rows.length ? `<div class="table-scroll" tabindex="0" role="region" aria-label="${escape(title)}"><table><caption class="sr-only">${escape(title)}</caption><thead><tr>${(columns || ["Größe oder Angabe", "Wert"]).map((label) => `<th scope="col">${escape(label)}</th>`).join("")}</tr></thead><tbody>` + rows.map((row) => `<tr>${row.map((value, index) => index ? `<td>${escape(value)}</td>` : `<th scope="row">${escape(value)}</th>`).join("")}</tr>`).join("") + "</tbody></table></div>" : "");
-      return optional ? `<details><summary>${escape(title)}</summary>${body}</details>` : `<section><h3>${escape(title)}</h3>${body}</section>`;
+      paragraphs.map((p) => `<p>${ScientificDisplay.html(p)}</p>`).join("") +
+      (rows.length ? `<div class="table-scroll"${focusTables ? ' tabindex="0"' : ""} role="region" aria-label="${escape(ScientificDisplay.spoken(title))}"><table><caption class="sr-only">${escape(ScientificDisplay.spoken(title))}</caption><thead><tr>${(columns || ["Größe oder Angabe", "Wert"]).map((label) => `<th scope="col">${escape(label)}</th>`).join("")}</tr></thead><tbody>` + rows.map((row) => `<tr>${row.map((value, index) => index ? `<td>${ScientificDisplay.html(value)}</td>` : `<th scope="row">${ScientificDisplay.html(value)}</th>`).join("")}</tr>`).join("") + "</tbody></table></div>" : "");
+      return optional ? `<details><summary>${ScientificDisplay.html(title)}</summary>${body}</details>` : `<section><h3>${ScientificDisplay.html(title)}</h3>${body}</section>`;
     }).join("");
   },
   report(sections) {
-    return `<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PhotoSwitchLab Ergebnisbericht</title><style>body{font:1rem/1.6 system-ui,sans-serif;max-width:90ch;margin:2rem auto;padding:0 1rem;color:#192d43;background:white}h1,h2,h3{line-height:1.3}section{margin:2rem 0}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%}caption{text-align:left;font-weight:600}th,td{border:1px solid #b8c4d0;padding:.5rem;text-align:left;overflow-wrap:anywhere}thead{background:#edf2f7}@media(max-width:400px){th,td{padding:.3rem}}@media print{body{max-width:none;margin:0}}</style><main><h1>PhotoSwitchLab Ergebnisbericht</h1><p>Aktuelle Rechenergebnisse und zugehörige Vergleiche. Wissenschaftliche Deutungen ergänzen Sie selbst im Protokoll.</p>${this.reportBody(sections)}</main></html>`;
+    return `<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PhotoSwitchLab Ergebnisbericht</title><style>body{font:1rem/1.6 system-ui,sans-serif;max-width:90ch;margin:2rem auto;padding:0 1rem;color:#192d43;background:white}h1,h2,h3{line-height:1.3}section{margin:2rem 0}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}.table-scroll{overflow-x:auto}table{border-collapse:collapse;width:100%}caption{text-align:left;font-weight:600}th,td{border:1px solid #b8c4d0;padding:.5rem;text-align:left;overflow-wrap:anywhere}thead{background:#edf2f7}@media(max-width:400px){th,td{padding:.3rem}}@media print{body{max-width:none;margin:0}}</style><main><h1>PhotoSwitchLab Ergebnisbericht</h1><p>Aktuelle Rechenergebnisse und zugehörige Vergleiche. Wissenschaftliche Deutungen ergänzen Sie selbst im Protokoll.</p>${this.reportBody(sections, true)}</main></html>`;
   },
   csv(rows) {
     return rows.map((row) => row.map((value) => {
@@ -204,8 +263,8 @@ globalThis.AccessibilityView = {
   initialize(context) {
     const $ = (id) => document.getElementById(id), data = AccessibleData;
     const layout = globalThis.PresentationLayout?.create(document);
-    const setText = (id, text) => { if ($(id).textContent !== text) $(id).textContent = text; };
-    const fmt = (value, digits = 4) => Number.isFinite(value) ? value.toLocaleString("de-DE", {minimumFractionDigits: digits, maximumFractionDigits: digits}) : "nicht verfügbar";
+    const setText = (id, text) => ScientificDisplay.setText($(id), text);
+    const fmt = (value, digits = 2) => ScientificDisplay.fixed(value, digits);
     const preference = $("text-preference"), graphicPreference = $("graphic-preference");
     const query = new URLSearchParams(location.search).get("text");
     let saved = false;
@@ -238,22 +297,34 @@ globalThis.AccessibilityView = {
     let curveQuery = null, measurementSelected = false, reportSections = [], querySections = [], measurementSections = [], methodSections = [], colorSections = [];
     let colorComparisonRecord = null;
     const rendered = new Map();
+    const updateTableFocus = () => {
+      document.querySelectorAll?.(".table-scroll").forEach((region) => {
+        if (!Number.isFinite(region.clientWidth) || !Number.isFinite(region.scrollWidth)) return;
+        const overflow = region.clientWidth > 0 && region.scrollWidth > region.clientWidth + 1;
+        if (overflow && region.getAttribute("tabindex") !== "0") region.setAttribute("tabindex", "0");
+        else if (!overflow && region.hasAttribute("tabindex")) region.removeAttribute("tabindex");
+      });
+    };
+    document.addEventListener?.("toggle", updateTableFocus, true);
+    globalThis.addEventListener?.("resize", updateTableFocus);
+    this.updateTableFocus = updateTableFocus;
+    setText("curve-interpolation-note", data.outputMethods[0]);
+    setText("display-rounding-note", ScientificDisplay.note);
     function display(id, sections) {
       const content = data.reportBody(sections);
-      if (rendered.get(id) !== content) { $(id).innerHTML = content; rendered.set(id, content); }
+      if (rendered.get(id) !== content) { $(id).innerHTML = content; rendered.set(id, content); updateTableFocus(); }
     }
     function fillSelect(select, options, value) {
       select.replaceChildren(...options.map(([label, key]) => new Option(label, key)));
       if (value != null && [...select.options].some((option) => option.value === String(value))) select.value = value;
     }
-    const strength = (value) => Number.isFinite(value) ? value.toLocaleString("de-DE", {maximumSignificantDigits: 3, useGrouping: false}) : "nicht verfügbar";
+    const strength = (value) => ScientificDisplay.significant(value, 2);
     const identity = (m) => {
       const label = context.label(m);
       const collisions = context.state.molecules.filter((other) => context.label(other) === label && other.kind === m.kind);
       if (collisions.length < 2) return label;
-      let length = 6;
-      while (length < m.id.length && collisions.some((other) => other.id !== m.id && other.id.slice(0, length) === m.id.slice(0, length))) length++;
-      return `${label} · ${m.id.slice(0, length)}`;
+      const number = collisions.findIndex((other) => other.id === m.id) + 1;
+      return `${label} · Berechnung ${number || 1}`;
     };
     const kind = (m) => ({initial: "Startstruktur", minimum: "Minimumstruktur", ts: "Übergangsstruktur", unconverged: "Optimierung nicht abgeschlossen"})[m.kind] || m.kind;
     const recordLabel = (m) => `${identity(m)} · ${kind(m)}`;
@@ -261,12 +332,12 @@ globalThis.AccessibilityView = {
     const windowText = (m) => `${fmt(m.spectrum?.energy_ev?.[0])} bis ${fmt(m.spectrum?.energy_ev?.at(-1))} eV`;
     const coverageWarning = (m) => m.spectrum?.coverage_complete === false
       ? `${recordLabel(m)}: Am oberen Rand des Beobachtungsfensters fehlen möglicherweise Beiträge weiterer Übergänge; die relative Absorption kann dort unterschätzt werden.` : null;
-    const geometryRows = (m) => [identity(m), kind(m), fmt(m.properties?.energy_ev), fmt(m.properties?.dihedral_deg, 1), fmt(m.properties?.ring_distance_pm, 1)];
+    const geometryRows = (m) => [identity(m), kind(m), fmt(m.properties?.energy_ev, 4), fmt(m.properties?.dihedral_deg, 1), fmt(m.properties?.ring_distance_pm, 0)];
     const geometryColumns = ["Struktur", "Strukturart", "E / eV", "C–N=N–C / °", "Ringabstand / pm"];
     const maximumText = (spectrum) => {
       const maximum = data.curveMaximum(spectrum);
       if (!maximum) return "Kein abgegrenztes Absorptionsmaximum in den gespeicherten Kurvenwerten.";
-      return `Absorptionsmaximum des verbreiterten Spektrums im berechneten Energiebereich: Emax = ${fmt(maximum.energy)} eV (${fmt(1239.8419843320026 / maximum.energy, 1)} nm).` +
+      return `Absorptionsmaximum des verbreiterten Spektrums im berechneten Energiebereich: Emax = ${fmt(maximum.energy)} eV (${fmt(1239.8419843320026 / maximum.energy, 0)} nm).` +
         (maximum.boundary ? " Der höchste gespeicherte Wert liegt am Rand des Energiebereichs; ein inneres Maximum ist dort nicht bestimmt." : "") +
         (maximum.multiple ? " Mehrere gespeicherte Punkte haben denselben Höchstwert; angegeben ist die kleinste Energie." : "");
     };
@@ -277,7 +348,7 @@ globalThis.AccessibilityView = {
         const bond = neighbor.bond_order === 1.5 ? "aromatische Bindung" : neighbor.bond_order === 1 ? "Einfachbindung" : neighbor.bond_order === 2 ? "Doppelbindung" : `Bindungsordnung ${fmt(neighbor.bond_order, 1)}`;
         return `${label(neighbor.number - 1)}, ${bond}`;
       }).join("; ") : "keine gespeicherten Bindungen") + "." : "Für diese gespeicherte Struktur fehlen Atom- und Bindungsdaten. Erstellen Sie die Struktur erneut.");
-      setText("atom-distance", graph.length ? `Abstand ${label(first)} zu ${label(second)}: ${fmt(data.distance(positions, first, second), 1)} pm.` : "");
+      setText("atom-distance", graph.length ? `Abstand ${label(first)} zu ${label(second)}: ${fmt(data.distance(positions, first, second), 0)} pm.` : "");
       setText("atom-angle", graph.length ? `Winkel ${[first, second, third].map(label).join(" – ")}: ${fmt(data.angle(positions, first, second, third), 1)} °.` : "");
       measurementSections = measurementSelected ? [{title: "Ausgewählter Atomabstand", paragraphs: [$("accessible-spectrum-geometry").textContent, $("atom-distance").textContent,
         ...(!this.prefersText ? [$("atom-angle").textContent] : [])]}] : [];
@@ -311,12 +382,13 @@ globalThis.AccessibilityView = {
       const partner = data.partner(m, context.state.molecules, true);
       const partners = [m, ...(partner ? [partner] : [])].sort((a, b) => (a.settings?.configuration || "").localeCompare(b.settings?.configuration || ""));
       const values = partners.map((other) => data.absorption(other.spectrum, energy));
+      const displayedValues = ScientificDisplay.compare(values, "strength");
       const unavailable = partners.flatMap((other, index) => values[index] == null
-        ? [`${recordLabel(other)}: Bei ${fmt(energy)} eV ist kein Kurvenwert verfügbar. Das Beobachtungsfenster reicht von ${windowText(other)}.`] : []);
-      const sections = [{title: values.some((value) => value != null) ? `Relative Absorption bei ${fmt(energy)} eV (${fmt(1239.8419843320026 / energy, 1)} nm)` : "Absorptionsabfrage",
+        ? [`${recordLabel(other)}: Bei ${ScientificDisplay.significant(energy, 4)} eV ist kein Kurvenwert verfügbar. Das Beobachtungsfenster reicht von ${windowText(other)}.`] : []);
+      const sections = [{title: values.some((value) => value != null) ? `Relative Absorption bei ${ScientificDisplay.significant(energy, 4)} eV (${fmt(1239.8419843320026 / energy, 0)} nm)` : "Absorptionsabfrage",
         paragraphs: ["Werte der verbreiterten Spektren bei derselben Energie.", ...unavailable, ...(!partner ? ["Kein eindeutig zuordenbares cis/trans-Paar mit abgeschlossenen Minimumsuchen und Spektren gespeichert."] : [])],
         columns: ["Struktur", "Konfiguration", "Relative Absorption"], rows: values.some((value) => value != null)
-          ? partners.map((other, index) => [recordLabel(other), other.settings?.configuration || "nicht angegeben", fmt(values[index])]) : []}];
+          ? partners.map((other, index) => [recordLabel(other), other.settings?.configuration || "nicht angegeben", displayedValues[index]]) : []}];
       if (values.some((value) => value != null)) querySections = sections;
       display("curve-value", sections);
     }
@@ -357,6 +429,7 @@ globalThis.AccessibilityView = {
         pointIndex = null;
         curveQuery = null;
         measurementSelected = false;
+        $("accessible-path").open = false;
       }
       const subs = (m.settings?.substituents || []).flatMap((sub, index) => sub === "H" ? [] : [`${index % 5 + 2}${index >= 5 ? "′" : ""}: ${context.substituentLabel(sub)}`]);
       const structuralFacts = `${m.formula}, ${m.atom_count} Atome. Konfiguration: ${m.settings?.configuration || "nicht angegeben"}. Substituenten: ${subs.join("; ") || "keine"}.`;
@@ -379,7 +452,7 @@ globalThis.AccessibilityView = {
       const selected = pointIndex == null ? null : points[pointIndex], preview = selected && step === "optimize";
       positions = preview ? selected.positions : data.coordinates(m.xyz);
       const properties = preview ? {...OptimizationProgress.geometryProperties(positions, m.geometry_definition), energy_ev: selected.energy_ev} : m.properties;
-      const geometryText = `${preview ? path ? `Pfadstruktur ${pointIndex + 1}` : `Rechenschritt ${selected.step}` : "Gespeicherte Struktur"}: elektronische Energie ${fmt(properties?.energy_ev)} eV; Diederwinkel C–N=N–C ${fmt(properties?.dihedral_deg, 1)} °; Ringabstand ${fmt(properties?.ring_distance_pm, 1)} pm.`;
+      const geometryText = `${preview ? path ? `Pfadstruktur ${pointIndex + 1}` : `Rechenschritt ${selected.step}` : "Gespeicherte Struktur"}: elektronische Energie ${fmt(properties?.energy_ev, 4)} eV; Diederwinkel C–N=N–C ${fmt(properties?.dihedral_deg, 1)} °; Ringabstand ${fmt(properties?.ring_distance_pm, 0)} pm.`;
       setText("accessible-spectrum-geometry", geometryText);
       let azoAngles = "";
       if (m.geometry_definition) {
@@ -391,15 +464,16 @@ globalThis.AccessibilityView = {
         const input = source(m), partner = data.partner(m, context.state.molecules);
         const related = [m, input, partner, partner && source(partner)].filter((item, index, all) => item && all.findIndex((other) => other?.id === item.id) === index);
         if (related.length > 1) reportSections.push({title: "Zugehörige Start- und Minimumstrukturen", columns: geometryColumns, rows: related.map(geometryRows)});
-        if (preview) reportSections.push({title: "Ausgewählte Zwischenstruktur", paragraphs: [`ΔE zur ersten gespeicherten ${path ? "Pfadstruktur" : "Suchstruktur"}: ${fmt(selected.energy_ev - points[0].energy_ev)} eV.`]});
+        if (preview) reportSections.push({title: "Ausgewählte Zwischenstruktur", paragraphs: [`ΔE zur ersten gespeicherten ${path ? "Pfadstruktur" : "Suchstruktur"}: ${ScientificDisplay.significant(selected.energy_ev - points[0].energy_ev, 3)} eV.`]});
       }
       if (m.ts_search && step === "optimize") {
         const ts = m.ts_search;
-        reportSections.push({title: "Prüfung der Übergangsstruktur", paragraphs: [ts.failure_reason].filter(Boolean), rows: [
+        reportSections.push({title: "Prüfung der Übergangsstruktur", paragraphs: [ts.failure_reason,
+          ...(ts.connectivity?.verified === true && ts.connectivity.endpoint_conformers_match === false ? ["Die erhaltenen Minimumstrukturen unterscheiden sich in der Orientierung der Ringe oder Substituenten von den Endstrukturen des dargestellten Reaktionspfads."] : [])].filter(Boolean), rows: [
           ["Optimierung abgeschlossen", m.converged === true ? "ja" : "nein"],
           ["Verbindung zwischen cis und trans bestätigt", ts.connectivity?.verified === true ? "ja" : ts.connectivity?.verified === false ? "nein" : "noch nicht geprüft"],
           ["Imaginäre Frequenzen mit einem Betrag über 20 cm⁻¹", ts.validation?.imaginary_count ?? "noch nicht geprüft"],
-          ["Betrag der imaginären Frequenz / cm⁻¹", Number.isFinite(ts.validation?.imaginary_frequency_cm1) ? fmt(Math.abs(ts.validation.imaginary_frequency_cm1), 1) : "nicht verfügbar"],
+          ["Betrag der imaginären Frequenz / cm⁻¹", Number.isFinite(ts.validation?.imaginary_frequency_cm1) ? ScientificDisplay.frequency(ts.validation.imaginary_frequency_cm1) : "nicht verfügbar"],
         ]});
       }
       graph = m.atom_graph || [];
@@ -409,11 +483,13 @@ globalThis.AccessibilityView = {
         for (const [id, value] of [["atom-first", 0], ["atom-second", Math.min(1, graph.length - 1)], ["atom-third", Math.min(2, graph.length - 1)]]) {
           fillSelect($(id), options, value); $(id).disabled = !graph.length;
         }
-        setText("atom-rings", m.geometry_definition ? `Diederwinkel: Atome ${m.geometry_definition.dihedral_indices.map((index) => index + 1).join("–")}. Phenylringe: ${m.geometry_definition.rings.map((ring) => ring.map((index) => index + 1).join(", ")).join("; ")}.` : "");
         setText("atom-scaffold", "Grundgerüst: C1–N=N–C1′. Erster Ring: C1–C2–C3–C4–C5–C6–C1. Zweiter Ring: C1′–C2′–C3′–C4′–C5′–C6′–C1′. Diese Positionsnummern bezeichnen Ringatome; die zusätzlichen Atomnummern gelten für die gespeicherten Koordinaten.");
       }
       measurement();
       $("accessible-path").hidden = step !== "optimize" || !points.length;
+      $("accessible-path-summary").hidden = this.prefersText && path;
+      $("accessible-path-title").hidden = !this.prefersText || !path;
+      if (this.prefersText && path) $("accessible-path").open = true;
       setText("accessible-path-note", path ? "Reaktionspfad im elektronischen Grundzustand. ΔE bezieht sich auf die erste Pfadstruktur. Die Auswahl zeigt berechnete Geometrien, keine molekulare Dynamik."
         : "Rechenschritte der Suche, keine Zeitachse. ΔE bezieht sich auf den ersten gespeicherten Suchschritt. Suchschritte einer Übergangsstruktursuche bilden noch keinen Reaktionspfad.");
       setText("energy-table-caption", path ? "Berechnete Strukturen des Reaktionspfads" : "Gespeicherte Suchschritte");
@@ -426,67 +502,77 @@ globalThis.AccessibilityView = {
       const spectrum = m.spectrum, tableKey = JSON.stringify([m.id, energyRows, spectrum]);
       if (tableKey !== tableSignature) {
         tableSignature = tableKey;
-        fillSelect($("path-point"), [["Gespeicherte Struktur", ""], ...energyRows.map((row, index) => [`${path ? "Pfadstruktur" : "Rechenschritt"} ${row[0]} · ${fmt(row[1])} eV`, index])], pointIndex ?? "");
-        const table = (id, rows, digits) => $(id).replaceChildren(...rows.map((row) => {
+        fillSelect($("path-point"), [["Gespeicherte Struktur", ""], ...energyRows.map((row, index) => [`${path ? "Pfadstruktur" : "Rechenschritt"} ${row[0]}`, index])], pointIndex ?? "");
+        const table = (id, rows, formats) => $(id).replaceChildren(...rows.map((row) => {
           const tr = document.createElement("tr");
-          row.forEach((value, index) => { const cell = document.createElement(index ? "td" : "th"); if (!index) cell.scope = "row"; cell.textContent = index ? id === "transition-table-body" && index === 3 ? strength(value) : fmt(value, digits[index] ?? 4) : String(value); tr.append(cell); });
+          row.forEach((value, index) => {
+            const cell = document.createElement(index ? "td" : "th");
+            if (!index) cell.scope = "row";
+            const text = formats[index](value);
+            cell.textContent = text;
+            if (ScientificDisplay.spoken(text) !== text) cell.innerHTML = ScientificDisplay.html(text);
+            tr.append(cell);
+          });
           return tr;
         }));
-        table("energy-table-body", energyRows, [0, 4, 4, 1, 1, 1, 1]);
-        table("transition-table-body", (spectrum?.excitations_ev || []).map((energy, index) => [index + 1, energy, 1239.8419843320026 / energy, spectrum.oscillator_strengths[index]]), [0, 4, 1, 4]);
+        table("energy-table-body", energyRows, [String, (value) => fmt(value, 4), (value) => ScientificDisplay.significant(value, 3), (value) => fmt(value, 1), (value) => fmt(value, 0), (value) => fmt(value, 1), (value) => fmt(value, 1)]);
+        const transitionEnergies = ScientificDisplay.compare(spectrum?.excitations_ev || [], "energy");
+        const allTransitions = (spectrum?.excitations_ev || []).map((energy, index) => ({energy, index, strength: spectrum.oscillator_strengths[index]}))
+          .sort((a, b) => b.strength - a.strength || a.energy - b.energy || a.index - b.index);
+        table("transition-table-body", allTransitions.map((transition) => [transition.index + 1, transitionEnergies[transition.index], 1239.8419843320026 / transition.energy, transition.strength]), [String, String, (value) => fmt(value, 0), strength]);
         const overview = data.describeCurve(spectrum);
         setText("spectrum-visible-coverage", overview.coverage);
-        $("spectrum-all-band-list").replaceChildren(...overview.allBands.map((text) => { const item = document.createElement("li"); item.textContent = text; return item; }));
+        $("spectrum-all-band-list").replaceChildren(...overview.allBands.map((text) => { const item = document.createElement("li"); item.textContent = text; if (ScientificDisplay.spoken(text) !== text) item.innerHTML = ScientificDisplay.html(text); return item; }));
         setText("spectrum-all-band-note", overview.allBands.length ? "" : "Keine inneren lokalen Maxima in der gespeicherten Kurve.");
       }
       $("path-point").value = pointIndex == null ? "" : String(pointIndex);
-      setText("accessible-point", selected ? `${path ? "Pfadstruktur" : "Rechenschritt"} ${path ? pointIndex + 1 : selected.step}: E = ${fmt(selected.energy_ev)} eV; ΔE = ${fmt(selected.energy_ev - points[0].energy_ev)} eV. ${azoAngles}` : "");
+      setText("accessible-point", selected ? `${path ? "Pfadstruktur" : "Rechenschritt"} ${path ? pointIndex + 1 : selected.step}: E = ${fmt(selected.energy_ev, 4)} eV; ΔE = ${ScientificDisplay.significant(selected.energy_ev - points[0].energy_ev, 3)} eV. ${azoAngles}` : "");
       $("accessible-spectrum").hidden = step !== "spectrum" || !spectrum;
       colorComparisonRecord = null;
       colorSections = [];
       if (step === "spectrum" && spectrum) {
         const overview = data.describeCurve(spectrum), transitions = data.strongestTransitions(spectrum), color = SolutionColor.estimate(spectrum);
-        const transitionRows = transitions.map((transition) => [transition.index, fmt(transition.energy), fmt(1239.8419843320026 / transition.energy, 1), strength(transition.strength)]);
+        const transitionEnergies = ScientificDisplay.compare(spectrum.excitations_ev || [], "energy");
+        const transitionRows = transitions.map((transition) => [transition.index, transitionEnergies[transition.index - 1], fmt(1239.8419843320026 / transition.energy, 0), strength(transition.strength)]);
         const visible = (spectrum.excitations_ev || []).map((energy, index) => ({energy, index, strength: spectrum.oscillator_strengths?.[index]}))
           .filter((transition) => transition.energy >= 1239.8419843320026 / 780 && transition.energy <= 1239.8419843320026 / 380 && transition.strength > 0 && Number.isFinite(transition.strength));
-        display("visible-transition-data", [{title: "Sichtbare elektronische Übergänge", paragraphs: visible.length ? [] : ["Keine Übergänge mit positiver Oszillatorstärke im sichtbaren Bereich berechnet."],
-          columns: ["Übergang", "E / eV", "λ / nm", "Oszillatorstärke f"], rows: visible.map((transition) => [transition.index + 1, fmt(transition.energy), fmt(1239.8419843320026 / transition.energy, 1), strength(transition.strength)])}]);
-        const strongestVisible = [...visible].sort((a, b) => b.strength - a.strength || a.index - b.index)[0];
+        const additionalVisible = visible.filter((transition) => !transitions.some((shown) => shown.index === transition.index + 1))
+          .sort((a, b) => b.strength - a.strength || a.energy - b.energy || a.index - b.index);
         const spectralNote = `INDO/S–CIS. Beobachtungsfenster: ${fmt(spectrum.energy_ev?.[0])} bis ${fmt(spectrum.energy_ev?.at(-1))} eV. Relative Absorption in willkürlichen Einheiten.` +
           (spectrum.coverage_complete === false ? " Am oberen Rand fehlen möglicherweise Beiträge weiterer Übergänge; die Absorption kann dort unterschätzt werden." : "");
-        reportSections.push({title: "Stärkste elektronische Übergänge", paragraphs: [`Bis zu fünf stärkste Übergänge im Beobachtungsfenster ${fmt(spectrum.energy_ev[0], 1)}–${fmt(spectrum.energy_ev.at(-1), 1)} eV, geordnet nach Energie. Die Oszillatorstärke f beschreibt die berechnete Übergangsstärke; sie ist keine gemessene Absorbanz.`,
-          ...(!transitions.length ? ["Keine Übergänge mit positiver Oszillatorstärke im Beobachtungsfenster."] : []),
-          ...(strongestVisible && !transitions.some((transition) => transition.index === strongestVisible.index + 1) ? [`Stärkster weiterer Übergang im sichtbaren Bereich: ${fmt(strongestVisible.energy)} eV (${fmt(1239.8419843320026 / strongestVisible.energy, 1)} nm), f = ${strength(strongestVisible.strength)}.`] : [])],
+        reportSections.push({title: "Stärkste elektronische Übergänge", paragraphs: [`Bis zu fünf stärkste Übergänge im Beobachtungsfenster ${fmt(spectrum.energy_ev[0], 1)}–${fmt(spectrum.energy_ev.at(-1), 1)} eV, absteigend nach Oszillatorstärke. Die Oszillatorstärke f beschreibt die berechnete Übergangsstärke; sie ist keine gemessene Absorbanz.`,
+          ...(!transitions.length ? ["Keine Übergänge mit positiver Oszillatorstärke im Beobachtungsfenster."] : [])],
           columns: ["Übergang", "E / eV", "λ / nm", "Oszillatorstärke f"], rows: transitionRows});
+        if (additionalVisible.length) reportSections.push({title: "Weitere Übergänge im sichtbaren Bereich", columns: ["Übergang", "E / eV", "λ / nm", "Oszillatorstärke f"],
+          rows: additionalVisible.map((transition) => [transition.index + 1, transitionEnergies[transition.index], fmt(1239.8419843320026 / transition.energy, 0), strength(transition.strength)])});
         reportSections.push({title: "UV/Vis-Spektrum", paragraphs: [maximumText(spectrum), overview.coverage, spectralNote]});
         const partner = data.partner(m, context.state.molecules, true);
         const paired = [m, ...(partner ? [partner] : [])].sort((a, b) => (a.settings?.configuration || "").localeCompare(b.settings?.configuration || ""));
         if (partner) {
+          const maxima = ScientificDisplay.compare(paired.map((other) => data.curveMaximum(other.spectrum)?.energy), "energy");
           const differentWindow = spectrum.energy_ev[0] !== partner.spectrum.energy_ev[0] || spectrum.energy_ev.at(-1) !== partner.spectrum.energy_ev.at(-1);
           reportSections.push({title: "Zugehöriges cis/trans-Paar", paragraphs: [coverageWarning(partner), ...(differentWindow ? [`${recordLabel(partner)}: Beobachtungsfenster ${windowText(partner)}.`] : [])].filter(Boolean),
             columns: ["Struktur", "Konfiguration", "Emax / eV"],
-            rows: paired.map((other) => [identity(other), other.settings.configuration, fmt(data.curveMaximum(other.spectrum)?.energy)])});
+            rows: paired.map((other, index) => [identity(other), other.settings.configuration, maxima[index]])});
         } else reportSections.push({title: "cis/trans-Vergleich", paragraphs: ["Kein eindeutig zuordenbares cis/trans-Paar mit abgeschlossenen Minimumsuchen und Spektren gespeichert. Berechnen Sie beide Konfigurationen desselben Substitutionsmusters."]});
         const second = partner && SolutionColor.estimate(partner.spectrum), distance = color && second ? data.colorDistance(color.rgb, second.rgb) : null;
         if (distance != null) colorComparisonRecord = {first_id: m.id, second_id: partner.id, first_rgb: color.rgb, second_rgb: second.rgb, cie76_distance: distance, reference_white: "D65", gamut: "clipped_sRGB", color_assumption: "fixed_absorbance_scale_no_concentration_or_path_length"};
         colorSections = [{title: "Freiwillige Farbauswertung", optional: true,
           paragraphs: ["Diese Schätzung ergänzt die elektronischen Übergänge und Absorptionswerte.",
             "Feste Absorbanzskalierung, keiner bestimmten Konzentration oder Schichtdicke zugeordnet.",
-            ...(distance != null ? [`cis/trans-Farbabstand: ${fmt(distance, 1)}. ${data.outputMethods[1]}`] : [])],
+            ...(distance != null ? [`cis/trans-Farbabstand: ${ScientificDisplay.significant(distance, 3)}. ${data.outputMethods[1]}`] : [])],
           columns: ["Struktur", "Konfiguration", "Geschätzte Lösungsfarbe", "Gewichtete Lichtdurchlässigkeit / %"],
-          rows: paired.map((other) => { const result = SolutionColor.estimate(other.spectrum); return [identity(other), other.settings?.configuration || "nicht angegeben", result ? data.color(result.rgb) : "nicht verfügbar: unvollständige oder nicht auswertbare Spektraldaten", result ? fmt(100 * result.luminance, 1) : "nicht verfügbar"]; })}];
+          rows: paired.map((other) => { const result = SolutionColor.estimate(other.spectrum); return [identity(other), other.settings?.configuration || "nicht angegeben", result ? data.color(result.rgb) : "nicht verfügbar: unvollständige oder nicht auswertbare Spektraldaten", result ? ScientificDisplay.percent(100 * result.luminance) : "nicht verfügbar"]; })}];
 
       }
-      const sources = [m, source(m), data.partner(m, context.state.molecules, step === "spectrum")].filter(Boolean);
-      methodSections = [{title: "Weitere Angaben zum Ergebnis", optional: true,
-        paragraphs: [...(step === "spectrum" && spectrum ? [data.outputMethods[0]] : [])],
-        columns: ["Struktur", "Gespeicherte Kennung"], rows: sources.map((other) => [recordLabel(other), other.id])}];
+      methodSections = step === "spectrum" && spectrum ? [{title: "Methoden der Datenausgabe", optional: true,
+        paragraphs: [data.outputMethods[0], ScientificDisplay.note]}] : [];
       // The surrounding spectral-data disclosure already makes this section optional.
       display("optional-color-data", colorSections.map((section) => ({...section, optional: false})));
-      display("accessible-context", methodSections);
       display("result-report-content", reportSections);
       updateQuery();
       this.reportSections = reportSections;
+      updateTableFocus();
       csvRows = [["structure", "kind", "data_type", "index", "energy_ev", "delta_energy_ev", "wavelength_nm", "oscillator_strength", "relative_absorption", "dihedral_deg", "ring_distance_pm"],
         [context.label(m), m.kind, "saved_geometry", "", m.properties?.energy_ev, "", "", "", "", m.properties?.dihedral_deg, m.properties?.ring_distance_pm],
         ...energyRows.map((row) => [context.label(m), m.kind, path ? "path_relative_to_first" : "search_relative_to_first", row[0], row[1], row[2], "", "", "", row[3], row[4]]),

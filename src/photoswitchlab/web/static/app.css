@@ -1510,7 +1510,6 @@ select {
 .text-preferred #molecular-panel,
 .text-preferred #spectrum-panel { display: none !important; }
 .text-preferred #simple-task-access { margin-bottom: 1rem; }
-.text-preferred #simple-task-access > button { min-height: 44px; margin-bottom: .75rem; padding: .6rem 1rem; color: var(--blue); border: 1px solid var(--line); border-radius: 7px; background: white; }
 .text-preferred .task-panel { position: static; max-height: none; height: auto; overflow: visible; margin: 0 0 1rem; }
 .text-preferred #simple-calculation-status { margin-bottom: 1rem; }
 .text-preferred #simple-calculation-status:empty { display: none; }
@@ -1543,3 +1542,12 @@ select {
 #result-report-content th, #result-report-content td { overflow-wrap: anywhere; }
 #data-report { margin-block: 1rem; }
 @media (max-width: 720px) { .header-actions { flex-wrap: wrap; } }
+
+#guide-feedback { padding-block: .5rem; }
+#guide-retry { min-height: 44px; }
+#guide-retry[aria-disabled="true"] { cursor: wait; opacity: .7; }
+
+#curve-query { display: block; margin-top: .5rem; }
+
+#curve-energy { max-width: 20rem; }
+.accessible-results table, .conversion-fields input { font-variant-numeric: tabular-nums; }

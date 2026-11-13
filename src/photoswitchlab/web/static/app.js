@@ -114,11 +114,7 @@ function selectMolecule(id, rememberResult = true) {
     candidates.at(-1)?.id ||
     null;
 }
-const fmt = (value, digits = 2) =>
-  Number(value).toLocaleString("de-DE", {
-    minimumFractionDigits: digits,
-    maximumFractionDigits: digits,
-  });
+const fmt = (value, digits = 2) => ScientificDisplay.fixed(Number(value), digits);
 function error(message) {
   $("alert").textContent = message;
   $("alert").hidden = !message;
@@ -401,7 +397,7 @@ function renderSpectrum() {
   const peak = spec.absorption.indexOf(Math.max(...spec.absorption)),
     e = spec.energy_ev[peak];
   $("spectrum-caption").textContent =
-    `im dargestellten Energiebereich: ${fmt(e, 4)} eV.` +
+    `im dargestellten Energiebereich: ${fmt(e, 2)} eV.` +
     (spec.coverage_complete === false
       ? " Am oberen Rand des dargestellten Energiebereichs fehlen möglicherweise Beiträge weiterer Übergänge. Die Absorption in diesem Bereich kann dadurch unterschätzt werden."
       : "");
@@ -414,9 +410,9 @@ function renderSolutionColor() {
   swatch.style.backgroundColor = result?.css || "";
   swatch.setAttribute("aria-label", `Geschätzte Lösungsfarbe für ${structureLabel(current())}`);
   $("transmission-help-trigger").hidden = !result;
-  $("solution-color-status").textContent = result
-    ? `${AccessibleData.color(result.rgb)} · ${fmt(100 * result.luminance, 1)} %`
-    : "Keine Farbschätzung verfügbar: Das Spektrum ist unvollständig oder enthält keine auswertbaren Absorptionsdaten.";
+  ScientificDisplay.setText($("solution-color-status"), result
+    ? `${AccessibleData.color(result.rgb)} · ${ScientificDisplay.percent(100 * result.luminance)} %`
+    : "Keine Farbschätzung verfügbar: Das Spektrum ist unvollständig oder enthält keine auswertbaren Absorptionsdaten.");
 }
 
 function renderState() {
@@ -450,7 +446,7 @@ function renderState() {
     ? fmt(m.properties.dihedral_deg, 1)
     : "—";
   $("distance").textContent = m?.properties
-    ? fmt(m.properties.ring_distance_pm, 1)
+    ? fmt(m.properties.ring_distance_pm, 0)
     : "—";
   $("properties-context").textContent = !m
     ? ""
@@ -461,11 +457,11 @@ function renderState() {
         : "Werte der berechneten Ergebnisstruktur";
   const ts = m?.ts_search;
   $("ts-summary").hidden = state.step !== "optimize" || !ts;
-  $("ts-summary").textContent = !ts
+  ScientificDisplay.setText($("ts-summary"), !ts
     ? ""
     : m.converged
-      ? `Elektronische Energiebarriere ΔE‡: ${fmt(ts.barrier_ev, 4)} eV`
-      : "Übergangsstruktur noch nicht bestätigt.";
+      ? `Elektronische Energiebarriere ΔE‡: ${ScientificDisplay.significant(ts.barrier_ev, 3)} eV`
+      : "Übergangsstruktur noch nicht bestätigt.");
   $("ts-details").hidden = state.step !== "optimize" || !ts;
   $("ts-check-result").textContent = !ts
     ? ""
@@ -479,7 +475,7 @@ function renderState() {
           ? `Imaginäre Frequenzen mit einem Betrag über 20 cm⁻¹: ${ts.validation.imaginary_count}.`
           : "Schwingungsprüfung noch nicht abgeschlossen.",
         ts.validation?.imaginary_frequency_cm1
-          ? `Betrag der imaginären Frequenz: ${fmt(ts.validation.imaginary_frequency_cm1, 1)} cm⁻¹.`
+          ? `Betrag der imaginären Frequenz: ${ScientificDisplay.frequency(ts.validation.imaginary_frequency_cm1)} cm⁻¹.`
           : "",
         ts.failure_reason || "",
       ]
@@ -683,7 +679,7 @@ function renderEnergyHistory(activeStep) {
                   ? `Struktur auf dem Reaktionspfad ${items[0].raw.image + 1}`
                   : `${{ endpoint: "Andere Minimumstruktur", path_seed: "Pfadvorbereitung", neb: "Reaktionspfad optimieren", neb_climb: "Energiebarriere suchen", connectivity: "Verbindungsprüfung", complete: "Prüfung abgeschlossen", refinement: "Übergangsstruktur verfeinern", vibrations: "Schwingungsprüfung" }[items[0].raw.phase] || "Optimierung"} · Schritt ${items[0].raw.x}`,
               label: (item) =>
-                `E = ${fmt(item.raw.energy, 4)} eV · ΔE = ${fmt(item.raw.y, 4)} eV (${fmt(item.raw.y * EV_KJ, 1)} kJ/mol)`,
+                `E = ${fmt(item.raw.energy, 4)} eV · ΔE = ${ScientificDisplay.significant(item.raw.y, 3)} eV (${ScientificDisplay.significant(item.raw.y * EV_KJ, 3)} kJ/mol)`,
             },
           },
         },
@@ -707,7 +703,7 @@ function renderEnergyHistory(activeStep) {
               font: plotStyle.titleFont, padding: { top: 0, bottom: 10 },
             },
             ticks: {
-              maxTicksLimit: 5, color: plotStyle.text, callback: (value) => fmt(value, 4),
+              maxTicksLimit: 5, color: plotStyle.text, callback: (value) => ScientificDisplay.significant(Number(value), 3),
               font: plotStyle.font, padding: 8,
             },
             grid: { color: plotStyle.grid, lineWidth: 1, drawTicks: false },
@@ -719,6 +715,7 @@ function renderEnergyHistory(activeStep) {
   }
   energyChart.options.scales.x.title.text = path?.length ? "Reaktionspfad" : exploringTS ? "Suchschritt" : "Optimierungsschritt";
   energyChart.options.scales.x.ticks.precision = path?.length ? 2 : 0;
+  energyChart.options.scales.x.ticks.callback = (value) => fmt(value, path?.length ? 2 : 0);
   if (path?.length) {
     const pathPoint = (p) => ({
       x: p.coordinate,
@@ -793,7 +790,7 @@ function renderSpectrumChart(spec) {
             ticks: { ...ticks, autoSkip: false, callback: (value) => fmt(HC / value, 0) },
             grid: { display: false, drawTicks: false }, border: { display: false } },
           y: { title: title("Relative Absorption"), beginAtZero: true,
-            ticks: { ...ticks, maxTicksLimit: 5 },
+            ticks: { ...ticks, maxTicksLimit: 5, callback: (value) => ScientificDisplay.significant(Number(value), 2) },
             grid: { color: plotStyle.grid, lineWidth: 1, drawTicks: false },
             border: { color: plotStyle.border } },
         },
@@ -828,8 +825,8 @@ function selectSpectrumTransition(event, _elements, chart) {
   const { energy, index } = candidates[0];
   const strength = spec.oscillator_strengths[index];
   chart.data.datasets[2].data = [{ x: energy, y: 0 }, { x: energy, y: strength }];
-  $("spectrum-selection-values").textContent = `Übergang ${index + 1} · ${fmt(energy, 4)} eV · ${fmt(HC / energy, 1)} nm · `;
-  $("spectrum-selection-strength").textContent = `: ${fmt(strength, 4)}`;
+  ScientificDisplay.setText($("spectrum-selection-values"), `Übergang ${index + 1} · ${ScientificDisplay.compare(spec.excitations_ev, "energy")[index]} eV · ${fmt(HC / energy, 0)} nm · `);
+  ScientificDisplay.setText($("spectrum-selection-strength"), `: ${ScientificDisplay.significant(strength, 2)}`);
   chart.update("none");
 }
 function collectProgress(job) {
@@ -873,7 +870,7 @@ function applyLiveGeometry() {
   for (const [id, key, digits] of [
     ["energy", "energy_ev", 4],
     ["dihedral", "dihedral_deg", 1],
-    ["distance", "ring_distance_pm", 1],
+    ["distance", "ring_distance_pm", 0],
   ]) {
     $(id).textContent = Number.isFinite(displayed?.[key])
       ? fmt(displayed[key], digits)
@@ -1443,7 +1440,7 @@ function convert(source) {
   for (const key in values)
     if (key !== source)
       $("convert-" + key).value = Number.isFinite(values[key])
-        ? values[key].toLocaleString("de-DE", {useGrouping: false, maximumSignificantDigits: 9})
+        ? ScientificDisplay.converter(values[key])
         : "";
 }
 for (const key of ["ev", "kj", "nm"])
@@ -1457,38 +1454,87 @@ function updateGuide(step) {
     section.hidden = key !== step;
   }
 }
-let loadedGuide = null, guideRequest = 0;
+let loadedGuide = null, guideRequest = 0, graphicalGuideOpen = true, guideRetryPending = false;
 const guideCache = new Map();
-async function guide(step, focus = true) {
-  const source = globalThis.AccessibilityView?.prefersText ? "guide-accessible.html" : "guide.html";
-  const request = ++guideRequest;
-  if (loadedGuide !== source) {
+const accessibleGuide = () => !!globalThis.AccessibilityView?.prefersText;
+const guideSource = () => accessibleGuide() ? "guide-accessible.html" : "guide.html";
+function guideVisibility() {
+  const accessible = accessibleGuide();
+  $("guide").hidden = !accessible && !graphicalGuideOpen;
+  $("guide-open").hidden = $("guide-close").hidden = accessible;
+  $("guide-open").setAttribute("aria-expanded", String(!$("guide").hidden));
+}
+async function guide(step, focus = true, {openGraphical = true, retry = false} = {}) {
+  const source = guideSource(), request = ++guideRequest;
+  if (!accessibleGuide() && openGraphical) graphicalGuideOpen = true;
+  guideVisibility();
+  if ($("guide").hidden) { guideRetryPending = false; return; }
+  const current = () => request === guideRequest && source === guideSource() && !$("guide").hidden;
+  const retryFocused = retry && document.activeElement === $("guide-retry");
+  // An explicit graphical open moves focus immediately; asynchronous loading never does.
+  if (focus && !accessibleGuide()) $("guide-title").focus();
+  const finish = () => {
+    updateGuide(state.step);
+    $("guide-content").hidden = false;
+    $("guide-content").setAttribute("aria-busy", "false");
+    if (retryFocused && document.activeElement === $("guide-retry")) $("guide-title").focus();
+    $("guide-feedback").hidden = $("guide-retry").hidden = true;
+    window.dispatchEvent(new Event("resize"));
+  };
+  if (loadedGuide === source) {
+    guideRetryPending = false;
+    $("guide-retry").setAttribute("aria-disabled", "false");
+    finish();
+    return;
+  }
+  guideRetryPending = true;
+  $("guide-content").hidden = true; // Never display tasks from the other working mode while fetching.
+  $("guide-content").setAttribute("aria-busy", "true");
+  $("guide-message").textContent = "Aufgaben werden geladen …";
+  $("guide-feedback").hidden = false;
+  $("guide-retry").hidden = !retryFocused;
+  $("guide-retry").setAttribute("aria-disabled", "true");
+  try {
     if (!guideCache.has(source)) {
       const response = await fetch(`static/${source}?v=ui-77`);
-      if (!response.ok) throw new Error("Aufgaben konnten nicht geladen werden. Öffnen Sie die Aufgaben erneut.");
+      if (!response.ok) throw new Error("Task loading failed");
       guideCache.set(source, await response.text());
     }
-    if (request !== guideRequest) return;
-    if (source !== (globalThis.AccessibilityView?.prefersText ? "guide-accessible.html" : "guide.html")) return guide(state.step, focus);
+    if (!current()) return;
     $("guide-content").innerHTML = guideCache.get(source); // Trusted, bundled teaching material.
     loadedGuide = source;
+    finish();
+  } catch {
+    if (!current()) return;
+    $("guide-content").setAttribute("aria-busy", "false");
+    $("guide-message").textContent = "Die Aufgaben konnten nicht geladen werden. Versuchen Sie es erneut.";
+    $("guide-retry").hidden = false;
+  } finally {
+    if (request === guideRequest) {
+      guideRetryPending = false;
+      $("guide-retry").setAttribute("aria-disabled", "false");
+    }
   }
-  updateGuide(state.step);
-  $("guide").hidden = false;
-  $("guide-open").setAttribute("aria-expanded", "true");
-  if (focus) $("guide-title").focus();
-  window.dispatchEvent(new Event("resize"));
+}
+function refreshGuidePresentation() {
+  return guide(state.step, false, {openGraphical: false});
 }
 function closeGuide() {
-  $("guide").hidden = true;
-  $("guide-open").setAttribute("aria-expanded", "false");
+  if (accessibleGuide()) return;
+  graphicalGuideOpen = false;
+  guideRequest++; // A response to an earlier open cannot reopen a closed graphical panel.
+  guideRetryPending = false;
+  guideVisibility();
   $("guide-open").focus();
   window.dispatchEvent(new Event("resize"));
 }
-$("guide-open").onclick = handle(() => $("guide").hidden ? guide(state.step) : closeGuide());
+$("guide-open").onclick = () => $("guide").hidden ? guide(state.step) : closeGuide();
 $("guide-close").onclick = closeGuide;
+$("guide-retry").onclick = () => {
+  if (!guideRetryPending) return guide(state.step, false, {openGraphical: false, retry: true});
+};
 $("guide").addEventListener("keydown", (event) => {
-  if (event.key === "Escape") {
+  if (event.key === "Escape" && !accessibleGuide()) {
     event.preventDefault();
     closeGuide();
   }
@@ -1512,7 +1558,7 @@ globalThis.AccessibilityView?.initialize({
   label: structureLabel, substituentLabel, download, filename,
   selectableMolecules,
   selectMolecule: (id) => { state.live = null; selectMolecule(id, state.step !== "build" || id !== state.selected); error(""); renderState(); },
-  presentationChanged: () => { if (!$("guide").hidden) handle(() => guide(state.step, false))(); },
+  presentationChanged: refreshGuidePresentation,
 });
 boot();
 // Optional browser-native agent interface; uses the same actions as the UI.

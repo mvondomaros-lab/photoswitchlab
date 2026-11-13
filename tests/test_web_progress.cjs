@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const vm = require("node:vm");
+require("../src/photoswitchlab/web/static/accessibility.js");
 function loadSelectionFunctions(context) {
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
   vm.runInContext(
@@ -67,7 +68,7 @@ test("short optimizations load the result directly without automatic playback", 
     const events = [];
     const records = [record(0), record(1)];
     const job = { status: "complete", kind, result: { molecule: { id: "result" } } };
-    const context = vm.createContext({
+    const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
       state: { tracking: { records }, live: record(1) },
       api: async () => job,
       updateControls: () => {},
@@ -106,7 +107,7 @@ test("Play resumes paused and selected steps, synchronizes geometry and energy, 
   const geometries = [],
     energies = [];
   let timerId = 0;
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     OptimizationProgress: progress,
     state: {
       selected: "result",
@@ -293,7 +294,7 @@ test("energy chart shows only reaction coordinates and describes the path", () =
   const m = { id: "m", base_name: "trans-Azobenzol", ts_search: { path }, optimization_history: records };
   const elements = new Map();
   let chart;
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     OptimizationProgress: progress,
     state: {
       step: "optimize",
@@ -369,7 +370,7 @@ test("energy chart shows only reaction coordinates and describes the path", () =
 test("live NEB coordinates reach the 3D viewer and identify the displayed image", () => {
   const positions = [];
   const elements = new Map();
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     Float32Array,
     OptimizationProgress: progress,
     fmt: String,
@@ -451,7 +452,7 @@ test("same molecule reuses its viewer and restores result positions without rese
   let loads = 0,
     cameraChanges = 0;
   const molecule = { id: "m", svg: "svg", xyz: "1\nresult\nH 1 2 3\n" };
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     Float32Array,
     Blob,
     state: { mode: "3d", step: "optimize", live: null },
@@ -519,7 +520,7 @@ test("both playback buttons appear only when frames exist", () => {
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
   const elements = new Map();
   let frames = [];
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: { step: "optimize", busy: false, mode: "3d", previewIndex: null },
     component: {},
     current: () => ({ kind: "minimum" }),
@@ -570,7 +571,7 @@ test("minimum energy history appears live and remains available after completion
   const elements = new Map();
   const m = { id: "m", properties: { energy_ev: -10 } };
   let chart;
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     OptimizationProgress: progress,
     state: {
       step: "optimize",
@@ -642,7 +643,7 @@ test("plot clicks select the matching structure, including reaction paths, and i
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
   const selected = [];
   let pathSelected = false;
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: {
       busy: false,
       mode: "3d",
@@ -737,7 +738,7 @@ test("result tools appear only when useful and spectrum prerequisites remain enf
   const elements = new Map();
   let molecule;
   let target = "minimum";
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: { busy: false, molecules: [], step: "build", live: null, job: null },
     current: () => molecule,
     document: { querySelector: () => ({ value: target }) },
@@ -824,7 +825,7 @@ test("result tools appear only when useful and spectrum prerequisites remain enf
 test("structure step defaults to 2D and remembers optional 3D without calculation tools", () => {
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
   const elements = new Map();
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: {
       step: "build",
       mode: "3d",
@@ -910,7 +911,7 @@ test("image export pauses playback and captures the displayed intermediate geome
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
   const button = {};
   const calls = [];
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: { mode: "3d", previewIndex: 3, live: { positions: [1, 2, 3] } },
     component: {},
     $: () => button,
@@ -944,7 +945,7 @@ test("image export pauses playback and captures the displayed intermediate geome
 
 test("structure picker groups chemical identities and keeps variants individually selectable", () => {
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     KIND: {
       initial: "Startstruktur",
       minimum: "Minimumstruktur",
@@ -1023,7 +1024,7 @@ test("structure picker groups chemical identities and keeps variants individuall
 
 function selectionLab(molecules) {
   const elements = new Map();
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: { molecules, selected: null, resultSelection: null, step: "build" },
     TITLES: { build: [], optimize: [], spectrum: [] },
     document: { querySelectorAll: () => [] },
@@ -1145,7 +1146,7 @@ test("clear structures confirms the full scope and resets selection only after s
   let approved = false,
     fail = false;
   const calls = [];
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: {
       busy: false,
       molecules: [{ id: "start" }, { id: "ts" }],
@@ -1217,7 +1218,7 @@ test("completion keeps the live view until the result is loaded, then switches a
   const result = { id: "result" };
   const live = { source_id: "source", step: 3 };
   const rendered = [];
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: { molecules: [source], selected: "source", step: "optimize", busy: true, live },
     api: () => new Promise((resolve) => { resolveSession = resolve; }),
     selectMolecule: (id) => { context.state.selected = id; },
@@ -1247,7 +1248,7 @@ test("minimum playback uses its optimization history without a mode toggle", () 
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
   const records = [record(0), record(1), record(2)];
   let molecule = { id: "minimum", kind: "minimum" };
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     OptimizationProgress: progress,
     current: () => molecule,
     energyRecords: () => records,
@@ -1264,7 +1265,7 @@ test("spectrum preserves bands and stick strengths with reciprocal wavelength ti
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
   let chart;
   const elements = new Map();
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     spectrumChart: null,
     HC: 1239.8419843320026,
     fmt: (value) => String(Math.round(value)),
@@ -1320,7 +1321,7 @@ test("spectrum notes rotate without inventing stage changes", () => {
 test("spectrum stage descriptions only appear for a running spectrum job", () => {
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
   const elements = new Map();
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: { step: "spectrum", busy: true },
     SpectrumProgress: globalThis.SpectrumProgress,
     JOBS: { uvvis: "UV/Vis-Spektrum wird berechnet", minimum: "Minimumstruktur wird gesucht" },
@@ -1361,7 +1362,7 @@ test("picker groups by starting configuration and substitution without redundant
     { id: "ts", base_name: "trans-4-Methoxyazobenzol", kind: "ts", formula: "C13H12N2O" },
     { id: "failed", base_name: "cis-4-Methoxyazobenzol", kind: "unconverged", ts_search: {}, formula: "C13H12N2O" },
   ];
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: { selected: "min", busy: false },
     KIND: { initial: "Startstruktur", minimum: "Minimumstruktur", ts: "Übergangsstruktur", unconverged: "Optimierung nicht abgeschlossen" },
     selectableMolecules: () => molecules,
@@ -1405,7 +1406,7 @@ test("Logout uses the public Hub URL and disappears in local mode", async () => 
     molecules: [], user: "student",
     hub: { logout: "/jhub/hub/logout" },
   };
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: { molecules: [], step: "build" },
     api: async () => session,
     selectMolecule: () => {},
@@ -1445,40 +1446,132 @@ test("tasks follow navigation without opening collapsible sections", () => {
   assert.equal(lab.$("task-examine-ring-geometry").open, false);
 });
 
-test("task loading can retry and opens the current step without trapping focus", async () => {
+function guideLab(accessible = false) {
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
-  const elements = new Map();
-  let focused = null;
-  let succeeds = false;
-  const lab = vm.createContext({
-    state: { step: "build" },
-    TITLES: { build: [], optimize: [], spectrum: [] },
-    Event: class {},
-    window: { dispatchEvent() {} },
-    fetch: async () => ({ ok: succeeds, text: async () => "<p>Tasks</p>" }),
-    $: (id) => {
-      if (!elements.has(id)) elements.set(id, {
-        children: [], hidden: true,
-        setAttribute(key, value) { this[key] = value; },
-        focus() { focused = id; },
-      });
-      return elements.get(id);
-    },
+  const elements = new Map(), requests = [];
+  const document = {activeElement: null};
+  const node = (id) => {
+    if (!elements.has(id)) elements.set(id, {
+      id, hidden: true, open: false, innerHTML: "", textContent: "", attributes: {}, listeners: {},
+      setAttribute(key, value) { this.attributes[key] = value; },
+      getAttribute(key) { return this.attributes[key]; },
+      addEventListener(type, listener) { this.listeners[type] = listener; },
+      focus() { document.activeElement = this; },
+    });
+    return elements.get(id);
+  };
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
+    state: {step: "build"}, TITLES: {build: [], optimize: [], spectrum: []},
+    AccessibilityView: {prefersText: accessible}, document,
+    Event: class {}, window: {dispatchEvent() {}}, $: node,
+    fetch: (url) => new Promise((resolve) => requests.push({url, resolve})),
   });
-  vm.runInContext(app.slice(app.indexOf("function updateGuide("), app.indexOf('$("guide-open").onclick')), lab);
-  await assert.rejects(lab.guide("build"), /Aufgaben konnten nicht geladen/);
-  assert.equal(lab.$("guide").hidden, true);
-  succeeds = true;
-  lab.state.step = "spectrum";
-  await lab.guide("build", false);
-  assert.equal(lab.$("guide-spectrum").hidden, false);
-  assert.equal(lab.$("guide-build").hidden, true);
-  assert.equal(lab.$("guide-open")["aria-expanded"], "true");
-  assert.equal(focused, null);
-  lab.closeGuide();
-  assert.equal(lab.$("guide").hidden, true);
-  assert.equal(lab.$("guide-open")["aria-expanded"], "false");
-  assert.equal(focused, "guide-open");
+  vm.runInContext(app.slice(app.indexOf("function updateGuide("), app.indexOf("async function boot(")), context);
+  node("input").focus();
+  return {context, node, document, requests,
+    respond(index, body = "Tasks", ok = true) { requests[index].resolve({ok, text: async () => body}); },
+    mode(accessible) { context.AccessibilityView.prefersText = accessible; return context.refreshGuidePresentation(); },
+  };
+}
+
+test("accessible tasks load as a fixed section for the current step without opening task details or moving focus", async () => {
+  const lab = guideLab(true);
+  const loading = lab.context.guide("build", false);
+  assert.equal(lab.node("guide").hidden, false);
+  assert.equal(lab.node("guide-open").hidden, true);
+  assert.equal(lab.node("guide-close").hidden, true);
+  assert.equal(lab.node("guide-content").hidden, true);
+  lab.context.state.step = "spectrum";
+  lab.context.updateGuide("spectrum");
+  lab.context.closeGuide(); // A hidden close action cannot hide the fixed section either.
+  let prevented = false;
+  lab.node("guide").listeners.keydown({key: "Escape", preventDefault() { prevented = true; }});
+  assert.equal(prevented, false);
+  assert.equal(lab.node("guide").hidden, false);
+  assert.equal(lab.document.activeElement.id, "input");
+  lab.respond(0, "Accessible tasks");
+  await loading;
+  assert.equal(lab.node("guide-content").innerHTML, "Accessible tasks");
+  assert.equal(lab.node("guide-build").hidden, true);
+  assert.equal(lab.node("guide-spectrum").hidden, false);
+  assert.equal(lab.node("task-compare-isomer-spectra").open, false);
+  assert.equal(lab.document.activeElement.id, "input");
+});
+
+test("mode changes preserve a closed graphical panel and late responses cannot reopen or replace it", async () => {
+  const lab = guideLab();
+  const initial = lab.context.guide("build", false);
+  lab.context.closeGuide();
+  assert.equal(lab.node("guide").hidden, true);
+  lab.node("mode-radio").focus();
+  const accessible = lab.mode(true);
+  assert.equal(lab.node("guide").hidden, false);
+  assert.equal(lab.node("guide-content").hidden, true);
+  await lab.mode(false);
+  assert.equal(lab.node("guide").hidden, true);
+  assert.equal(lab.node("guide-open").hidden, false);
+  lab.respond(1, "Accessible tasks");
+  lab.respond(0, "Graphical tasks");
+  await Promise.all([initial, accessible]);
+  assert.equal(lab.node("guide").hidden, true);
+  assert.equal(lab.node("guide-content").innerHTML, "");
+  assert.equal(lab.document.activeElement.id, "mode-radio");
+});
+
+test("returning to an open graphical panel restores its content while an accessible request is pending", async () => {
+  const lab = guideLab();
+  const initial = lab.context.guide("build", false);
+  lab.respond(0, "Graphical tasks");
+  await initial;
+  lab.node("mode-radio").focus();
+  const accessible = lab.mode(true);
+  assert.equal(lab.node("guide-content").hidden, true);
+  await lab.mode(false);
+  assert.equal(lab.node("guide").hidden, false);
+  assert.equal(lab.node("guide-content").hidden, false);
+  assert.equal(lab.node("guide-content").innerHTML, "Graphical tasks");
+  lab.respond(1, "Accessible tasks");
+  await accessible;
+  assert.equal(lab.node("guide-content").innerHTML, "Graphical tasks");
+  assert.equal(lab.document.activeElement.id, "mode-radio");
+});
+
+test("fixed task loading errors can be retried and focus follows only a still-focused explicit retry", async () => {
+  for (const moveFocus of [false, true]) {
+    const lab = guideLab(true);
+    const initial = lab.context.guide("build", false);
+    lab.respond(0, "", false);
+    await initial;
+    assert.equal(lab.node("guide").hidden, false);
+    assert.equal(lab.node("guide-retry").hidden, false);
+    assert.match(lab.node("guide-message").textContent, /konnten nicht geladen/);
+    lab.node("guide-retry").focus();
+    const retry = lab.node("guide-retry").onclick();
+    assert.equal(lab.node("guide-retry").hidden, false);
+    assert.equal(lab.node("guide-retry").getAttribute("aria-disabled"), "true");
+    if (moveFocus) lab.node("input").focus();
+    lab.respond(1, "Accessible tasks");
+    await retry;
+    assert.equal(lab.node("guide-feedback").hidden, true);
+    assert.equal(lab.node("guide-retry").hidden, true);
+    assert.equal(lab.document.activeElement.id, moveFocus ? "input" : "guide-title");
+    assert.equal(lab.node("task-compare-configurations").open, false);
+  }
+});
+
+test("an explicit graphical open focuses immediately and never steals focus after the response", async () => {
+  const lab = guideLab();
+  const opening = lab.context.guide("build");
+  assert.equal(lab.document.activeElement.id, "guide-title");
+  lab.node("input").focus();
+  lab.respond(0, "Graphical tasks");
+  await opening;
+  assert.equal(lab.document.activeElement.id, "input");
+  let prevented = false;
+  lab.node("guide").listeners.keydown({key: "Escape", preventDefault() { prevented = true; }});
+  assert.equal(prevented, true);
+  assert.equal(lab.node("guide").hidden, true);
+  assert.equal(lab.document.activeElement.id, "guide-open");
 });
 
 
@@ -1490,7 +1583,7 @@ test("new structures reset the build view to 2D while failed builds and calculat
     ["minimum", { molecule: { id: "minimum" } }, "3d"],
   ]) {
     let modeAtRefresh;
-    const context = vm.createContext({
+    const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
       state: { buildMode: "3d" },
       api: async () => ({ kind, status: result ? "completed" : "failed", result }),
       refresh: async () => { modeAtRefresh = context.state.buildMode; },
@@ -1512,7 +1605,7 @@ test("builder disables existing starting structures and updates when settings ch
     kind: "initial",
     settings: { configuration: "trans", substituents: Array(10).fill("H") },
   };
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: { molecules: [molecule], busy: false, step: "build" },
     current: () => null,
     selectableMolecules: () => [],

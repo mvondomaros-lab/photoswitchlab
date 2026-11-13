@@ -70,7 +70,7 @@ test("simplified app uses the original controls in linear DOM order and restores
   const document = templateDocument("src/photoswitchlab/web/static/index.html");
   const $ = (id) => document.getElementById(id);
   const originalIds = document.nodes().filter((node) => node.id).map((node) => node.id).sort();
-  const moved = ["guide-open", "guide", "job-status", "method-build", "method-optimize", "method-spectrum", "fundamentals-link", "converter-content"];
+  const moved = ["guide", "job-status", "method-build", "method-optimize", "method-spectrum", "fundamentals-link", "converter-content"];
   const originals = new Map(moved.map((id) => [id, {node: $(id), parent: $(id).parentNode}]));
   $("molecule-select").textContent = "Gewählte Minimumstruktur";
   $("job-status").hidden = false;
@@ -79,7 +79,8 @@ test("simplified app uses the original controls in linear DOM order and restores
   vm.runInContext(fs.readFileSync("src/photoswitchlab/web/static/presentation.js", "utf8"), context);
   const layout = context.PresentationLayout.create(document);
   layout.apply(true, "optimize");
-  assert.equal($("guide-open").parentNode.id, "simple-task-access");
+  assert.equal($("guide").parentNode.id, "simple-task-access");
+  assert.equal($("guide-open").parentNode, $("graphic-preference").parentNode.parentNode.parentNode);
   assert.equal($("job-status").parentNode.id, "simple-calculation-status");
   assert.equal($("method-optimize").parentNode.id, "simple-methods");
   assert.equal($("method-optimize").hidden, false);
@@ -87,7 +88,7 @@ test("simplified app uses the original controls in linear DOM order and restores
   assert.equal($("accessible-results-summary").hidden, true);
   assert.equal($("accessible-results").open, true);
   const order = document.nodes().filter((node) => node.id).map((node) => node.id);
-  for (const [before, after] of [["guide-open", "structure-library"], ["optimize", "job-status"], ["job-status", "accessible-current"], ["accessible-current", "data-report"], ["data-report", "atom-explorer"], ["atom-explorer", "method-optimize"]]) assert.ok(order.indexOf(before) < order.indexOf(after), `${before} precedes ${after}`);
+  for (const [before, after] of [["guide", "structure-library"], ["optimize", "job-status"], ["job-status", "accessible-current"], ["accessible-current", "data-report"], ["data-report", "atom-explorer"], ["atom-explorer", "method-optimize"], ["convert-nm", "fundamentals-link"]]) assert.ok(order.indexOf(before) < order.indexOf(after), `${before} precedes ${after}`);
   assert.equal($("converter-content").parentNode.id, "simple-converter");
   assert.equal($("convert-ev").parentNode.parentNode.parentNode.id, "converter-content");
   assert.equal($("simple-tools").tagName, "section");

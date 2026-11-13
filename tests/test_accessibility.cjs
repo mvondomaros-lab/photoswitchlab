@@ -55,7 +55,7 @@ test("CSV preserves machine-readable decimals and quotes cells correctly", () =>
 });
 test("individual path frames can be selected without a WebGL component", () => {
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     state: { busy: false, selected: "m" }, component: null,
     playbackData: () => ({ kind: "path", frames: [[1, 0, 0]], records: [{ image: 0, energy_ev: -1 }] }),
     applyLiveGeometry() {}, renderEnergyHistory() {}, renderPlaybackControls() {},
@@ -80,12 +80,17 @@ test("CIELAB display-color comparison has correct neutral anchors and is symmetr
 
 function accessibleLab(search = "", deniedStorage = false) {
   let mutations = 0;
-  const elements = new Map(), saved = new Map();
+  const elements = new Map(), saved = new Map(), regions = [], events = new Map(), records = [];
   function element() {
     let text = "", html = "";
     return {
       get innerHTML() { return html; },
       set innerHTML(value) { html = value; mutations++; },
+      attributes: {},
+      setAttribute(key, value) { this.attributes[key] = value; },
+      getAttribute(key) { return this.attributes[key]; },
+      hasAttribute(key) { return key in this.attributes; },
+      removeAttribute(key) { delete this.attributes[key]; },
       options: [], children: [], value: "", open: false, checked: false,
       get textContent() { return text; },
       set textContent(value) { text = value; mutations++; },
@@ -102,8 +107,9 @@ function accessibleLab(search = "", deniedStorage = false) {
     return elements.get(id);
   };
   let exported, focused;
-  const context = vm.createContext({
-    document: { getElementById: node, createElement: element, body: element() },
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
+    document: { getElementById: node, createElement: element, body: element(), querySelectorAll: () => regions, addEventListener: (type, handler) => events.set(type, handler) },
+    addEventListener: (type, handler) => events.set(type, handler),
     Option: function(text, value) { return { text, value: String(value) }; },
     location: { search }, URLSearchParams,
     localStorage: {
@@ -122,14 +128,14 @@ function accessibleLab(search = "", deniedStorage = false) {
   const state = { step: "spectrum", molecules: [molecule, {...molecule, id: "b", name: "B", settings: {...molecule.settings, configuration: "trans"}}] };
   let selected = molecule;
   const view = context.AccessibilityView;
-  view.initialize({ state, current: () => selected, records: () => [], playback: () => ({records: []}),
+  view.initialize({ state, current: () => selected, records: () => records, playback: () => ({records: []}),
     selectableMolecules: () => state.molecules.filter((m) => state.step !== "spectrum" || m.kind === "minimum"),
     selectMolecule: (id) => { selected = state.molecules.find((m) => m.id === id); view.render(); },
     render: () => view.render(), showResult: () => {}, selectFrame: () => {}, label: (m) => m.name,
     substituentLabel: (s) => s, filename: (extension) => `result.${extension}`,
     download: (content, filename) => { exported = {content, filename}; },
   });
-  return { view, node, saved, molecule, state, context, select: (value) => { selected = value; view.render(); }, mutations: () => mutations, exported: () => exported, focused: () => focused };
+  return { view, node, saved, molecule, state, context, regions, events, records, select: (value) => { selected = value; view.render(); }, mutations: () => mutations, exported: () => exported, focused: () => focused };
 }
 
 test("explicit text preference persists and turning it off restores graphical-first disclosure", () => {
@@ -164,7 +170,7 @@ test("automatic in-app result and optional export share one escaped report model
   assert.ok(displayed.includes("Zugehöriges cis/trans-Paar"));
   lab.node("data-report").onclick();
   assert.equal(lab.exported().filename, "result.html");
-  assert.ok(lab.exported().content.includes(displayed));
+  assert.ok(lab.exported().content.replaceAll(' tabindex="0"', "").includes(displayed));
   assert.ok(!lab.exported().content.includes("Beobachtung 1"));
   assert.ok(!lab.exported().content.includes("Vollständige Spektraldaten"));
   const source = fs.readFileSync("src/photoswitchlab/web/static/accessibility.js", "utf8");
@@ -179,16 +185,16 @@ test("shared-energy probe immediately compares both configurations without captu
   lab.node("curve-energy").value = "1,5";
   lab.node("curve-query").onclick();
   const displayed = lab.node("curve-value").innerHTML;
-  for (const text of ["1,5000 eV", "cis", "trans", "0,3000", "0,6000"]) assert.ok(displayed.includes(text), text);
+  for (const text of ["1,5 eV", "cis", "trans", "0,3", "0,6"]) assert.ok(displayed.includes(text), text);
   lab.node("data-report").onclick();
-  assert.ok(lab.exported().content.includes(displayed));
+  assert.ok(lab.exported().content.replaceAll(' tabindex="0"', "").includes(displayed));
   assert.ok(!lab.exported().content.includes("Diederwinkel"));
   // A later query replaces the current value instead of building a mental queue.
   lab.node("curve-energy").value = "1,8";
   lab.node("curve-query").onclick();
   lab.node("data-report").onclick();
-  assert.ok(lab.exported().content.includes("1,8000 eV"));
-  assert.ok(!lab.exported().content.includes("1,5000 eV ("));
+  assert.ok(lab.exported().content.includes("1,8 eV"));
+  assert.ok(!lab.exported().content.includes("1,5 eV ("));
 });
 
 test("invalid and out-of-range probes show clear messages and do not export stale values", () => {
@@ -196,12 +202,12 @@ test("invalid and out-of-range probes show clear messages and do not export stal
   lab.view.render();
   lab.node("curve-energy").value = "1,8";
   lab.node("curve-query").onclick();
-  for (const [value, expected] of [["0,3", "von 1,0000 bis 2,0000"], ["1,5.1", "Dezimalkomma oder Dezimalpunkt"]]) {
+  for (const [value, expected] of [["0,3", "von 1 bis 2"], ["1,5.1", "Dezimalkomma oder Dezimalpunkt"]]) {
     lab.node("curve-energy").value = value;
     lab.node("curve-query").onclick();
     assert.ok(lab.node("curve-value").innerHTML.includes(expected));
     lab.node("data-report").onclick();
-    assert.ok(!lab.exported().content.includes("1,8000 eV ("));
+    assert.ok(!lab.exported().content.includes("1,8 eV ("));
   }
 });
 
@@ -215,22 +221,22 @@ test("paired spectra retain source-specific coverage warnings and explain unavai
   lab.view.render();
   const main = lab.node("result-report-content").innerHTML;
   assert.ok(main.includes("trans-Azobenzol · Minimumstruktur: Am oberen Rand des Beobachtungsfensters"));
-  assert.ok(main.includes("trans-Azobenzol · Minimumstruktur: Beobachtungsfenster 2,0000 bis 4,0000 eV"));
+  assert.ok(main.includes("trans-Azobenzol · Minimumstruktur: Beobachtungsfenster 2 bis 4 eV"));
   assert.ok(!main.includes("cis-Azobenzol · Minimumstruktur: Am oberen Rand"));
   lab.node("curve-energy").value = "1,5";
   lab.node("curve-query").onclick();
   let probe = lab.node("curve-value").innerHTML;
-  assert.ok(probe.includes("trans-Azobenzol · Minimumstruktur: Bei 1,5000 eV ist kein Kurvenwert verfügbar"));
-  assert.ok(probe.includes("von 2,0000 bis 4,0000 eV"));
-  assert.ok(probe.includes("0,5000")); // cis remains valid.
+  assert.ok(probe.includes("trans-Azobenzol · Minimumstruktur: Bei 1,5 eV ist kein Kurvenwert verfügbar"));
+  assert.ok(probe.includes("von 2 bis 4 eV"));
+  assert.ok(probe.includes("0,5")); // cis remains valid.
   // A value outside the selected spectrum can still be available in its partner.
   lab.node("curve-energy").value = "3,5";
   lab.node("curve-query").onclick();
   probe = lab.node("curve-value").innerHTML;
-  assert.ok(probe.includes("cis-Azobenzol · Minimumstruktur: Bei 3,5000 eV ist kein Kurvenwert verfügbar"));
-  assert.ok(probe.includes("1,0000</td>")); // trans remains available despite incomplete high-edge coverage.
+  assert.ok(probe.includes("cis-Azobenzol · Minimumstruktur: Bei 3,5 eV ist kein Kurvenwert verfügbar"));
+  assert.ok(probe.includes("1</td>")); // trans remains available despite incomplete high-edge coverage.
   lab.node("data-report").onclick();
-  assert.ok(lab.exported().content.includes(probe));
+  assert.ok(lab.exported().content.replaceAll(' tabindex="0"', "").includes(probe));
   assert.ok(lab.exported().content.includes("trans-Azobenzol · Minimumstruktur: Am oberen Rand"));
 });
 
@@ -246,6 +252,7 @@ test("color analysis is an optional supplement and tables keep one visible title
   lab.node("data-report").onclick();
   const exported = lab.exported().content;
   assert.ok(exported.includes("<details><summary>Freiwillige Farbauswertung</summary>"));
+  assert.ok(exported.includes('<div class="table-scroll" tabindex="0" role="region"')); // Standalone exports have no resize observer.
   assert.ok(exported.includes(".sr-only{position:absolute"));
   const body = data.reportBody([{title: "Testtabelle", columns: ["Struktur", "Wert"], rows: [["cis", "1"]]}]);
   assert.equal((body.match(/<h3>Testtabelle<\/h3>/g) || []).length, 1);
@@ -275,13 +282,13 @@ test("automatic matching accepts all eight independent ring orientations and nev
   assert.equal(data.partner(m, [m, other], true), null); // No spectra.
 });
 
-test("five transitions are selected by positive finite strength in the inclusive observation window and displayed by energy", () => {
+test("five transitions are selected in the inclusive observation window and ordered by descending raw strength", () => {
   const spectrum = {energy_ev: [1.5, 5.5], absorption: [0, 1],
     excitations_ev: [1.4, 1.5, 2, 2.5, 3, 4, 5, 5.5, 5.6, 3.5, 4.5, 4.7],
     oscillator_strengths: [100, .2, .9, 0, .5, .5, .3, .4, 100, -1, NaN, Infinity]};
   const selected = data.strongestTransitions(spectrum);
-  assert.deepEqual(selected.map((t) => t.index), [3, 5, 6, 7, 8]);
-  assert.deepEqual(data.strongestTransitions(spectrum, 6).map((t) => t.index), [2, 3, 5, 6, 7, 8]);
+  assert.deepEqual(selected.map((t) => t.index), [3, 5, 6, 8, 7]);
+  assert.deepEqual(data.strongestTransitions(spectrum, 6).map((t) => t.index), [3, 5, 6, 8, 7, 2]);
   const tied = {...spectrum, oscillator_strengths: spectrum.oscillator_strengths.map((f) => f > 0 && Number.isFinite(f) ? 1 : f)};
   assert.deepEqual(data.strongestTransitions(tied).map((t) => t.index), [2, 3, 5, 6, 7]);
   assert.deepEqual(data.strongestTransitions({...spectrum, oscillator_strengths: spectrum.oscillator_strengths.map(() => 0)}), []);
@@ -293,10 +300,10 @@ test("a weak visible line remains discoverable while curve maximum and same-ener
     excitations_ev: [2.1, 3.5, 3.7, 4, 4.5, 5], oscillator_strengths: [0.0000002, .1, .2, .3, .4, .5]};
   lab.view.render();
   const report = lab.node("result-report-content").innerHTML;
-  assert.ok(report.includes("Emax = 2,0000 eV"));
-  assert.ok(report.includes("Stärkster weiterer Übergang im sichtbaren Bereich: 2,1000 eV"));
-  assert.ok(report.includes("0,0000002"));
-  assert.ok(lab.node("visible-transition-data").innerHTML.includes("2,1000"));
+  assert.ok(report.includes("Emax = 2 eV"));
+  assert.ok(report.includes("Weitere Übergänge im sichtbaren Bereich"));
+  assert.ok(report.includes("2,1</td>"));
+  assert.ok(report.includes("2 mal zehn hoch minus 7"));
   assert.equal(lab.node("transition-table-body").options.length, 6);
   assert.ok(!report.includes("Lokale Maxima"));
 });
@@ -309,14 +316,14 @@ test("reports follow the selected saved structure and preserve convergence and t
     failure_reason: "Verbindung nicht bestätigt", path: [{image: 0, energy_ev: -10, positions: [0, 0, 0, 1, 0, 0, 1, 2, 0]}, {image: 1, energy_ev: -9, positions: [0, 0, 0, 2, 0, 0, 2, 2, 0]}]};
   lab.view.render();
   const report = lab.node("result-report-content").innerHTML;
-  for (const text of ["Verbindung zwischen cis und trans bestätigt</th><td>nein", "Betrag über 20 cm⁻¹</th><td>1", "230,0", "Verbindung nicht bestätigt"]) assert.ok(report.includes(text), text);
+  for (const text of ["Verbindung zwischen cis und trans bestätigt</th><td>nein", "Betrag über 20 cm⁻¹</th><td>1", "230", "Verbindung nicht bestätigt"]) assert.ok(report.includes(text), text);
   lab.node("path-point").value = "1";
   lab.node("path-point").onchange();
   assert.ok(lab.node("result-report-content").innerHTML.includes("Pfadstruktur 2"));
   lab.select({...lab.molecule, id: "different", name: "Andere Struktur", kind: "minimum", ts_search: null});
   lab.node("data-report").onclick();
   assert.ok(lab.exported().content.includes("Andere Struktur"));
-  assert.ok(!lab.exported().content.includes("230,0"));
+  assert.ok(!lab.exported().content.includes("230"));
   lab.select(null);
   assert.equal(lab.node("accessible-results").hidden, true);
   assert.equal(lab.node("data-report").disabled, true);
@@ -344,7 +351,7 @@ test("stored broadened-curve overview finds visible and ultraviolet maxima witho
   const description = data.describeCurve(spectrum);
   assert.equal(description.bands.length, 3);
   assert.ok(description.bands[0].startsWith("Sichtbarer Bereich"));
-  assert.ok(description.bands[0].includes("1,7000 eV"));
+  assert.ok(description.bands[0].includes("1,7 eV"));
   assert.ok(description.bands[2].includes("Außerhalb des sichtbaren Bereichs"));
   assert.ok(description.bands[2].includes("relative Absorption 3"));
 });
@@ -352,13 +359,13 @@ test("stored broadened-curve overview finds visible and ultraviolet maxima witho
 test("curve overview treats plateaus, clipped boundaries, flat curves and partial visible coverage explicitly", () => {
   const plateau = {energy_ev: [1, 2, 3, 4], absorption: [0, 0.7, 0.7, 0]};
   assert.deepEqual(data.curveOverview(plateau).peaks.map((peak) => [peak.low, peak.high]), [[2, 3]]);
-  assert.ok(data.describeCurve(plateau).bands[0].includes("2,0000–3,0000 eV"));
+  assert.ok(data.describeCurve(plateau).bands[0].includes("2–3 eV"));
   assert.ok(data.describeCurve(plateau).bands[0].includes("Plateau"));
   assert.ok(!data.describeCurve(plateau).bands[0].includes("2,5000"));
   const boundary = {energy_ev: [1.5, 2, 3.5, 4], absorption: [0, 1, 0.5, 2]};
   assert.deepEqual(data.curveOverview(boundary).peaks.map((peak) => peak.low), [2]);
   assert.ok(data.describeCurve(boundary).note.includes("am oberen Rand"));
-  assert.ok(!data.describeCurve(boundary).bands.join(" ").includes("4,0000 eV"));
+  assert.ok(!data.describeCurve(boundary).bands.join(" ").includes("4 eV"));
   const flat = {energy_ev: [1, 2, 3, 4], absorption: [0.2, 0.2, 0.2, 0.2]};
   assert.equal(data.curveOverview(flat).flat, true);
   assert.equal(data.describeCurve(flat).bands.length, 0);
@@ -381,10 +388,10 @@ test("full spectral data exposes every broadened-curve maximum when the compact 
   const overview = data.describeCurve(spectrum);
   assert.equal(overview.bands.length, 6);
   assert.equal(overview.allBands.length, 8);
-  assert.ok(!overview.bands.some((band) => band.includes("1,7000 eV")));
-  assert.ok(!overview.bands.some((band) => band.includes("3,5000 eV")));
-  assert.ok(overview.allBands.some((band) => band.includes("1,7000 eV")));
-  assert.ok(overview.allBands.some((band) => band.includes("3,5000 eV")));
+  assert.ok(!overview.bands.some((band) => band.includes("1,7 eV")));
+  assert.ok(!overview.bands.some((band) => band.includes("3,5 eV")));
+  assert.ok(overview.allBands.some((band) => band.includes("1,7 eV")));
+  assert.ok(overview.allBands.some((band) => band.includes("3,5 eV")));
   assert.ok(overview.note.includes("2 weitere lokale Maxima sind"));
   const fewer = {...spectrum, absorption: [...absorption]};
   fewer.absorption[21] = 0;
@@ -393,11 +400,11 @@ test("full spectral data exposes every broadened-curve maximum when the compact 
   lab.molecule.spectrum = spectrum;
   lab.view.render();
   assert.equal(lab.node("spectrum-all-band-list").options.length, 8);
-  assert.ok(lab.node("spectrum-all-band-list").options[0].textContent.includes("1,7000 eV"));
+  assert.ok(lab.node("spectrum-all-band-list").options[0].textContent.includes("1,7 eV"));
   lab.node("curve-energy").value = "1,7";
   lab.node("curve-query").onclick();
   lab.node("data-report").onclick();
-  assert.ok(lab.exported().content.includes("1,7000 eV"));
+  assert.ok(lab.exported().content.includes("1,7 eV"));
 });
 
 test("unit conversion accepts comma or dot consistently in all fields and rejects invalid wavelengths", () => {
@@ -406,22 +413,22 @@ test("unit conversion accepts comma or dot consistently in all fields and reject
     if (!nodes.has(id)) nodes.set(id, {value: "", textContent: "", attributes: {}, setAttribute(key, value) { this.attributes[key] = value; }});
     return nodes.get(id);
   };
-  const context = vm.createContext({$: node, AccessibleData: data, EV_KJ: 96.48533212331002, HC: 1239.8419843320026});
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,$: node, AccessibleData: data, EV_KJ: 96.48533212331002, HC: 1239.8419843320026});
   const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
   vm.runInContext(app.slice(app.indexOf("function convert(source)"), app.indexOf('for (const key of ["ev", "kj", "nm"])\n  $("convert-" + key).oninput')), context);
   const convert = (source, value) => { node(`convert-${source}`).value = value; context.convert(source); };
   const value = (key) => data.decimal(node(`convert-${key}`).value);
   convert("ev", "0,3");
-  assert.ok(Math.abs(value("kj") - 28.945599637) < 1e-6);
+  assert.equal(node("convert-kj").value, "28,95");
   convert("ev", "3,5");
-  assert.ok(Math.abs(value("nm") - 354.24056695) < 1e-6);
+  assert.equal(node("convert-nm").value, "354,2");
   const expected = node("convert-nm").value;
   convert("ev", "3.5");
   assert.equal(node("convert-nm").value, expected);
   convert("kj", "0,3");
-  assert.ok(Math.abs(value("ev") - 0.3 / context.EV_KJ) < 1e-10);
+  assert.equal(node("convert-ev").value, "0,003109");
   convert("nm", "3,5");
-  assert.ok(Math.abs(value("ev") - context.HC / 3.5) < 1e-6);
+  assert.equal(node("convert-ev").value, "354,2");
   for (const energy of ["0", "-0,3"]) {
     convert("ev", energy);
     assert.equal(node("convert-nm").value, "");
@@ -445,7 +452,7 @@ test("website preference restores separate manual disclosure choices in each pre
   const listeners = new Map();
   const preference = {checked: false, addEventListener(type, listener) { listeners.set(type, listener); }};
   const descriptions = [{open: true}, {open: false}];
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     document: {currentScript: {src: "https://example.org/assets/site.js"}, querySelector: () => preference,
       querySelectorAll: () => descriptions, body: {classList: {toggle() {}}}},
     location: {search: ""}, URL, URLSearchParams,
@@ -477,7 +484,7 @@ test("calculation focus follows completion only while the user has not moved", a
     document.activeElement = node("create");
     let finish;
     const finished = new Promise((resolve) => { finish = resolve; });
-    const context = vm.createContext({document, $: node, state: {busy: false}, current: () => null,
+    const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,document, $: node, state: {busy: false}, current: () => null,
       error() {}, stopAnimation() {}, updateControls() { if (context.state.busy) document.activeElement = document.body; },
       api: async () => ({id: "job"}), displayJob() {}, monitor: () => finished,
     });
@@ -491,4 +498,168 @@ test("calculation focus follows completion only while the user has not moved", a
     await running;
     assert.equal(document.activeElement.id, move ? "guide-open" : "active-name");
   }
+});
+
+test("display precision keeps useful energy differences, removes padding and gives tiny values a spoken scientific form", () => {
+  const numbers = globalThis.ScientificDisplay;
+  assert.equal(numbers.fixed(-1234.5678123, 4), "-1234,5678");
+  assert.equal(numbers.fixed(-1234.6951123, 4), "-1234,6951");
+  assert.equal(numbers.fixed(142.37, 0), "142");
+  assert.equal(numbers.fixed(124.76, 1), "124,8");
+  assert.equal(numbers.fixed(180, 1), "180");
+  assert.equal(numbers.fixed(-0.000001, 1), "0"); // Geometric numerical noise is not extra precision.
+  for (const zero of [0, -0]) {
+    assert.equal(numbers.fixed(zero, 4), "0");
+    assert.equal(numbers.significant(zero, 2), "0");
+  }
+  assert.equal(numbers.significant(0.1273, 3), "0,127");
+  assert.equal(numbers.significant(12.283, 3), "12,3");
+  assert.equal(numbers.significant(.0356, 2), "0,036");
+  assert.equal(numbers.significant(.2252, 2), "0,23");
+  const tiny = numbers.significant(5.321e-31, 2);
+  assert.equal(tiny, "5,3 × 10⁻³¹");
+  assert.equal(numbers.spoken(tiny), "5,3 mal zehn hoch minus 31");
+  assert.equal(numbers.spoken(numbers.significant(-1.234e-7, 3)), "minus 1,23 mal zehn hoch minus 7");
+  assert.ok(numbers.html(tiny).includes('role="math" aria-label="5,3 mal zehn hoch minus 31"'));
+  assert.ok(!numbers.html('<script>"' + tiny).includes("<script>"));
+});
+
+test("frequency thresholds and percentage endpoints remain truthful after display rounding", () => {
+  const numbers = globalThis.ScientificDisplay;
+  assert.deepEqual([-19.96, -20, -20.04].map((value) => numbers.frequency(value)), ["knapp unter 20", "20", "knapp über 20"]);
+  assert.equal([-19.96, -20, -20.04].filter((value) => Math.abs(value) > 20).length, 1);
+  assert.deepEqual([0, 0.04, 73.456, 99.96, 100].map((value) => numbers.percent(value)), ["0", "<0,1", "73,5", ">99,9", "100"]);
+});
+
+test("local comparison precision distinguishes close values and marks remaining rounded equality", () => {
+  const numbers = globalThis.ScientificDisplay;
+  assert.deepEqual(numbers.compare([3.0011, 3.0012], "energy"), ["3,0011", "3,0012"]);
+  assert.deepEqual(numbers.compare([.2341, .2342], "strength"), ["0,2341", "0,2342"]);
+  assert.deepEqual(numbers.compare([.234100001, .234100002], "strength"), ["0,2341 (gerundet gleich)", "0,2341 (gerundet gleich)"]);
+  assert.deepEqual(numbers.compare([.2, .2], "strength"), ["0,2", "0,2"]);
+});
+
+test("human reports and collision labels contain chemical names and calculation numbers without technical IDs", () => {
+  const lab = accessibleLab("?text=1");
+  lab.molecule.id = "aabbccddeeff00112233445566778899";
+  lab.molecule.name = "cis-Azobenzol";
+  lab.state.molecules[1].name = "trans-Azobenzol";
+  lab.state.molecules[1].id = "ffeeddccbbaa99887766554433221100";
+  lab.state.molecules.push({...lab.molecule, id: "0123456789abcdef0123456789abcdef"});
+  lab.view.render();
+  const options = lab.node("accessible-molecule-select").options.map((option) => option.text).join(" ");
+  assert.ok(options.includes("Berechnung 1") && options.includes("Berechnung 2"));
+  lab.node("data-report").onclick();
+  for (const molecule of lab.state.molecules) {
+    for (const output of [options, lab.node("result-report-content").innerHTML, lab.node("optional-color-data").innerHTML, lab.exported().content]) assert.ok(!output.includes(molecule.id));
+  }
+  assert.ok(!lab.exported().content.includes("Gespeicherte Kennung"));
+  lab.node("data-json").onclick();
+  assert.ok(lab.exported().content.includes(lab.molecule.id)); // Deliberately chosen machine data retains provenance.
+});
+
+test("reaction paths are directly open with short choices while optimization iterations remain optional", () => {
+  const lab = accessibleLab("?text=1");
+  lab.state.step = "optimize";
+  lab.molecule.ts_search = {path: [{image: 0, energy_ev: -10, positions: [0, 0, 0, 1, 0, 0, 1, 2, 0]}, {image: 1, energy_ev: -9.8, positions: [0, 0, 0, 2, 0, 0, 2, 2, 0]}]};
+  lab.view.render();
+  assert.equal(lab.node("accessible-path").hidden, false);
+  assert.equal(lab.node("accessible-path").open, true);
+  assert.equal(lab.node("accessible-path-summary").hidden, true);
+  assert.equal(lab.node("path-point").options[1].text, "Pfadstruktur 1");
+  lab.records.push({step: 0, energy_ev: -10, positions: [0, 0, 0]}, {step: 1, energy_ev: -9, positions: [0, 0, 0]});
+  lab.select({...lab.molecule, id: "iteration", ts_search: null});
+  assert.equal(lab.node("accessible-path").hidden, false);
+  assert.equal(lab.node("accessible-path").open, false);
+  assert.equal(lab.node("accessible-path-summary").hidden, false);
+  lab.node("accessible-path").open = true;
+  lab.view.render();
+  assert.equal(lab.node("accessible-path").open, true);
+});
+
+test("all positive visible transitions supplement the strongest five without duplication, with consistent strength sorting", () => {
+  const lab = accessibleLab("?text=1");
+  lab.molecule.spectrum = {energy_ev: [1.5, 3.2, 5.5], absorption: [0, 1, 0],
+    excitations_ev: [1.8, 2.1, 2.8, 4, 4.5, 5, 5.2, 5.4], oscillator_strengths: [.03, .001, 0, .1, .2, .3, .4, .5]};
+  const original = JSON.stringify(lab.molecule.spectrum);
+  lab.view.render();
+  const sections = lab.view.reportSections;
+  const strongest = sections.find((section) => section.title === "Stärkste elektronische Übergänge").rows;
+  const visible = sections.find((section) => section.title === "Weitere Übergänge im sichtbaren Bereich").rows;
+  assert.deepEqual(Array.from(strongest, (row) => row[0]), [8, 7, 6, 5, 4]);
+  assert.deepEqual(Array.from(visible, (row) => row[0]), [1, 2]);
+  const full = lab.node("transition-table-body").options.map((row) => Number(row.children[0].textContent));
+  assert.deepEqual(Array.from(full), [8, 7, 6, 5, 4, 1, 2, 3]); // f = 0 remains in the complete list.
+  assert.equal(JSON.stringify(lab.molecule.spectrum), original);
+  const tie = data.strongestTransitions({energy_ev: [1, 5], absorption: [0, 1], excitations_ev: [4, 3, 3], oscillator_strengths: [.5, .5, .5]});
+  assert.deepEqual(tie.map((transition) => transition.index), [2, 3, 1]);
+});
+
+test("short tables do not add tab stops and overflowing tables remain keyboard reachable after opening or zoom", () => {
+  const lab = accessibleLab("?text=1"), region = lab.node("test-region");
+  lab.regions.push(region);
+  region.clientWidth = 600;
+  region.scrollWidth = 550;
+  lab.view.updateTableFocus();
+  assert.equal(region.hasAttribute("tabindex"), false);
+  region.clientWidth = 250;
+  lab.events.get("resize")();
+  assert.equal(region.getAttribute("tabindex"), "0");
+  region.clientWidth = region.scrollWidth = 0;
+  lab.events.get("toggle")();
+  assert.equal(region.hasAttribute("tabindex"), false);
+  region.clientWidth = 250;
+  region.scrollWidth = 550;
+  lab.events.get("toggle")();
+  assert.equal(region.getAttribute("tabindex"), "0");
+});
+
+test("unit conversion preserves the active input and emits four-significant-digit editable decimal values", () => {
+  const nodes = new Map(), node = (id) => {
+    if (!nodes.has(id)) nodes.set(id, {value: "", textContent: "", setAttribute() {}});
+    return nodes.get(id);
+  };
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay, $: node, AccessibleData: data, EV_KJ: 96.48533212331002, HC: 1239.8419843320026});
+  const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
+  vm.runInContext(app.slice(app.indexOf("function convert(source)"), app.indexOf('for (const key of ["ev", "kj", "nm"])\n  $("convert-" + key).oninput')), context);
+  for (const input of ["1,2345", "1.2345"]) {
+    node("convert-ev").value = input;
+    context.convert("ev");
+    assert.equal(node("convert-ev").value, input);
+    assert.equal(node("convert-kj").value, "119,1");
+    assert.equal(node("convert-nm").value, "1004");
+  }
+  node("convert-ev").value = "0,0000001";
+  context.convert("ev");
+  assert.equal(node("convert-kj").value, "0,000009649");
+  assert.equal(node("convert-nm").value, "12400000000");
+  assert.equal(data.decimal(node("convert-nm").value), 12400000000);
+  node("convert-ev").value = "1,";
+  context.convert("ev");
+  assert.equal(node("convert-ev").value, "1,");
+});
+
+test("close paired maxima and absorption values keep distinguishable displays without changing exported raw data", () => {
+  const lab = accessibleLab("?text=1");
+  const partner = lab.state.molecules[1];
+  lab.molecule.properties.energy_ev = -1234.567812345;
+  lab.molecule.spectrum = {energy_ev: [1.5, 3.0011, 5.5], absorption: [0, .2341, 0], excitations_ev: [3.0011, 3.0012], oscillator_strengths: [1.23e-28, .2]};
+  partner.spectrum = {...lab.molecule.spectrum, energy_ev: [1.5, 3.0012, 5.5], absorption: [0, .2342, 0]};
+  lab.view.render();
+  const pair = lab.view.reportSections.find((section) => section.title === "Zugehöriges cis/trans-Paar");
+  assert.deepEqual(Array.from(pair.rows, (row) => row[2]), ["3,0011", "3,0012"]);
+  const transitions = lab.node("transition-table-body").options;
+  assert.equal(transitions.length, 2);
+  assert.equal(transitions[0].children[1].textContent, "3,0012");
+  assert.equal(transitions[1].children[1].textContent, "3,0011");
+  assert.equal(transitions[0].children[2].textContent, "413");
+  assert.equal(transitions[1].children[2].textContent, "413");
+  lab.node("curve-energy").value = "3,00115";
+  lab.node("curve-query").onclick();
+  assert.match(lab.node("curve-value").innerHTML, /0,2341|0,2342/);
+  lab.node("data-json").onclick();
+  const exported = JSON.parse(lab.exported().content);
+  assert.equal(exported.molecule.properties.energy_ev, -1234.567812345);
+  assert.equal(exported.molecule.spectrum.oscillator_strengths[0], 1.23e-28);
+  assert.deepEqual(exported.molecule.spectrum.excitations_ev, [3.0011, 3.0012]);
 });

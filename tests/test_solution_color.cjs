@@ -34,8 +34,8 @@ test("missing coverage and invalid data never produce a misleading swatch", () =
     {energy_ev: [1.5, 5.5], absorption: [1]}]) assert.equal(estimate(spec), null);
 });
 
+require("../src/photoswitchlab/web/static/accessibility.js");
 test("structure changes refresh the swatch and clear unavailable results", () => {
-  require("../src/photoswitchlab/web/static/accessibility.js");
   const fs = require("node:fs"), vm = require("node:vm");
   const elements = {};
   const get = (id) => elements[id] ||= {
@@ -43,7 +43,7 @@ test("structure changes refresh the swatch and clear unavailable results", () =>
     addEventListener(event, callback) { this[event] = callback; },
   };
   let molecule = {label: "trans · H", spectrum: flat(0)};
-  const context = vm.createContext({
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
     $: get, current: () => molecule, SolutionColor: globalThis.SolutionColor, AccessibleData: globalThis.AccessibleData,
     structureLabel: (m) => m.label,
     fmt: (v, n) => v.toFixed(n).replace(".", ","),
@@ -56,7 +56,7 @@ test("structure changes refresh the swatch and clear unavailable results", () =>
   molecule = {label: "cis · 4-OMe", spectrum: flat(1)};
   context.renderSolutionColor();
   assert.match(get("solution-color-swatch")["aria-label"], /cis · 4-OMe/);
-  assert.match(get("solution-color-status").textContent, /10,0 %/);
+  assert.match(get("solution-color-status").textContent, /10 %/);
   molecule.spectrum.coverage_complete = false;
   context.renderSolutionColor();
   assert.equal(get("solution-color-swatch").hidden, true);

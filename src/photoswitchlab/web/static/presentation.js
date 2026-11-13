@@ -24,7 +24,6 @@ globalThis.PresentationLayout = {
         $("accessible-results-summary").hidden = enabled;
         if (enabled) {
           $("accessible-results").open = true;
-          move($("guide-open"), $("simple-task-access"));
           move($("guide"), $("simple-task-access"));
           move($("job-status"), $("simple-calculation-status"));
           move($("fundamentals-link"), $("simple-tools"));
@@ -35,7 +34,6 @@ globalThis.PresentationLayout = {
             move(method, $("simple-methods"));
             method.hidden = key !== step;
           }
-          move($("ts-details"), $("simple-methods"));
           const heading = step === "build" ? "Ausgewählte Startstruktur" : "Ergebnis";
           if ($("active-name").textContent !== heading) $("active-name").textContent = heading;
           if ($("structure-choice-label").textContent !== "Ausgewählte Struktur") $("structure-choice-label").textContent = "Ausgewählte Struktur";

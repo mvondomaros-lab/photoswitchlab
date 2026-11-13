@@ -17,15 +17,15 @@ document their own choices.
     <meta name="description" content="$brand_title · $brand_subtitle"/>
     <link rel="icon" type="image/svg+xml" href="static/brand-mark.svg"/>
     <link rel="stylesheet" href="static/header.css?v=7"/>
-    <link rel="stylesheet" href="static/app.css?v=ui-68"/>
+    <link rel="stylesheet" href="static/app.css?v=ui-69"/>
     <script src="static/vendor/ngl.js" defer></script>
     <script src="static/vendor/chart.js" defer></script>
     <script src="static/progress.js?v=ui-36" defer></script>
     <script src="static/vendor/cie-color.js?v=1" defer></script>
     <script src="static/solution-color.js?v=1" defer></script>
-    <script src="static/presentation.js?v=3" defer></script>
-    <script src="static/accessibility.js?v=9" defer></script>
-    <script src="static/app.js?v=ui-100" defer></script>
+    <script src="static/presentation.js?v=4" defer></script>
+    <script src="static/accessibility.js?v=10" defer></script>
+    <script src="static/app.js?v=ui-101" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
@@ -68,13 +68,17 @@ document their own choices.
     </div>
     <div id="simple-task-access" class="simple-only"></div>
 <div class="learning-layout">
-<aside id="guide" class="task-panel" aria-labelledby="guide-title" hidden>
+<section id="guide" class="task-panel" aria-labelledby="guide-title" hidden>
     <div class="task-heading">
         <h2 id="guide-title" tabindex="-1">Aufgaben</h2>
         <button class="close" id="guide-close" aria-label="Aufgaben schließen">×</button>
     </div>
+    <div id="guide-feedback" hidden>
+        <p id="guide-message" role="status"></p>
+        <button id="guide-retry" class="text-button" type="button" hidden>Aufgaben erneut laden</button>
+    </div>
     <div id="guide-content"></div>
-</aside>
+</section>
     <div class="workbench">
         <aside class="controls">
             <section class="library" id="structure-library" hidden>
@@ -315,6 +319,8 @@ document their own choices.
                         Beiträge addiert. Die Kurve zeigt eine relative Absorptionsstärke, keine gemessene
                         Absorbanz einer konkreten Probe.
                     </p>
+                    <p id="curve-interpolation-note"></p>
+                    <p id="display-rounding-note" class="note"></p>
                     <h3>Abschätzung der Lösungsfarbe</h3>
                     <p>Nur für die Farbschätzung behandelt die Webapp die relative Absorptionskurve mit einer
                         festen Skalierung als dimensionslose Absorbanz A. Diese Annahme entspricht keiner bestimmten
@@ -437,11 +443,12 @@ document their own choices.
                 <div id="accessible-current">
                     <div id="result-report-content"></div>
                     <details id="accessible-path" hidden>
-                        <summary>Pfadstrukturen und Rechenschritte</summary>
+                        <summary id="accessible-path-summary">Pfadstrukturen und Rechenschritte</summary>
+                        <h3 id="accessible-path-title" hidden>Reaktionspfad</h3>
                         <p id="accessible-path-note" class="note"></p>
                         <label for="path-point">Schritt oder Pfadstruktur</label><select id="path-point"></select>
                         <p id="accessible-point"></p>
-                        <div class="table-scroll" tabindex="0" role="region" aria-label="Energiedaten"><table>
+                        <div class="table-scroll" role="region" aria-label="Energiedaten"><table>
                             <caption id="energy-table-caption">Energiedaten</caption>
                             <thead><tr><th scope="col">Schritt / Pfadstruktur</th><th scope="col">E / eV</th><th scope="col">ΔE / eV</th><th scope="col">C–N=N–C / °</th><th scope="col">Ringabstand / pm</th><th scope="col">C–N=N / °</th><th scope="col">N=N–C / °</th></tr></thead>
                             <tbody id="energy-table-body"></tbody>
@@ -453,11 +460,9 @@ document their own choices.
                         <button id="curve-query" class="text-button" type="button">Absorption bestimmen</button>
                         <div id="curve-value" role="status"></div>
                         <details id="full-spectrum-data"><summary>Weitere Spektraldaten</summary>
-                            <h4>Übergänge im sichtbaren Bereich</h4>
-                            <div id="visible-transition-data"></div>
                             <h4>Alle berechneten elektronischen Übergänge</h4>
-                            <div class="table-scroll" tabindex="0" role="region" aria-label="Alle elektronischen Übergänge"><table>
-                                <caption>Berechnete elektronische Übergänge</caption>
+                            <div class="table-scroll" role="region" aria-label="Alle elektronischen Übergänge"><table>
+                                <caption class="sr-only">Berechnete elektronische Übergänge</caption>
                                 <thead><tr><th scope="col">Übergang</th><th scope="col">E / eV</th><th scope="col">λ / nm</th><th scope="col">Oszillatorstärke f</th></tr></thead>
                                 <tbody id="transition-table-body"></tbody>
                             </table></div>
@@ -488,9 +493,7 @@ document their own choices.
                         <label for="atom-third">Drittes Atom für den Winkel am zweiten Atom</label><select id="atom-third"></select>
                         <p id="atom-angle"></p>
                     </div>
-                    <p id="atom-rings" class="note"></p>
                 </details>
-                <div id="accessible-context"></div>
                 <details id="accessible-raw" class="graphical-only"><summary>Vollständige Rohdaten exportieren</summary>
                     <p class="note">CSV enthält alle gespeicherten Kurven- und Energiedaten; JSON enthält zusätzlich Strukturen und Rechenmetadaten.</p>
                     <div class="inline-actions"><button id="data-json" class="text-button" type="button">JSON speichern</button><button id="data-csv" class="text-button" type="button">CSV speichern</button></div>
@@ -647,8 +650,8 @@ document their own choices.
             </div>
         </section>
         <section id="simple-methods" class="simple-only" aria-label="Methoden und Prüfung"></section>
-        <section id="simple-tools" class="simple-only" aria-label="Grundlagen"></section>
         <section id="simple-converter" class="simple-only" aria-labelledby="simple-converter-title"><h2 id="simple-converter-title">Einheiten umrechnen</h2></section>
+        <section id="simple-tools" class="simple-only" aria-label="Grundlagen"></section>
     </div>
 </div>
     <footer>
@@ -698,7 +701,7 @@ document their own choices.
         >Energie / eV<input
                 id="convert-ev"
                 type="text" inputmode="decimal" autocomplete="off" aria-describedby="conversion-status"
-                value="3,0000"/></label
+                value="3"/></label
         ><label
     >Energie / kJ mol⁻¹<input
             id="convert-kj"
