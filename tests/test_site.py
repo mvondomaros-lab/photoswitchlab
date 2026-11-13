@@ -288,6 +288,13 @@ class SiteBuildTests(unittest.TestCase):
         ):
             self.assertIn(requirement, course)
         self.assertIn("materials/protokollvorlage.docx", course)
+        self.assertIn("materials/protokollvorlage-text.docx", course)
+        self.assertTrue(
+            (
+                self.output
+                / "media/src/photoswitchlab/web/static/materials/protokollvorlage-text.docx"
+            ).is_file()
+        )
         self.assertTrue(
             (
                 self.output

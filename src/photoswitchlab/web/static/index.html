@@ -17,14 +17,14 @@ document their own choices.
     <meta name="description" content="$brand_title · $brand_subtitle"/>
     <link rel="icon" type="image/svg+xml" href="static/brand-mark.svg"/>
     <link rel="stylesheet" href="static/header.css?v=6"/>
-    <link rel="stylesheet" href="static/app.css?v=ui-64"/>
+    <link rel="stylesheet" href="static/app.css?v=ui-65"/>
     <script src="static/vendor/ngl.js" defer></script>
     <script src="static/vendor/chart.js" defer></script>
     <script src="static/progress.js?v=ui-36" defer></script>
     <script src="static/vendor/cie-color.js?v=1" defer></script>
     <script src="static/solution-color.js?v=1" defer></script>
-    <script src="static/accessibility.js?v=2" defer></script>
-    <script src="static/app.js?v=ui-95" defer></script>
+    <script src="static/accessibility.js?v=3" defer></script>
+    <script src="static/app.js?v=ui-96" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
@@ -422,20 +422,25 @@ document their own choices.
             </div>
             <details id="accessible-results" class="accessible-results" hidden>
                 <summary>Struktur und Ergebnisse als Text und Tabellen</summary>
-                <label class="text-graphics-option"><input id="text-show-graphics" type="checkbox"/> Grafiken zusätzlich anzeigen</label>
                 <p id="accessible-identity"></p>
                 <p id="accessible-geometry"></p>
-                <details><summary>Strukturzuordnung und Rechenkontext</summary><p id="accessible-assumptions"></p></details>
+                <details><summary>Strukturzuordnung und Rechenkontext</summary><p id="accessible-assumptions"></p><div id="accessible-output-methods"></div></details>
                 <div class="inline-actions">
+                    <button id="remember-observation" class="text-button" type="button">Auswahl merken</button>
                     <button id="data-report" class="text-button" type="button">Ergebnisbericht speichern</button>
                 </div>
+                <details><summary id="observations-summary">Gemerkte Beobachtungen (0)</summary>
+                    <p class="note">Merken Sie ausgewählte Pfadstrukturen, Atomabstände oder Kurvenabfragen für den Bericht. Die Sammlung gilt bis zum Neuladen; speichern Sie Ihren Bericht rechtzeitig.</p>
+                    <ol id="observations-list"></ol>
+                    <button id="clear-observations" class="text-button" type="button" disabled>Sammlung leeren</button>
+                </details>
                 <details><summary>Vollständige Rohdaten exportieren</summary>
                     <p class="note">CSV enthält alle gespeicherten Kurven- und Energiedaten; JSON enthält zusätzlich Strukturen und Rechenmetadaten. Für die direkte Lektüre verwenden Sie den Ergebnisbericht.</p>
                     <div class="inline-actions"><button id="data-json" class="text-button" type="button">JSON speichern</button><button id="data-csv" class="text-button" type="button">CSV speichern</button></div>
                 </details>
                 <details id="atom-explorer">
                     <summary>Atome, Bindungen und Abstände untersuchen</summary>
-                    <p class="note">Atomnummern gelten innerhalb dieser Struktur und ihrer gespeicherten Rechenschritte. Sie sind keine chemischen Positionsnummern. Abstände werden aus den dargestellten Koordinaten berechnet.</p>
+                    <p class="note">Atomnummern gelten innerhalb dieser Struktur und ihrer gespeicherten Rechenschritte. Sie sind keine chemischen Positionsnummern. Bei Atomen außerhalb der Ringe nennt der Ringbezug die nächste Ringposition in der Bindungsfolge. Abstände werden aus den dargestellten Koordinaten berechnet.</p>
                     <label for="atom-first">Erstes Atom</label><select id="atom-first"></select>
                     <p id="atom-neighbors"></p>
                     <label for="atom-second">Zweites Atom</label><select id="atom-second"></select>
@@ -472,15 +477,13 @@ document their own choices.
                     </table></div>
                     </details>
                     <label for="curve-energy">Absorptionskurve abfragen: Energie / eV</label>
-                    <input id="curve-energy" type="number" step="any"/>
+                    <input id="curve-energy" type="text" inputmode="decimal" autocomplete="off" aria-describedby="curve-value"/>
                     <button id="curve-query" class="text-button" type="button">Absorption bestimmen</button>
                     <p id="curve-value" role="status"></p>
                     <p id="accessible-color"></p>
                     <details><summary>Farben zweier Strukturen vergleichen</summary>
                         <label for="color-comparison">Zweite Struktur</label><select id="color-comparison"></select>
                         <p id="color-comparison-value"></p>
-                        <p class="note">Der CIE76-Farbabstand vergleicht die berechneten Bildschirmfarben im CIE-L*a*b*-Farbraum. Größere Werte bedeuten einen größeren Abstand in diesem Modell. Das ist kein Energieunterschied und keine proportionale Skala der wahrgenommenen Farbunterschiede.</p>
-                        <p class="note">Beide Farben beruhen auf derselben festen Absorbanzskalierung. Es sind keine Lösungen mit festgelegter Konzentration oder Schichtdicke. Die Umrechnung begrenzt Farben auf den sRGB-Bildschirmfarbraum.</p>
                     </details>
                 </details>
             </details>

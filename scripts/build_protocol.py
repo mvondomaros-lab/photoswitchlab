@@ -75,12 +75,12 @@ def build(text_based=False):
             replacements = {
                 "Fügen Sie gleich ausgerichtete 3D-Ansichten der substituierten Start- und Minimumstruktur ein.": "Dokumentieren Sie ausgewählte Abstände zwischen benannten Atomen oder Gruppen in der substituierten Start- und Minimumstruktur.",
                 "[gleich ausgerichtete 3D-Ansicht einfügen und beschriften]": "[Benannte Atompaare und Abstände / pm dokumentieren]",
-                "[Energieprofil einfügen und beschriften]": "[Pfadtabellen mit Energiebezug und ausgewählten Strukturgrößen einfügen oder als CSV beilegen]",
-                "Fügen Sie das Energieprofil ein.": "Dokumentieren Sie das Energieprofil als beschriftete Datentabelle oder CSV-Datei.",
-                "Fügen Sie die Spektren der Derivate mit dem kleinsten und dem größten Wert von ΔEmax ein.": "Legen Sie die beschrifteten Kurvendaten der Derivate mit dem kleinsten und dem größten Wert von ΔEmax bei.",
-                "fügen Sie beide Spektren ein": "legen Sie beide beschrifteten Kurvendatensätze bei",
-                "[Abbildung einfügen und beschriften]": "[Ergebnisbericht mit ausgewählten Kurvenabfragen beilegen; vollständige Kurvendaten bei Bedarf ergänzen]",
-                "[Spektrum einfügen und beschriften]": "[Ergebnisbericht mit ausgewählten Kurvenabfragen beilegen; vollständige Kurvendaten bei Bedarf ergänzen]",
+                "[Energieprofil einfügen und beschriften]": "[Bericht mit ausgewählten Pfadstrukturen, Energiebezug und Strukturgrößen oder entsprechende kompakte Tabelle beilegen]",
+                "Fügen Sie das Energieprofil ein.": "Dokumentieren Sie ausgewählte Pfadstrukturen mit ihren Energien und Strukturgrößen im Ergebnisbericht oder in einer kompakten Tabelle. Beziehen Sie Anfang, Energiemaximum und Ende sowie weitere für Ihre Beschreibung benötigte Pfadstrukturen ein.",
+                "Fügen Sie die Spektren der Derivate mit dem kleinsten und dem größten Wert von ΔEmax ein.": "Legen Sie Ergebnisberichte mit ausgewählten Kurvenabfragen oder entsprechende kompakte Tabellen der Derivate mit dem kleinsten und dem größten Wert von ΔEmax bei.",
+                "fügen Sie beide Spektren ein": "legen Sie für beide Spektren Ergebnisberichte mit ausgewählten Kurvenabfragen oder entsprechende kompakte Tabellen bei",
+                "[Abbildung einfügen und beschriften]": "[Ergebnisbericht mit gemerkten Kurvenabfragen oder entsprechende kompakte Tabelle beilegen]",
+                "[Spektrum einfügen und beschriften]": "[Ergebnisbericht mit gemerkten Kurvenabfragen oder entsprechende kompakte Tabelle beilegen]",
                 "fügen Sie gespeicherte Abbildungen mit Beschriftungen ein": "legen Sie die lesbaren Ergebnisberichte mit ausgewählten Daten bei und ergänzen Sie Ihre Beobachtungen; vollständige CSV- oder JSON-Rohdaten sind optional",
             }
             for old, new in replacements.items():
@@ -114,7 +114,7 @@ def build(text_based=False):
         p(text)
         if text_based and task_id == "task-plan-experiment-series":
             p(
-                "Vergleichen Sie für die textbasierte Farbauswertung selbst gewählte cis/trans-Paare mit dem CIE76-Farbabstand der App. Dokumentieren Sie die beiden Strukturen, den Abstand und die Grenzen des Vergleichs. Größere Werte bedeuten größere Abstände der berechneten Bildschirmfarben im verwendeten Farbmodell; sie sind weder Energieunterschiede noch eine proportionale Skala wahrgenommener Farbunterschiede."
+                "Vergleichen Sie selbst gewählte cis/trans-Paare mit dem CIE76-Farbabstand der App. Dokumentieren Sie beide Strukturen und den Abstand der berechneten Bildschirmfarben. Berücksichtigen Sie die methodischen Hinweise der Farbauswertung."
             )
 
     def table(headers, rows, widths):

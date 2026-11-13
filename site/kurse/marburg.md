@@ -35,13 +35,18 @@ von Ihrer Betreuung.
 
 ## Protokoll führen
 
-Laden Sie die [Protokollvorlage im DOCX-Format](../../src/photoswitchlab/web/static/materials/protokollvorlage.docx)
+Laden Sie die [Protokollvorlage mit Abbildungen im DOCX-Format](../../src/photoswitchlab/web/static/materials/protokollvorlage.docx)
 herunter und bearbeiten Sie sie mit Word oder LibreOffice Writer. Die Überschriften entsprechen
 den Aufgaben. Tragen Sie berechnete Werte mit Einheiten ein und fügen Sie die
 geforderten Strukturansichten, Energieprofile und Spektren ein. Kennzeichnen Sie
 Modellvorhersagen, wo die Aufgaben es verlangen.
 
-Speichern Sie die Vorlage und exportierte Abbildungen während der Arbeit auf
+Alternativ steht die [Protokollvorlage für textbasierte Auswertung im DOCX-Format](../../src/photoswitchlab/web/static/materials/protokollvorlage-text.docx)
+bereit. Sie dokumentieren darin ausgewählte, beschriftete Beobachtungen und
+Messwerte in lesbaren Ergebnisberichten oder kompakten Tabellen anstelle der
+Abbildungen. Die wissenschaftlichen Fragestellungen bleiben gleich.
+
+Speichern Sie die Vorlage und exportierte Abbildungen beziehungsweise Ergebnisberichte während der Arbeit auf
 Ihrem Computer. Ergebnisse in der Webapp gehen beim Serverneustart verloren und
 werden nach 24 Stunden Inaktivität gelöscht.
 

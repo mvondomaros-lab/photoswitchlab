@@ -265,7 +265,7 @@ async function renderMolecule() {
   const image = svgURL(m.svg);
   if ($("structure-image").getAttribute("src") !== image)
     $("structure-image").src = image;
-  if (globalThis.AccessibilityView?.prefersText && !globalThis.AccessibilityView?.showGraphics) return;
+  if (globalThis.AccessibilityView?.prefersText) return;
   if (state.mode !== "3d" || state.step === "spectrum") return;
   if (component && renderedMolecule === m.id) {
     if (state.live && state.step === "optimize") applyLiveGeometry();

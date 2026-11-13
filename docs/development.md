@@ -50,8 +50,12 @@ This preference changes presentation; both views use the same calculation data.
 The app's `accessibility.js` provides atom/bond exploration, distances and angles,
 search/path tables, spectrum transitions, interpolated curve queries and compact
 readable HTML reports. Full CSV/JSON exports and full tables are optional details.
-Reports include the saved structure and explicitly selected points, transitions,
-curve queries or color pairs, not every history record. Atom numbers are one-based indices of the stored geometry, distinct
+Reports include the saved structure and current or explicitly remembered points,
+measurements, transitions, curve queries or color pairs, not every history record.
+The observation collection retains selections across structures until reload;
+students can remove entries and export the collection as a readable report.
+Decimal input accepts one comma or dot without relying on number-input locale
+handling. Atom numbers are one-based indices of the stored geometry, distinct
 from the chemical ring positions supplied alongside them. Old stored sessions
 without `atom_graph` require recreating their structures for bond exploration.
 
