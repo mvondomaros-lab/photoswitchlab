@@ -66,7 +66,7 @@ Trägt man ihre Energien und Stärken auf, erhält man das folgende Linienspektr
 <img src="../../figures/outputs/spectrum_lines.svg" alt="Das Spektrum eines Moleküls, das Licht mit 3,0 eV und 4,0 eV absorbiert." width="600" loading="lazy">
 <details class="text-alternative" markdown="1"><summary>Linienspektrum als Text</summary>
 
-Die horizontale Achse zeigt die Photonenenergie. Zwei einzelne Absorptionslinien stehen bei 3,0 eV und 4,0 eV. Zwischen diesen Linien wird in dieser schematischen Darstellung kein Übergang eingezeichnet. Die Skizze zeigt ein Beispiel und kein berechnetes Azobenzolspektrum.
+Die horizontale Achse zeigt die Photonenenergie, die vertikale Achse die relative Übergangsstärke. Die Linie bei 3,0 eV hat die Höhe 0,5, die Linie bei 4,0 eV die Höhe 0,3. Zwischen diesen Linien wird in dieser schematischen Darstellung kein Übergang eingezeichnet. Die Skizze zeigt ein Beispiel und kein berechnetes Azobenzolspektrum.
 
 </details>
 
@@ -87,6 +87,11 @@ Ihre relativen Höhen hängen von den Übergangsstärken und der Überlagerung b
 
 <figure markdown="1">
 <img src="../../figures/outputs/spectrum_bands.svg" alt="Das Bandenspektrum eines Moleküls, das bevorzugt Licht mit 3,0 eV und 4,0 eV absorbiert." width="600" loading="lazy">
+<details class="text-alternative" markdown="1"><summary>Bandenspektrum als Text</summary>
+
+Die horizontale Achse zeigt die Energie von 1,4 bis 5,6 eV, die vertikale Achse die relative Absorption. Zwei gleich breit dargestellte Banden haben ihre Gipfel nahe 3,0 eV mit einer Höhe von etwa 0,5 und nahe 4,0 eV mit einer Höhe von etwa 0,3. Dazwischen fällt die Kurve fast auf null ab. Die schmalen Linien im Hintergrund stehen bei denselben Energien und haben dieselben Höhen wie im Linienspektrum. Die kontinuierliche Kurve ist die Summe der verbreiterten Einzelbeiträge.
+
+</details>
 
 <figcaption markdown="1">
 Das Bandenspektrum eines Moleküls, das bevorzugt Licht mit 3,0 eV und 4,0 eV absorbiert.

@@ -232,11 +232,15 @@ leiten Sie daraus den Namen ab:
 
 </figure>
 
+<details class="text-alternative" markdown="1">
+<summary>Substitutionsmuster der Abbildung als Text</summary>
+
+Mit den festen Positionsnummern der Abbildung liegen am ersten Ring Methylgruppen an 3 und 5 sowie eine Methoxygruppe an 4. Am zweiten Ring befinden sich Fluor an 2′, Trifluormethyl an 4′ und Dimethylamino an 5′. Diese Angaben beschreiben die Eingabe; bestimmen Sie daraus selbst die Nummerierung und den Namen.
+
+</details>
+
 <details markdown="1">
 <summary markdown="span">Lösung</summary>
-
-Mit den festen Positionsnummern der Abbildung liegen am ersten Ring Methylgruppen an 3 und 5 sowie eine
-Methoxygruppe an 4. Am zweiten Ring befinden sich Fluor an 2′, Trifluormethyl an 4′ und Dimethylamino an 5′.
 
 Für den chemischen Namen werden die beiden Ringe vertauscht. Die niedrigste Zahlenfolge bleibt dabei
 2,3,4,4,5,5; bei dieser Gleichheit erhält der alphabetisch zuerst genannte Substituent Dimethylamino eine ungestrichene

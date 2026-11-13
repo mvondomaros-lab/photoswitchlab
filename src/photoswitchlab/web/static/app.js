@@ -1025,6 +1025,12 @@ async function startJob(payload) {
     throw new Error("Eine Minimumsuche ausgehend von einer Übergangsstruktur ist hier nicht möglich. Wählen Sie eine Startstruktur.");
   if (state.busy)
     throw new Error("Warten Sie, bis die laufende Berechnung abgeschlossen ist.");
+  const focusOrigin = document.activeElement;
+  const followFocus = !!focusOrigin && ["create", "optimize", "calculate-spectrum"].includes(focusOrigin.id);
+  let userMovedFocus = false;
+  const rememberFocus = (event) => {
+    if (event.target !== focusOrigin && event.target !== document.body && event.target !== $("job-title")) userMovedFocus = true;
+  };
   error("");
   const wasPreviewing = state.live?.replay;
   state.live = null;
@@ -1048,14 +1054,19 @@ async function startJob(payload) {
     renderEnergyHistory();
   }
   updateControls();
+  if (followFocus) document.addEventListener?.("focusin", rememberFocus);
   try {
     const job = await api("jobs", {
       method: "POST",
       body: JSON.stringify(payload),
     });
     displayJob(job);
-    return await monitor(job.id);
+    if (followFocus && !userMovedFocus && (!document.activeElement || document.activeElement === document.body || document.activeElement === focusOrigin)) $("job-title").focus?.();
+    const result = await monitor(job.id);
+    if (followFocus && !userMovedFocus && result.status === "complete") $("active-name").focus?.();
+    return result;
   } finally {
+    if (followFocus) document.removeEventListener?.("focusin", rememberFocus);
     state.busy = false;
     updateControls();
   }

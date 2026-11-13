@@ -7,6 +7,9 @@ if (textPreference) {
   let saved = false;
   try { saved = localStorage.getItem('photoswitchlab.textPreferred') === 'true'; } catch (_) {}
   textPreference.checked = query === '1' || (query !== '0' && saved);
+  if (query === '1' || query === '0') {
+    try { localStorage.setItem('photoswitchlab.textPreferred', String(textPreference.checked)); } catch (_) {}
+  }
   const apply = () => {
     document.body.classList.toggle('text-preferred', textPreference.checked);
     for (const description of document.querySelectorAll('details.text-alternative')) {

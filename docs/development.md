@@ -42,16 +42,16 @@ installed separately; it is not needed to run the application. Inspect changed
 interfaces in a browser as well. Changes to Hub integration also need a login
 test on a real Hub.
 
-### Chemistry regression tests
-
 ### Accessible presentation
 
 The app and website offer an optional text-first presentation, persisted locally
 and selectable directly with `?text=1` (`?text=0` overrides the stored choice).
 This preference changes presentation; both views use the same calculation data.
 The app's `accessibility.js` provides atom/bond exploration, distances and angles,
-search/path tables, spectrum transitions, interpolated curve queries and CSV/JSON
-exports. Atom numbers are one-based indices of the stored geometry, distinct
+search/path tables, spectrum transitions, interpolated curve queries and compact
+readable HTML reports. Full CSV/JSON exports and full tables are optional details.
+Reports include the saved structure and explicitly selected points, transitions,
+curve queries or color pairs, not every history record. Atom numbers are one-based indices of the stored geometry, distinct
 from the chemical ring positions supplied alongside them. Old stored sessions
 without `atom_graph` require recreating their structures for bond exploration.
 
@@ -65,6 +65,17 @@ Run `node --test tests/test_accessibility.cjs` and
 `pytest tests/test_accessibility.py` alongside the routine checks. Manual
 keyboard, screen-reader, zoom and graphical presentation checks remain necessary;
 the automated tests do not establish WCAG conformance.
+
+The optional color comparison uses the CIE76 Euclidean distance in CIELAB with
+D65 reference white, calculated from the same clipped sRGB triples as the swatch.
+It does not rank derivatives automatically or predict measured colors at a
+specified concentration. The value is a color-space distance, not an energy
+difference or a proportional scale of perceived differences. See the
+[W3C color conversion and difference discussion](https://www.w3.org/TR/css-color-4/#color-conversion-code)
+for color-space background; D65 is used consistently here rather than CSS Lab's
+D50 white. Tests check neutral anchors, symmetry and zero self-distance.
+
+### Chemistry regression tests
 
 These longer-running calculations are excluded from routine runs and are run
 explicitly:

@@ -17,14 +17,14 @@ document their own choices.
     <meta name="description" content="$brand_title · $brand_subtitle"/>
     <link rel="icon" type="image/svg+xml" href="static/brand-mark.svg"/>
     <link rel="stylesheet" href="static/header.css?v=6"/>
-    <link rel="stylesheet" href="static/app.css?v=ui-63"/>
+    <link rel="stylesheet" href="static/app.css?v=ui-64"/>
     <script src="static/vendor/ngl.js" defer></script>
     <script src="static/vendor/chart.js" defer></script>
     <script src="static/progress.js?v=ui-36" defer></script>
     <script src="static/vendor/cie-color.js?v=1" defer></script>
     <script src="static/solution-color.js?v=1" defer></script>
-    <script src="static/accessibility.js?v=1" defer></script>
-    <script src="static/app.js?v=ui-94" defer></script>
+    <script src="static/accessibility.js?v=2" defer></script>
+    <script src="static/app.js?v=ui-95" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
@@ -368,7 +368,7 @@ document their own choices.
         <section class="results" aria-label="Struktur und Ergebnisse">
             <div class="result-heading" id="result-heading" hidden>
                 <div>
-                    <h2 id="active-name">Startstruktur</h2>
+                    <h2 id="active-name" tabindex="-1">Startstruktur</h2>
                     <p id="active-meta">
                         Wählen Sie Konfiguration und Substituenten für Ihre
                         Startstruktur.
@@ -415,7 +415,7 @@ document their own choices.
             </div>
             <div id="job-status" class="job-status" hidden>
                 <div>
-                    <strong id="job-title"></strong><span id="job-time"></span>
+                    <strong id="job-title" tabindex="-1"></strong><span id="job-time"></span>
                     <p id="job-detail" hidden></p>
                 </div>
                 <button id="cancel" class="small-button">Abbrechen</button>
@@ -425,46 +425,64 @@ document their own choices.
                 <label class="text-graphics-option"><input id="text-show-graphics" type="checkbox"/> Grafiken zusätzlich anzeigen</label>
                 <p id="accessible-identity"></p>
                 <p id="accessible-geometry"></p>
+                <details><summary>Strukturzuordnung und Rechenkontext</summary><p id="accessible-assumptions"></p></details>
                 <div class="inline-actions">
-                    <button id="data-json" type="button">Ergebnisse als JSON speichern</button>
-                    <button id="data-csv" type="button">Tabellendaten als CSV speichern</button>
+                    <button id="data-report" class="text-button" type="button">Ergebnisbericht speichern</button>
                 </div>
+                <details><summary>Vollständige Rohdaten exportieren</summary>
+                    <p class="note">CSV enthält alle gespeicherten Kurven- und Energiedaten; JSON enthält zusätzlich Strukturen und Rechenmetadaten. Für die direkte Lektüre verwenden Sie den Ergebnisbericht.</p>
+                    <div class="inline-actions"><button id="data-json" class="text-button" type="button">JSON speichern</button><button id="data-csv" class="text-button" type="button">CSV speichern</button></div>
+                </details>
                 <details id="atom-explorer">
                     <summary>Atome, Bindungen und Abstände untersuchen</summary>
                     <p class="note">Atomnummern gelten innerhalb dieser Struktur und ihrer gespeicherten Rechenschritte. Sie sind keine chemischen Positionsnummern. Abstände werden aus den dargestellten Koordinaten berechnet.</p>
                     <label for="atom-first">Erstes Atom</label><select id="atom-first"></select>
                     <p id="atom-neighbors"></p>
                     <label for="atom-second">Zweites Atom</label><select id="atom-second"></select>
-                    <p id="atom-distance" role="status"></p>
+                    <p id="atom-distance"></p>
                     <label for="atom-third">Drittes Atom für den Winkel am zweiten Atom</label><select id="atom-third"></select>
-                    <p id="atom-angle" role="status"></p>
+                    <p id="atom-angle"></p>
                     <p id="atom-rings" class="note"></p>
+                    <p id="accessible-azo-angles"></p>
                 </details>
-                <section id="accessible-path" hidden>
-                    <h3>Rechenschritte untersuchen</h3>
+                <details id="accessible-path" hidden>
+                    <summary>Rechenschritte untersuchen</summary>
                     <p id="accessible-path-note" class="note"></p>
                     <label for="path-point">Schritt oder Pfadstruktur</label><select id="path-point"></select>
-                    <p id="accessible-point" role="status" aria-atomic="true"></p>
+                    <p id="accessible-point"></p>
+                    <details><summary>Vollständige Energietabelle</summary>
                     <div class="table-scroll" tabindex="0" role="region" aria-label="Energiedaten"><table>
                         <caption id="energy-table-caption">Energiedaten</caption>
                         <thead><tr><th scope="col">Schritt / Pfadstruktur</th><th scope="col">E / eV</th><th scope="col">ΔE / eV</th><th scope="col">Diederwinkel / °</th><th scope="col">Ringabstand / pm</th></tr></thead>
                         <tbody id="energy-table-body"></tbody>
                     </table></div>
-                </section>
-                <section id="accessible-spectrum" hidden>
-                    <h3>Spektrum untersuchen</h3>
+                    </details>
+                </details>
+                <details id="accessible-spectrum" hidden>
+                    <summary>Spektrum untersuchen</summary>
+                    <p id="accessible-spectrum-summary"></p>
                     <p id="accessible-spectrum-note" class="note"></p>
+                    <label for="transition-point">Elektronischen Übergang auswählen</label><select id="transition-point"></select>
+                    <p id="transition-value"></p>
+                    <details><summary>Vollständige Übergangstabelle</summary>
                     <div class="table-scroll" tabindex="0" role="region" aria-label="Elektronische Übergänge"><table>
                         <caption>Berechnete elektronische Übergänge</caption>
                         <thead><tr><th scope="col">Übergang</th><th scope="col">E / eV</th><th scope="col">λ / nm</th><th scope="col">Oszillatorstärke</th></tr></thead>
                         <tbody id="transition-table-body"></tbody>
                     </table></div>
+                    </details>
                     <label for="curve-energy">Absorptionskurve abfragen: Energie / eV</label>
                     <input id="curve-energy" type="number" step="any"/>
-                    <button id="curve-query" type="button">Absorption bestimmen</button>
+                    <button id="curve-query" class="text-button" type="button">Absorption bestimmen</button>
                     <p id="curve-value" role="status"></p>
                     <p id="accessible-color"></p>
-                </section>
+                    <details><summary>Farben zweier Strukturen vergleichen</summary>
+                        <label for="color-comparison">Zweite Struktur</label><select id="color-comparison"></select>
+                        <p id="color-comparison-value"></p>
+                        <p class="note">Der CIE76-Farbabstand vergleicht die berechneten Bildschirmfarben im CIE-L*a*b*-Farbraum. Größere Werte bedeuten einen größeren Abstand in diesem Modell. Das ist kein Energieunterschied und keine proportionale Skala der wahrgenommenen Farbunterschiede.</p>
+                        <p class="note">Beide Farben beruhen auf derselben festen Absorbanzskalierung. Es sind keine Lösungen mit festgelegter Konzentration oder Schichtdicke. Die Umrechnung begrenzt Farben auf den sRGB-Bildschirmfarbraum.</p>
+                    </details>
+                </details>
             </details>
             <div id="molecular-panel">
                 <div class="viewer-toolbar" id="viewer-toolbar" hidden>
