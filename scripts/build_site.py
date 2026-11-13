@@ -46,8 +46,9 @@ PAGES = (
     "impressum",
 )
 PAGE_SCRIPTS = {
-    "theory/structures": "structure-viewer.js?v=2",
-    "installation": "binder-launch.js",
+    "theory/structures": ("structure-viewer.js?v=2",),
+    "theory/light": ("sonification-practice.js?v=1",),
+    "installation": ("binder-launch.js",),
 }
 
 
@@ -134,10 +135,14 @@ def build(output: Path = OUTPUT, *, course: str = "public") -> None:
         )
         vendor = stage / "assets/vendor"
         vendor.mkdir(parents=True, exist_ok=True)
-        for name in ("ngl.js", "NGL-LICENSE"):
+        for name in ("ngl.js", "NGL-LICENSE", "chart2music.js", "Chart2Music-LICENSE"):
             shutil.copy2(
                 ROOT / "src/photoswitchlab/web/static/vendor" / name, vendor / name
             )
+        shutil.copy2(
+            ROOT / "src/photoswitchlab/web/static/sonification-audio.js",
+            stage / "assets/sonification-audio.js",
+        )
         template = Template((SITE / "template.html").read_text())
         search = []
         for slug in (*PAGES, "theory"):
@@ -228,10 +233,9 @@ def build(output: Path = OUTPUT, *, course: str = "public") -> None:
                     if outline.count("<a ") >= 2
                     else ""
                 ),
-                page_scripts=(
-                    f'<script src="{root}assets/{PAGE_SCRIPTS[slug]}" defer></script>'
-                    if slug in PAGE_SCRIPTS
-                    else ""
+                page_scripts="".join(
+                    f'<script src="{root}assets/{script}" defer></script>'
+                    for script in PAGE_SCRIPTS.get(slug, ())
                 ),
             )
             destination = stage / page_url(slug) / "index.html"

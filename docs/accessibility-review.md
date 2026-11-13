@@ -662,3 +662,11 @@ instead of only the topic; the build merges upright MathML letters (`cis` as one
 identifier) and decimal-comma numbers (`932,48` as one number) so screen readers and
 Braille displays do not split them; table cells use less padding below 400 px.
 Not tested: screen-reader speech of the corrected MathML.
+
+The light chapter now offers a Chart2Music practice field for the band spectrum
+(peaks at 3,0 and 4,0 eV), shown and lazily loaded only in the accessible
+presentation, so a blind student can learn the app's sonification keys before the
+lab without a joint trial. The Safari-compatible audio engine moved to the shared
+`sonification-audio.js`. In headless Chrome the field stayed hidden and Chart2Music
+unloaded in graphical mode; in accessible mode 30 right-arrow steps reached
+“3,00 eV, 413 nm, 0,5” in the live region.

@@ -164,3 +164,5 @@ dialog input { width: 100%; padding: .5rem; border: 1px solid var(--line); borde
 .text-preferred .header { position: static; }
 .text-preferred article img { max-width: 100%; height: auto; }
 .text-preferred .site-menu > summary { display: list-item; min-height: 44px; padding-block: .5rem; color: var(--text); }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+.sonification { margin: .5rem 0; padding: .75rem 1rem; border: 2px solid #8eafea; border-radius: 7px; background: var(--tint); font-weight: 600; }

@@ -99,6 +99,12 @@ Zur besseren Orientierung wurde das zugrunde liegende Linienspektrum im Hintergr
 </figcaption>
 </figure>
 
+<div class="sonification-practice" data-sonification-practice hidden>
+<div class="sonification" data-sonification aria-label="Hörbares Bandenspektrum zum Üben" aria-describedby="sonification-practice-hint">Hörbares Bandenspektrum zum Üben</div>
+<p id="sonification-practice-hint">Die Webapp stellt berechnete Spektren im barrierearmen Modus auch hörbar dar. An diesem Bandenspektrum mit Gipfeln bei 3,0 und 4,0 eV können Sie die Bedienung vorab ausprobieren. Wählen Sie das Feld mit der Tabulatortaste aus. Die Pfeiltasten nach links und rechts bewegen sich in Schritten von 0,05 eV entlang der Energie; die Energie steigt nach rechts. Die Tonhöhe folgt der relativen Absorption, die Stereoposition der Energie. Pos1 und Ende springen an die Ränder, Umschalt und Ende spielt die ganze Kurve ab; H zeigt alle Tastenbefehle. In der Webapp wechseln Bild auf und Bild ab außerdem zwischen cis und trans.</p>
+<div class="sr-only" data-sonification-cc></div>
+</div>
+
 <details id="absorbance-transmission-oscillator-strength" markdown="1">
 <summary markdown="span">Ergänzung: Absorption, Transmission und Oszillatorstärke</summary>
 

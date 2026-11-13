@@ -167,6 +167,23 @@ class SiteBuildTests(unittest.TestCase):
                 models = (output / "theory/models/index.html").read_text()
                 self.assertNotIn("Semester", models)
 
+    def test_light_page_offers_a_lazy_accessible_sonification_practice(self):
+        light = (self.output / "theory/light/index.html").read_text()
+        document = Document(light)
+        self.assertIn("data-sonification-practice hidden", light)
+        self.assertIn("../../assets/sonification-practice.js?v=1", document.links)
+        self.assertNotIn("chart2music.js", light)
+        for asset in (
+            "assets/sonification-practice.js",
+            "assets/sonification-audio.js",
+            "assets/vendor/chart2music.js",
+            "assets/vendor/Chart2Music-LICENSE",
+        ):
+            self.assertTrue((self.output / asset).is_file(), asset)
+        script = (self.output / "assets/sonification-practice.js").read_text()
+        self.assertIn("text-preferred", script)
+        self.assertIn("assets/vendor/chart2music.js", script)
+
     def test_structures_page_has_progressive_local_3d_viewer(self):
         structures_path = self.output / "theory/structures/index.html"
         structures = structures_path.read_text()
