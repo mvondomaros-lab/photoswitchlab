@@ -1559,3 +1559,6 @@ select {
 .sonification { margin: .5rem 0; padding: .75rem 1rem; border: 2px solid #8eafea; border-radius: 7px; background: #f1f6ff; font-weight: 600; }
 .sonification:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 body:not(.text-preferred) .sonification, body:not(.text-preferred) #spectrum-sonification-hint { display: none !important; }
+.sonification-value { margin: 0 0 .5rem; padding: .4rem .75rem; font-variant-numeric: tabular-nums; font-weight: 600; border-left: 4px solid var(--blue); background: #f3f6fa; }
+.sonification-value:empty { display: none; }
+.text-preferred #simple-spectrum-plot .spectrum-plot { margin: 0 0 1rem; padding: 0; }

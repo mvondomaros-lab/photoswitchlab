@@ -635,3 +635,11 @@ engine that resumes the context within each key press and plays a short triangle
 tone with stereo panning. In headless Chrome, arrow, End and Home produced three
 tones panned at −0.96, 0.98 and −0.98. Safari playback was not re-tested by the
 agent; speech output requires a running screen reader.
+
+The accessible spectrum result now also shows the existing chart (moved with a
+restoration marker, including the dashed partner curve) before the sonification
+field. Exploring with Chart2Music marks the current point in the chart and shows the
+announced value visibly below the field, which supports low vision and sighted
+helpers without a screen reader. In headless Chrome, 39 right-arrow steps marked and
+displayed “3,45 eV, 359 nm, 0,14”; returning to graphical mode restored the chart to
+its original position without the marker.

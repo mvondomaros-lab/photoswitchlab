@@ -70,7 +70,7 @@ test("simplified app uses the original controls in linear DOM order and restores
   const document = templateDocument("src/photoswitchlab/web/static/index.html");
   const $ = (id) => document.getElementById(id);
   const originalIds = document.nodes().filter((node) => node.id).map((node) => node.id).sort();
-  const moved = ["guide", "job-status", "method-build", "method-optimize", "method-spectrum", "fundamentals-link", "converter-content"];
+  const moved = ["guide", "job-status", "spectrum-plot", "method-build", "method-optimize", "method-spectrum", "fundamentals-link", "converter-content"];
   const originals = new Map(moved.map((id) => [id, {node: $(id), parent: $(id).parentNode}]));
   $("molecule-select").textContent = "Gewählte Minimumstruktur";
   $("job-status").hidden = false;
@@ -82,6 +82,7 @@ test("simplified app uses the original controls in linear DOM order and restores
   assert.equal($("guide").parentNode.id, "simple-task-access");
   assert.equal($("guide-open").parentNode, $("graphic-preference").parentNode.parentNode.parentNode);
   assert.equal($("job-status").parentNode.id, "simple-calculation-status");
+  assert.equal($("spectrum-plot").parentNode.id, "simple-spectrum-plot"); // Chart follows the text results.
   assert.equal($("method-optimize").parentNode.id, "simple-methods");
   assert.equal($("method-optimize").hidden, false);
   assert.equal($("method-build").hidden, true);

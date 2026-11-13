@@ -801,6 +801,8 @@ function renderSpectrumChart(spec) {
         // The other configuration of the same derivative, dashed so it does not rely on color.
         { label: "Andere Konfiguration", order: 2, data: [], borderColor: plotStyle.text,
           borderWidth: plotStyle.curveWidth, borderJoinStyle: "round", borderDash: [7, 5], pointRadius: 0, tension: 0 },
+        { label: "Angehörter Punkt", order: -2, data: [], borderColor: plotStyle.ink,
+          backgroundColor: "white", borderWidth: 3, pointRadius: 7, showLine: false },
       ] },
       options: {
         locale: "de-DE", color: plotStyle.text, font: plotStyle.font,
@@ -823,6 +825,10 @@ function renderSpectrumChart(spec) {
         },
       },
     });
+  }
+  if (spectrumChart.spectrumData !== spec || !globalThis.AccessibilityView?.prefersText) {
+    spectrumChart.data.datasets[4].data = [];
+    $("spectrum-sonification-cc").textContent = "";
   }
   if (spectrumChart.spectrumData !== spec) {
     spectrumChart.data.datasets[2].data = [];
@@ -888,6 +894,12 @@ function sonificationAudio() {
     },
   };
 }
+// Shows the explored point in the chart; the value itself is visible below the field.
+function markSonifiedPoint({ point }) {
+  if (!spectrumChart) return;
+  spectrumChart.data.datasets[4].data = Number.isFinite(point?.y) ? [{ x: point.x, y: point.y }] : [];
+  spectrumChart.update("none");
+}
 function renderSonification() {
   const id = "spectrum-sonification", element = $(id), m = current();
   if (!element || !globalThis.c2mChart) return;
@@ -908,7 +920,8 @@ function renderSonification() {
     if (sonification) sonification.chart.setData(data, axes);
     else {
       const { err, data: chart } = c2mChart({ type: "line", element, cc: $(`${id}-cc`), lang: "de",
-        title: "UV/Vis-Spektrum", data, axes, audioEngine: sonificationAudio() });
+        title: "UV/Vis-Spektrum", data, axes, audioEngine: sonificationAudio(),
+        options: { onFocusCallback: markSonifiedPoint } });
       if (err) throw new Error(err);
       sonification = { chart };
     }

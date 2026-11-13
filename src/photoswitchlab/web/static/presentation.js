@@ -26,6 +26,8 @@ globalThis.PresentationLayout = {
           $("accessible-results").open = true;
           move($("guide"), $("simple-task-access"));
           move($("job-status"), $("simple-calculation-status"));
+          // The same chart supports low vision next to its sonification.
+          move($("spectrum-plot"), $("simple-spectrum-plot"));
           move($("fundamentals-link"), $("simple-tools"));
           if ($("converter").open) $("converter").close?.();
           move($("converter-content"), $("simple-converter"));

@@ -17,16 +17,16 @@ document their own choices.
     <meta name="description" content="$brand_title · $brand_subtitle"/>
     <link rel="icon" type="image/svg+xml" href="static/brand-mark.svg"/>
     <link rel="stylesheet" href="static/header.css?v=7"/>
-    <link rel="stylesheet" href="static/app.css?v=ui-73"/>
+    <link rel="stylesheet" href="static/app.css?v=ui-74"/>
     <script src="static/vendor/ngl.js" defer></script>
     <script src="static/vendor/chart.js" defer></script>
     <script src="static/progress.js?v=ui-36" defer></script>
     <script src="static/vendor/cie-color.js?v=1" defer></script>
     <script src="static/solution-color.js?v=1" defer></script>
     <script src="static/vendor/chart2music.js?v=1.20.0" defer></script>
-    <script src="static/presentation.js?v=4" defer></script>
+    <script src="static/presentation.js?v=5" defer></script>
     <script src="static/accessibility.js?v=12" defer></script>
-    <script src="static/app.js?v=ui-109" defer></script>
+    <script src="static/app.js?v=ui-110" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
@@ -456,10 +456,11 @@ document their own choices.
                         </table></div>
                     </details>
                     <section id="accessible-spectrum" hidden aria-label="Absorptionsvergleich und weitere Spektraldaten">
+                        <div id="simple-spectrum-plot" class="simple-only"></div>
                         <div id="spectrum-sonification" class="sonification" aria-describedby="spectrum-sonification-hint"
                              aria-label="Hörbares UV/Vis-Spektrum" hidden>Hörbares UV/Vis-Spektrum</div>
                         <p id="spectrum-sonification-hint" class="note" hidden>Hörbares Spektrum: Wählen Sie das Feld mit der Tabulatortaste aus. Die Pfeiltasten nach links und rechts bewegen sich in Schritten von 0,05 eV entlang der Energie; die Energie steigt nach rechts. Die Tonhöhe folgt der relativen Absorption, die Stereoposition der Energie. Pos1 und Ende springen an die Ränder, Umschalt und Ende spielt die ganze Kurve ab. Bild auf und Bild ab wechseln zwischen den Konfigurationen; H zeigt alle Tastenbefehle.</p>
-                        <div id="spectrum-sonification-cc" class="sr-only"></div>
+                        <div id="spectrum-sonification-cc" class="sonification-value"></div>
                         <label for="curve-energy">Absorption bei gleicher Energie vergleichen / eV</label>
                         <input id="curve-energy" type="text" inputmode="decimal" autocomplete="off" aria-describedby="curve-value"/>
                         <button id="curve-query" class="text-button" type="button">Absorption bestimmen</button>
@@ -601,7 +602,7 @@ document their own choices.
                     <h3>Noch kein Spektrum berechnet</h3>
                 </div>
                 <div id="spectrum-result" hidden>
-                    <section class="spectrum-plot" aria-label="Berechnetes UV/Vis-Spektrum">
+                    <section class="spectrum-plot" id="spectrum-plot" aria-label="Berechnetes UV/Vis-Spektrum">
                         <div class="energy-heading">
                             <div>
                                 <h3>UV/Vis-Spektrum</h3>
