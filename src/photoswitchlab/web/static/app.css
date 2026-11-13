@@ -1522,6 +1522,7 @@ select {
 .text-preferred #simple-methods > details { margin: .75rem 0; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 8px; background: white; }
 .text-preferred #simple-tools { margin-top: 1rem; padding: 1rem 1.25rem; border: 1px solid var(--line); border-radius: 8px; background: white; }
 .text-preferred #simple-tools > :not(summary) { margin: .75rem .75rem 0 0; }
+.text-preferred #simple-tools .quiet { display: inline-flex; align-items: center; min-height: 44px; padding: .6rem .85rem; color: var(--blue); background: #f3f6fa; border: 1px solid #b7c9df; border-radius: 7px; text-decoration: none; }
 .text-preferred #simple-default-capture:empty { display: none; }
 .text-preferred #simple-collection { margin-top: .75rem; }
 .text-preferred #simple-collection > button { margin-top: .75rem; }

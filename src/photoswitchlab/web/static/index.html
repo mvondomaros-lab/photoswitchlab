@@ -17,15 +17,15 @@ document their own choices.
     <meta name="description" content="$brand_title · $brand_subtitle"/>
     <link rel="icon" type="image/svg+xml" href="static/brand-mark.svg"/>
     <link rel="stylesheet" href="static/header.css?v=6"/>
-    <link rel="stylesheet" href="static/app.css?v=ui-66"/>
+    <link rel="stylesheet" href="static/app.css?v=ui-67"/>
     <script src="static/vendor/ngl.js" defer></script>
     <script src="static/vendor/chart.js" defer></script>
     <script src="static/progress.js?v=ui-36" defer></script>
     <script src="static/vendor/cie-color.js?v=1" defer></script>
     <script src="static/solution-color.js?v=1" defer></script>
-    <script src="static/presentation.js?v=1" defer></script>
-    <script src="static/accessibility.js?v=5" defer></script>
-    <script src="static/app.js?v=ui-97" defer></script>
+    <script src="static/presentation.js?v=2" defer></script>
+    <script src="static/accessibility.js?v=6" defer></script>
+    <script src="static/app.js?v=ui-98" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
@@ -75,7 +75,7 @@ document their own choices.
         <aside class="controls">
             <section class="library" id="structure-library" hidden>
                 <label for="molecule-select"
-                >Gespeicherte Strukturen
+                ><span id="structure-choice-label">Gespeicherte Strukturen</span>
                     <span id="structure-count" class="count">0</span></label
                 >
                 <button
@@ -91,6 +91,7 @@ document their own choices.
             </section>
             <section class="step-panel" data-panel="build">
                 <form id="builder">
+                    <h2 class="simple-only">Neue Startstruktur erstellen</h2>
                     <fieldset>
                         <legend>Konfiguration</legend>
                         <div class="segmented">
@@ -450,6 +451,10 @@ document their own choices.
                     <p id="accessible-spectrum-summary"></p>
                     <p id="accessible-color"></p>
                     <p id="accessible-spectrum-note" class="note"></p>
+                    <h4>Bandenübersicht der gespeicherten Kurve</h4>
+                    <p id="spectrum-visible-coverage"></p>
+                    <ul id="spectrum-band-list"></ul>
+                    <p id="spectrum-band-note" class="note"></p>
                     <label for="transition-point">Elektronischen Übergang auswählen</label><select id="transition-point"></select>
                     <p id="transition-value"></p>
                     <label for="curve-energy">Absorptionskurve abfragen: Energie / eV</label>

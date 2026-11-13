@@ -46,7 +46,7 @@ PAGES = (
     "impressum",
 )
 PAGE_SCRIPTS = {
-    "theory/structures": "structure-viewer.js",
+    "theory/structures": "structure-viewer.js?v=2",
     "installation": "binder-launch.js",
 }
 

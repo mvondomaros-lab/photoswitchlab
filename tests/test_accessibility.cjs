@@ -84,18 +84,22 @@ function accessibleLab(search = "", deniedStorage = false) {
   function element() {
     let text = "";
     return {
-      options: [], value: "", open: false, checked: false,
+      options: [], children: [], value: "", open: false, checked: false,
       get textContent() { return text; },
       set textContent(value) { text = value; mutations++; },
       replaceChildren(...children) { this.options = children; this.value = children[0]?.value ?? ""; mutations++; },
-      append() {}, classList: { toggle() {} },
+      append(...children) { this.children.push(...children); }, focus() { focused = this; }, classList: { toggle() {} },
     };
   }
   const node = (id) => {
-    if (!elements.has(id)) elements.set(id, element());
+    if (!elements.has(id)) {
+      const created = element();
+      created.id = id;
+      elements.set(id, created);
+    }
     return elements.get(id);
   };
-  let exported;
+  let exported, focused;
   const context = vm.createContext({
     document: { getElementById: node, createElement: element, body: element() },
     Option: function(text, value) { return { text, value: String(value) }; },
@@ -121,7 +125,7 @@ function accessibleLab(search = "", deniedStorage = false) {
     substituentLabel: (s) => s, filename: (extension) => `result.${extension}`,
     download: (content, filename) => { exported = {content, filename}; },
   });
-  return { view, node, saved, molecule, state, context, select: (value) => { selected = value; view.render(); }, mutations: () => mutations, exported: () => exported };
+  return { view, node, saved, molecule, state, context, select: (value) => { selected = value; view.render(); }, mutations: () => mutations, exported: () => exported, focused: () => focused };
 }
 
 test("explicit text preference persists and turning it off restores graphical-first disclosure", () => {
@@ -319,12 +323,86 @@ test("spectrum presentation prioritizes its own results while geometry remains o
   assert.equal(lab.node("accessible-geometry").hidden, true);
   assert.equal(lab.node("accessible-spectrum-geometry").hidden, false);
   lab.node("data-report").onclick();
-  assert.ok(lab.exported().content.includes("Maximum im berechneten Kurvenbereich"));
+  assert.ok(lab.exported().content.includes("Höchste gespeicherte relative Absorption"));
   assert.ok(!lab.exported().content.includes("Diederwinkel"));
   lab.state.step = "optimize";
   lab.view.render();
   assert.equal(lab.node("accessible-spectrum").hidden, true);
   assert.equal(lab.node("accessible-geometry").hidden, false);
+});
+
+test("stored broadened-curve overview finds visible and ultraviolet maxima without fitting sub-grid peaks", () => {
+  const spectrum = {energy_ev: [1.5, 1.7, 2, 2.3, 3, 3.4, 4, 4.3, 5], absorption: [0, 1, 0.1, 0.8, 0.1, 0.1, 3, 0.1, 0]};
+  const curve = data.curveOverview(spectrum);
+  assert.deepEqual(curve.peaks.map((peak) => peak.low), [1.7, 2.3, 4]);
+  assert.deepEqual(curve.peaks.map((peak) => peak.visible), [true, true, false]);
+  assert.equal(curve.visible.coverage, "full");
+  const description = data.describeCurve(spectrum);
+  assert.equal(description.bands.length, 3);
+  assert.ok(description.bands[0].startsWith("Sichtbarer Bereich"));
+  assert.ok(description.bands[0].includes("1,7000 eV"));
+  assert.ok(description.bands[2].includes("Außerhalb des sichtbaren Bereichs"));
+  assert.ok(description.bands[2].includes("relative Absorption 3"));
+});
+
+test("curve overview treats plateaus, clipped boundaries, flat curves and partial visible coverage explicitly", () => {
+  const plateau = {energy_ev: [1, 2, 3, 4], absorption: [0, 0.7, 0.7, 0]};
+  assert.deepEqual(data.curveOverview(plateau).peaks.map((peak) => [peak.low, peak.high]), [[2, 3]]);
+  assert.ok(data.describeCurve(plateau).bands[0].includes("2,0000–3,0000 eV"));
+  assert.ok(data.describeCurve(plateau).bands[0].includes("Plateau"));
+  assert.ok(!data.describeCurve(plateau).bands[0].includes("2,5000"));
+  const boundary = {energy_ev: [1.5, 2, 3.5, 4], absorption: [0, 1, 0.5, 2]};
+  assert.deepEqual(data.curveOverview(boundary).peaks.map((peak) => peak.low), [2]);
+  assert.ok(data.describeCurve(boundary).note.includes("am oberen Rand"));
+  assert.ok(!data.describeCurve(boundary).bands.join(" ").includes("4,0000 eV"));
+  const flat = {energy_ev: [1, 2, 3, 4], absorption: [0.2, 0.2, 0.2, 0.2]};
+  assert.equal(data.curveOverview(flat).flat, true);
+  assert.equal(data.describeCurve(flat).bands.length, 0);
+  assert.ok(data.describeCurve(flat).note.includes("konstant"));
+  const partial = {energy_ev: [2, 2.5, 3], absorption: [1, 2, 3]};
+  assert.equal(data.curveOverview(partial).visible.coverage, "partial");
+  assert.ok(data.describeCurve(partial).coverage.includes("nur von"));
+  assert.ok(data.describeCurve(partial).note.includes("steigen dort mit steigender Energie"));
+  assert.ok(data.describeCurve(partial).note.includes("kein inneres lokales Maximum"));
+  assert.equal(data.curveOverview({energy_ev: [4, 5], absorption: [1, 2]}).visible.coverage, "none");
+  assert.equal(data.curveOverview({energy_ev: [2, 2], absorption: [0, 1]}), null);
+  assert.equal(data.curveOverview({energy_ev: [2, 3], absorption: [0, -1]}), null);
+});
+
+test("remembering a spectrum retains the factual band overview with its source context", () => {
+  const lab = accessibleLab();
+  lab.molecule.spectrum = {energy_ev: [1.5, 2, 2.5, 3, 3.5], absorption: [0, 1, 0, 2, 0], excitations_ev: [2], oscillator_strengths: [0.2]};
+  lab.view.render();
+  lab.node("remember-observation").onclick();
+  lab.select(null);
+  lab.node("data-report").onclick();
+  const report = lab.exported().content;
+  assert.ok(report.includes("2,0000 eV"));
+  assert.ok(report.includes("3,0000 eV"));
+  assert.ok(report.includes("Sichtbarer Bereich"));
+  assert.ok(report.includes("INDO/S–CIS"));
+  assert.ok(report.includes("Lokale Maxima werden an den gespeicherten Kurvenpunkten bestimmt"));
+});
+
+test("removing or clearing the last observation without a current structure focuses a visible heading", () => {
+  for (const remove of [true, false]) {
+    const lab = accessibleLab();
+    lab.view.render();
+    lab.node("remember-observation").onclick();
+    const button = lab.node("observations-list").options[0].children[1];
+    lab.select(null);
+    if (remove) button.onclick();
+    else lab.node("clear-observations").onclick();
+    assert.equal(lab.node("accessible-results").hidden, true);
+    assert.equal(lab.focused(), lab.node("step-title"));
+    assert.ok(lab.node("accessible-status").textContent.includes(remove ? "entfernt" : "geleert"));
+  }
+  const lab = accessibleLab();
+  lab.view.render();
+  lab.node("remember-observation").onclick();
+  lab.node("clear-observations").onclick();
+  assert.equal(lab.node("accessible-results").hidden, false);
+  assert.equal(lab.focused(), lab.node("observations-summary"));
 });
 
 test("unit conversion accepts comma or dot consistently in all fields and rejects invalid wavelengths", () => {

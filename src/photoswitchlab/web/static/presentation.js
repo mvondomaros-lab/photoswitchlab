@@ -45,10 +45,13 @@ globalThis.PresentationLayout = {
           move($("ts-details"), $("simple-methods"));
           move($("observations-collection"), $("simple-collection"));
           move($("data-report"), $("simple-collection"));
-          if ($("active-name").textContent !== "Ergebnis") $("active-name").textContent = "Ergebnis";
+          const heading = step === "build" ? "Ausgewählte Startstruktur" : "Ergebnis";
+          if ($("active-name").textContent !== heading) $("active-name").textContent = heading;
+          if ($("structure-choice-label").textContent !== "Ausgewählte Struktur") $("structure-choice-label").textContent = "Ausgewählte Struktur";
           positionCapture();
         } else {
           restore();
+          if ($("structure-choice-label").textContent !== "Gespeicherte Strukturen") $("structure-choice-label").textContent = "Gespeicherte Strukturen";
           for (const key of ["build", "optimize", "spectrum"]) $(`method-${key}`).hidden = false;
         }
       },

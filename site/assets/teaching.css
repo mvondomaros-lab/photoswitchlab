@@ -164,3 +164,4 @@ dialog input { width: 100%; padding: .5rem; border: 1px solid var(--line); borde
 .text-preferred .outline { display: none; }
 .text-preferred .header { position: static; }
 .text-preferred article img { max-width: 100%; height: auto; }
+.text-preferred .site-menu > summary { display: list-item; min-height: 44px; padding-block: .5rem; color: var(--text); }

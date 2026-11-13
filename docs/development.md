@@ -56,6 +56,12 @@ open without an additional disclosure, and a modest supporting 2D formula avoids
 initializing WebGL in simplified mode. The default graphical layout is restored
 when switching back. The website similarly places its existing compact navigation
 in the reading flow and omits the duplicate outline in simplified mode.
+The spectrum overview reports local maxima of the stored broadened curve before
+scalar queries, with visible-range coverage and raw relative heights. Plateau
+locations remain intervals of stored samples; edge maxima are identified as
+boundary values rather than fitted band peaks. A short overview prioritizes up
+to four visible-range maxima and two others, explicitly noting omitted maxima.
+Remembering the spectrum retains this overview with its source context.
 The app's `accessibility.js` provides atom/bond exploration, distances and angles,
 search/path tables, spectrum transitions, interpolated curve queries and compact
 readable HTML reports. Full CSV/JSON exports and full tables are optional details.

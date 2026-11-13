@@ -114,7 +114,7 @@ def build(text_based=False):
         p(text)
         if text_based and task_id == "task-plan-experiment-series":
             p(
-                "Vergleichen Sie selbst gewählte cis/trans-Paare mit dem CIE76-Farbabstand der App. Dokumentieren Sie beide Strukturen und den Abstand der berechneten Bildschirmfarben. Berücksichtigen Sie die methodischen Hinweise der Farbauswertung."
+                "Vergleichen Sie selbst gewählte cis/trans-Paare anhand des Farbabstands der berechneten Farben. Dokumentieren Sie beide Strukturen und den Farbabstand. Berücksichtigen Sie die methodischen Hinweise der Farbauswertung."
             )
 
     def table(headers, rows, widths):

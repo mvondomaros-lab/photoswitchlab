@@ -5,6 +5,16 @@
   const structureUrl = new URL('assets/structures/azobenzene-trans.sdf', assetRoot);
   let nglPromise;
 
+  function syncPresentation(viewer) {
+    const simple = document.body.classList.contains('text-preferred');
+    const ready = viewer.dataset.viewerState === 'ready';
+    const figure = viewer.closest('figure');
+    figure.querySelector('[data-viewer-fallback]').hidden = !simple && ready;
+    figure.querySelector('[data-viewer-instruction]').hidden = simple || !ready;
+    viewer.querySelector('[data-viewer-status]').hidden = simple || ready;
+    if (!simple && ready) viewer._nglStage?.handleResize();
+  }
+
   function loadNgl() {
     if (globalThis.NGL) return Promise.resolve(globalThis.NGL);
     if (nglPromise) return nglPromise;
@@ -22,6 +32,7 @@
     viewer.dataset.viewerState = 'failed';
     const status = viewer.querySelector('[data-viewer-status]');
     status.textContent = 'Das interaktive 3D-Modell ist nicht verfügbar. Die Skelettformel bleibt als Ersatzdarstellung sichtbar.';
+    syncPresentation(viewer);
     console.error(error);
   }
 
@@ -29,10 +40,13 @@
     if (document.body.classList.contains('text-preferred')) return;
     if (viewer.dataset.viewerState) return;
     viewer.dataset.viewerState = 'loading';
-    const status = viewer.querySelector('[data-viewer-status]');
-    const figure = viewer.closest('figure');
     try {
       const NGL = await loadNgl();
+      if (document.body.classList.contains('text-preferred')) {
+        delete viewer.dataset.viewerState;
+        syncPresentation(viewer);
+        return;
+      }
       const stage = new NGL.Stage(viewer, {
         backgroundColor: '#fafcff',
         quality: 'medium',
@@ -40,7 +54,7 @@
         fogNear: 100,
         fogFar: 200,
       });
-      const resizeObserver = new ResizeObserver(() => stage.handleResize());
+      const resizeObserver = new ResizeObserver(() => { if (!document.body.classList.contains('text-preferred')) stage.handleResize(); });
       resizeObserver.observe(viewer);
       const component = await stage.loadFile(structureUrl.href, {ext: 'sdf'});
       component.addRepresentation('ball+stick', {
@@ -51,15 +65,14 @@
       component.autoView(0);
       stage.handleResize();
       requestAnimationFrame(() => {
+        if (document.body.classList.contains('text-preferred')) return;
         stage.handleResize();
         component.autoView(0);
       });
-      figure.querySelector('[data-viewer-fallback]').hidden = true;
-      figure.querySelector('[data-viewer-instruction]').hidden = false;
-      status.hidden = true;
       viewer.dataset.viewerState = 'ready';
       viewer._nglStage = stage;
       viewer._nglResizeObserver = resizeObserver;
+      syncPresentation(viewer);
     } catch (error) {
       showFallback(viewer, error);
     }
@@ -68,6 +81,7 @@
   for (const viewer of document.querySelectorAll('[data-ngl-viewer]')) {
     const disclosure = viewer.closest('details');
     const initializeWhenOpen = () => {
+      syncPresentation(viewer);
       if (!disclosure || disclosure.open) initialize(viewer);
     };
     document.addEventListener('photoswitchlab-presentation', initializeWhenOpen);

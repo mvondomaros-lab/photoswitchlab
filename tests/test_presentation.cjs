@@ -93,6 +93,10 @@ test("simplified app uses the original controls in linear DOM order and restores
   const mutations = document.mutations();
   layout.apply(true, "optimize");
   assert.equal(document.mutations(), mutations); // Polling does not reparent focused controls.
+  layout.apply(true, "build");
+  assert.equal($("active-name").textContent, "Ausgewählte Startstruktur");
+  assert.equal($("structure-choice-label").textContent, "Ausgewählte Struktur");
+  assert.equal($("molecule-select").textContent, "Gewählte Minimumstruktur");
   layout.apply(false, "optimize");
   for (const [id, original] of originals) {
     assert.equal($(id), original.node, id);

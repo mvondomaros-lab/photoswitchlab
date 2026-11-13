@@ -173,7 +173,7 @@ class SiteBuildTests(unittest.TestCase):
         document = Document(structures)
         self.assertIn('id="azobenzene-trans-viewer"', structures)
         self.assertIn("data-ngl-viewer", structures)
-        self.assertIn("../../assets/structure-viewer.js", document.links)
+        self.assertIn("../../assets/structure-viewer.js?v=2", document.links)
         self.assertNotIn("ngl.js", structures)
 
         fallback = [
@@ -207,7 +207,7 @@ class SiteBuildTests(unittest.TestCase):
 
         for prefix in ("/", "/PhotoSwitchLab/"):
             page_url = "https://example.org" + prefix + "theory/structures/"
-            script_url = urljoin(page_url, "../../assets/structure-viewer.js")
+            script_url = urljoin(page_url, "../../assets/structure-viewer.js?v=2")
             asset_root = urljoin(script_url, "../")
             for relative in (
                 "assets/vendor/ngl.js",

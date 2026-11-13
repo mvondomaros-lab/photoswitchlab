@@ -35,7 +35,59 @@ globalThis.AccessibleData = {
   outputMethods: [
     "Kurvenabfragen: Zwischen gespeicherten Kurvenpunkten wird die relative Absorption linear interpoliert.",
     "Farbvergleich: CIE76 ist der Abstand der berechneten sRGB-Bildschirmfarben im CIE-L*a*b*-Farbraum mit D65-Referenzweiß. Größere Werte bedeuten größere Modellabstände, keine proportional empfundenen Unterschiede. Die Umrechnung begrenzt die Farben auf sRGB. Beide Farben verwenden dieselbe feste Absorbanzskalierung.",
+    "Bandenübersicht: Lokale Maxima werden an den gespeicherten Kurvenpunkten bestimmt; gleich hohe benachbarte Punkte erscheinen als Intervall. Randwerte werden nicht als innere Bandenmaxima ausgegeben. Bei vielen Maxima nennt die Kurzansicht die vier höchsten im sichtbaren Bereich und zwei weitere; die Kurvenabfrage bleibt für alle gespeicherten Energien verfügbar.",
   ],
+  curveOverview(spectrum) {
+    const energy = spectrum?.energy_ev, values = spectrum?.absorption;
+    if (!Array.isArray(energy) || !Array.isArray(values) || energy.length < 2 || energy.length !== values.length ||
+        energy.some((e, i) => !Number.isFinite(e) || e <= 0 || (i && e <= energy[i - 1])) || values.some((value) => !Number.isFinite(value) || value < 0)) return null;
+    const visibleLow = 1239.8419843320026 / 780, visibleHigh = 1239.8419843320026 / 380;
+    const maximum = Math.max(...values), flat = values.every((value) => value === values[0]);
+    const peaks = [];
+    for (let first = 0; first < values.length;) {
+      let last = first;
+      while (last + 1 < values.length && values[last + 1] === values[first]) last++;
+      if (first > 0 && last < values.length - 1 && values[first] > values[first - 1] && values[last] > values[last + 1]) peaks.push({first, last, low: energy[first], high: energy[last], height: values[first], visible: energy[last] >= visibleLow && energy[first] <= visibleHigh});
+      first = last + 1;
+    }
+    const overlapLow = Math.max(energy[0], visibleLow), overlapHigh = Math.min(energy.at(-1), visibleHigh);
+    const visibleValues = values.filter((_value, i) => energy[i] >= visibleLow && energy[i] <= visibleHigh);
+    const changes = visibleValues.slice(1).map((value, i) => Math.sign(value - visibleValues[i])).filter(Boolean);
+    const trend = visibleValues.length < 2 ? null : !changes.length ? "flat" : changes.every((value) => value > 0) ? "rising" : changes.every((value) => value < 0) ? "falling" : null;
+    return {maximum, flat, peaks, lowerBoundaryHighest: !flat && values[0] === maximum, upperBoundaryHighest: !flat && values.at(-1) === maximum,
+      visible: {coverage: overlapLow > overlapHigh ? "none" : energy[0] <= visibleLow && energy.at(-1) >= visibleHigh ? "full" : "partial", low: overlapLow, high: overlapHigh, samples: visibleValues.length, trend}};
+  },
+  describeCurve(spectrum) {
+    const curve = this.curveOverview(spectrum);
+    if (!curve) return {summary: "Für die Bandenübersicht fehlen gültige Kurvenwerte.", coverage: "", bands: [], note: ""};
+    const fmt = (value, digits) => value.toLocaleString("de-DE", {minimumFractionDigits: digits, maximumFractionDigits: digits});
+    const height = (value) => value.toLocaleString("de-DE", {maximumSignificantDigits: 3});
+    const coverage = curve.visible.coverage === "full" ? "Sichtbarer Bereich (380–780 nm): vollständig abgedeckt."
+      : curve.visible.coverage === "none" ? "Der sichtbare Bereich (380–780 nm) liegt außerhalb des berechneten Energiebereichs."
+      : `Sichtbarer Bereich (380–780 nm): nur von ${fmt(1239.8419843320026 / curve.visible.high, 1)} bis ${fmt(1239.8419843320026 / curve.visible.low, 1)} nm abgedeckt.`;
+    const inVisible = curve.peaks.filter((peak) => peak.visible), elsewhere = curve.peaks.filter((peak) => !peak.visible);
+    const select = (peaks, count) => [...peaks].sort((a, b) => b.height - a.height).slice(0, count).sort((a, b) => a.low - b.low);
+    const selected = [...select(inVisible, 4), ...select(elsewhere, 2)];
+    const bands = selected.map((peak) => {
+      const range = peak.first === peak.last ? `${fmt(peak.low, 4)} eV (${fmt(1239.8419843320026 / peak.low, 1)} nm)`
+        : `${fmt(peak.low, 4)}–${fmt(peak.high, 4)} eV (${fmt(1239.8419843320026 / peak.high, 1)}–${fmt(1239.8419843320026 / peak.low, 1)} nm), Plateau`;
+      return `${peak.visible ? "Sichtbarer Bereich" : "Außerhalb des sichtbaren Bereichs"}: lokales Maximum bei ${range}; relative Absorption ${height(peak.height)}.`;
+    });
+    const notes = [];
+    if (curve.flat) notes.push("Die gespeicherte Kurve ist konstant; es gibt kein abgegrenztes Maximum.");
+    else {
+      if (curve.visible.coverage !== "none" && !inVisible.length) {
+        notes.push("Im sichtbaren Teilbereich liegt kein inneres lokales Maximum.");
+        if (curve.visible.trend === "rising") notes.push("Die gespeicherten Werte steigen dort mit steigender Energie.");
+        if (curve.visible.trend === "falling") notes.push("Die gespeicherten Werte fallen dort mit steigender Energie.");
+        if (curve.visible.trend === "flat") notes.push("Die gespeicherten Werte sind dort konstant.");
+        if (!curve.visible.samples) notes.push("In diesem Teilbereich liegen keine gespeicherten Kurvenpunkte.");
+      }
+      if (curve.lowerBoundaryHighest || curve.upperBoundaryHighest) notes.push(`Der höchste gespeicherte Wert liegt ${curve.lowerBoundaryHighest && curve.upperBoundaryHighest ? "an beiden Rändern" : curve.lowerBoundaryHighest ? "am unteren Rand" : "am oberen Rand"} des Energiebereichs; dort ist kein inneres Bandenmaximum bestimmt.`);
+    }
+    if (selected.length < curve.peaks.length) notes.push(`${curve.peaks.length - selected.length} weitere lokale Maxima sind in der Kurzansicht nicht aufgeführt.`);
+    return {summary: `Höchste gespeicherte relative Absorption: ${height(curve.maximum)}.`, coverage, bands, note: notes.join(" ")};
+  },
   coordinates(xyz) {
     return (xyz || "").trim().split("\n").slice(2).flatMap((line) =>
       line.trim().split(/\s+/).slice(1, 4).map(Number));
@@ -146,7 +198,7 @@ globalThis.AccessibilityView = {
     let positions = [], graph = [], csvRows = [], tableSignature = "", graphKey = null;
     let selectedTransition = null, curveQuery = null, comparison = null, comparisonSignature = "";
     let measurementSelected = false;
-    let reportSections = [], colorComparisonRecord = null;
+    let reportSections = [], colorComparisonRecord = null, spectrumOverview = [], bandSignature = "";
     let captureKind = "result";
     const captureLabels = {result: "Ergebnis merken", geometry: "Messung merken", path: "Pfadstruktur merken", transition: "Übergang merken", curve: "Kurvenwert merken", color: "Farbvergleich merken", invalid: "Kurvenwert merken"};
     const setCapture = (kind, anchor) => {
@@ -266,12 +318,12 @@ globalThis.AccessibilityView = {
       if (captureKind === "color" && colorComparisonRecord) { paragraphs.push($("color-comparison-value").textContent); hasSelection = true; }
       if (!force && !hasSelection) return null;
       if (!hasSelection) {
-        if (spectral) paragraphs.push($("accessible-spectrum-summary").textContent, $("accessible-color").textContent);
+        if (spectral) paragraphs.push($("accessible-spectrum-summary").textContent, ...spectrumOverview, $("accessible-color").textContent);
         else if (context.state.step === "build") paragraphs.push($("accessible-structure-facts").textContent);
         else paragraphs.push($("accessible-geometry").textContent);
       }
       const source = sourceContext(m, spectral && captureKind !== "geometry", spectral && (!hasSelection || captureKind === "color"));
-      return {key: JSON.stringify([m.id, captureKind, paragraphs]), source, hasColor: captureKind === "color", hasCurve: captureKind === "curve", section: {title: "Aktuelle Auswahl", paragraphs}};
+      return {key: JSON.stringify([m.id, captureKind, paragraphs]), source, hasColor: captureKind === "color", hasCurve: captureKind === "curve", hasOverview: spectral && !hasSelection, section: {title: "Aktuelle Auswahl", paragraphs}};
     };
     const renderObservations = () => {
       setText("observations-summary", `Gemerkte Beobachtungen (${observations.length})`);
@@ -285,7 +337,7 @@ globalThis.AccessibilityView = {
           observations.splice(observations.indexOf(entry), 1);
           renderObservations();
           this.render();
-          $("observations-summary").focus?.();
+          (context.current() || observations.length ? $("observations-summary") : $("step-title")).focus?.();
           this.announce("Beobachtung entfernt.");
         };
         item.append(label, remove);
@@ -309,7 +361,7 @@ globalThis.AccessibilityView = {
       observations.length = 0;
       renderObservations();
       this.render();
-      $("observations-summary").focus?.();
+      (context.current() || observations.length ? $("observations-summary") : $("step-title")).focus?.();
       this.announce("Sammlung geleert.");
     };
     $("data-report").onclick = () => {
@@ -336,6 +388,7 @@ globalThis.AccessibilityView = {
       const methods = [];
       if (evidence.some((entry) => entry.hasCurve)) methods.push(data.outputMethods[0]);
       if (evidence.some((entry) => entry.hasColor)) methods.push(data.outputMethods[1]);
+      if (evidence.some((entry) => entry.hasOverview)) methods.push(data.outputMethods[2]);
       if (methods.length) sections.push({title: "Methoden zur Datenausgabe", paragraphs: methods, optional: true});
       if (sections.length) context.download(data.report(sections), observations.length ? "photoswitchlab-beobachtungen.html" : context.filename("html"), "text/html;charset=utf-8");
     };
@@ -487,15 +540,27 @@ globalThis.AccessibilityView = {
       if (spec) {
         $("curve-energy").min = spec.energy_ev[0];
         $("curve-energy").max = spec.energy_ev.at(-1);
-        const peak = spec.absorption.indexOf(Math.max(...spec.absorption));
-        setText("accessible-spectrum-summary", `Maximum im berechneten Kurvenbereich: ${fmt(spec.energy_ev[peak])} eV · ${fmt(1239.8419843320026 / spec.energy_ev[peak], 1)} nm.`);
+        const overview = data.describeCurve(spec);
+        setText("accessible-spectrum-summary", overview.summary);
+        setText("spectrum-visible-coverage", overview.coverage);
+        setText("spectrum-band-note", overview.note);
+        spectrumOverview = [overview.coverage, ...overview.bands, overview.note].filter(Boolean);
+        const signature = JSON.stringify(overview.bands);
+        if (signature !== bandSignature) {
+          bandSignature = signature;
+          $("spectrum-band-list").replaceChildren(...overview.bands.map((text) => {
+            const item = document.createElement("li");
+            item.textContent = text;
+            return item;
+          }));
+        }
         setText("accessible-spectrum-note", `INDO/S–CIS. Relative Absorption in willkürlichen Einheiten. Kurvenbereich ${fmt(spec.energy_ev[0])} bis ${fmt(spec.energy_ev.at(-1))} eV.${spec.coverage_complete === false ? " Am oberen Rand fehlen möglicherweise Beiträge weiterer Übergänge; die Absorption kann dort unterschätzt werden." : ""}`);
         $("transition-point").value = selectedTransition == null ? "" : String(selectedTransition);
         const transition = spec.excitations_ev[selectedTransition];
         setText("transition-value", Number.isFinite(transition) ? `Übergang ${selectedTransition + 1}: ${fmt(transition)} eV · ${fmt(1239.8419843320026 / transition, 1)} nm · Oszillatorstärke ${fmt(spec.oscillator_strengths[selectedTransition])}.` : "");
         const color = SolutionColor.estimate(spec);
         setText("accessible-color", color ? `Geschätzte Lösungsfarbe: ${data.color(color.rgb)}; gewichtete Lichtdurchlässigkeit ${fmt(100 * color.luminance, 1)} %. Farbmodell ohne festgelegte Konzentration oder Schichtdicke.` : "Keine Farbschätzung verfügbar: Das Spektrum ist unvollständig oder enthält keine auswertbaren Absorptionsdaten.");
-        if (context.state.step === "spectrum") reportSections.push({title: "Berechnetes UV/Vis-Spektrum", paragraphs: [$("accessible-spectrum-summary").textContent, $("accessible-spectrum-note").textContent, $("accessible-color").textContent]});
+        if (context.state.step === "spectrum") reportSections.push({title: "Berechnetes UV/Vis-Spektrum", paragraphs: [$("accessible-spectrum-summary").textContent, ...spectrumOverview, $("accessible-spectrum-note").textContent, $("accessible-color").textContent]});
         const candidates = context.state.molecules.filter((other) => other.id !== m.id && SolutionColor.estimate(other.spectrum));
         const candidateSignature = JSON.stringify([m.id, candidates.map((other) => [other.id, context.label(other)])]);
         if (candidateSignature !== comparisonSignature) {
