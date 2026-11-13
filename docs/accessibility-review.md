@@ -628,3 +628,10 @@ and no sonification element. Accessible mode exposed the sonification as a focus
 application with the German summary; 26 right-arrow steps announced “2,8 eV, 443 nm,
 0,034”, and Page Down switched to trans-azobenzene. Audio and screen readers were not
 tested.
+
+Chart2Music creates its AudioContext on the first key press but never resumes it, so
+Safari can keep it suspended and play no sound. The app passes its own small audio
+engine that resumes the context within each key press and plays a short triangle
+tone with stereo panning. In headless Chrome, arrow, End and Home produced three
+tones panned at −0.96, 0.98 and −0.98. Safari playback was not re-tested by the
+agent; speech output requires a running screen reader.

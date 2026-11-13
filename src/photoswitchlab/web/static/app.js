@@ -854,6 +854,40 @@ function curvePoints(spec, limit = 400) {
 // Chart2Music makes the broadened curves explorable by keyboard, speech and pitch.
 // Accessible mode only: sound in a shared lab room must never start by accident.
 let sonification = null;
+// Chart2Music never resumes its AudioContext; Safari keeps such a context suspended.
+// This engine resumes it within each key press and otherwise plays a short tone.
+function sonificationAudio() {
+  const Context = globalThis.AudioContext || globalThis.webkitAudioContext;
+  if (!Context) return undefined;
+  let context = null, output = null;
+  return {
+    get masterGain() { return output?.gain.value ?? 0.5; },
+    set masterGain(value) { if (output) output.gain.value = value; },
+    playDataPoint(frequency, panning, duration = 0.2) {
+      if (!context) {
+        context = new Context();
+        output = context.createGain();
+        output.gain.value = 0.5;
+        output.connect(context.destination);
+      }
+      if (context.state !== "running") context.resume?.();
+      const start = context.currentTime, oscillator = context.createOscillator(), envelope = context.createGain();
+      oscillator.type = "triangle";
+      oscillator.frequency.value = frequency;
+      envelope.gain.setValueAtTime(0.0001, start);
+      envelope.gain.exponentialRampToValueAtTime(0.6, start + 0.02);
+      envelope.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      oscillator.connect(envelope);
+      if (context.createStereoPanner) {
+        const panner = context.createStereoPanner();
+        panner.pan.value = panning;
+        envelope.connect(panner).connect(output);
+      } else envelope.connect(output);
+      oscillator.start(start);
+      oscillator.stop(start + duration + 0.05);
+    },
+  };
+}
 function renderSonification() {
   const id = "spectrum-sonification", element = $(id), m = current();
   if (!element || !globalThis.c2mChart) return;
@@ -874,7 +908,7 @@ function renderSonification() {
     if (sonification) sonification.chart.setData(data, axes);
     else {
       const { err, data: chart } = c2mChart({ type: "line", element, cc: $(`${id}-cc`), lang: "de",
-        title: "UV/Vis-Spektrum", data, axes });
+        title: "UV/Vis-Spektrum", data, axes, audioEngine: sonificationAudio() });
       if (err) throw new Error(err);
       sonification = { chart };
     }
