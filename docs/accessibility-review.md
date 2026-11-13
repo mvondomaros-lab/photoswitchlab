@@ -638,8 +638,10 @@ agent; speech output requires a running screen reader.
 
 The accessible spectrum result now also shows the existing chart (moved with a
 restoration marker, including the dashed partner curve) before the sonification
-field. Exploring with Chart2Music marks the current point in the chart and shows the
-announced value visibly below the field, which supports low vision and sighted
-helpers without a screen reader. In headless Chrome, 39 right-arrow steps marked and
-displayed “3,45 eV, 359 nm, 0,14”; returning to graphical mode restored the chart to
-its original position without the marker.
+field. Exploring with Chart2Music marks the current point in the chart. In headless
+Chrome, 39 right-arrow steps marked x = 3,45 eV and wrote “3,45 eV, 359 nm, 0,14” to
+the live region; returning to graphical mode restored the chart to its original
+position without the marker. A visible copy of the announced value was removed again
+at the instructor's request: the marker shows the position, screen readers speak the
+value, and exact values remain available from the absorption query field. The live
+region is visually hidden (`sr-only`).
