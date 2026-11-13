@@ -17,7 +17,7 @@ document their own choices.
     <meta name="description" content="$brand_title · $brand_subtitle"/>
     <link rel="icon" type="image/svg+xml" href="static/brand-mark.svg"/>
     <link rel="stylesheet" href="static/header.css?v=7"/>
-    <link rel="stylesheet" href="static/app.css?v=ui-70"/>
+    <link rel="stylesheet" href="static/app.css?v=ui-71"/>
     <script src="static/vendor/ngl.js" defer></script>
     <script src="static/vendor/chart.js" defer></script>
     <script src="static/progress.js?v=ui-36" defer></script>
@@ -25,7 +25,7 @@ document their own choices.
     <script src="static/solution-color.js?v=1" defer></script>
     <script src="static/presentation.js?v=4" defer></script>
     <script src="static/accessibility.js?v=12" defer></script>
-    <script src="static/app.js?v=ui-104" defer></script>
+    <script src="static/app.js?v=ui-105" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
@@ -136,6 +136,9 @@ document their own choices.
                         Struktur erstellen
                     </button>
                 </form>
+                <button id="next-optimize" class="next-step full" type="button" hidden>
+                    Weiter zu Schritt 02: Struktur optimieren
+                </button>
                 <details class="method-help" id="method-build">
                     <summary>Methoden und Interpretation</summary>
                     <h3>Rechenverfahren</h3>
@@ -196,6 +199,9 @@ document their own choices.
                 </p>
                 <button id="optimize" class="primary full" disabled>
                     Optimierung starten
+                </button>
+                <button id="next-spectrum" class="next-step full" type="button" hidden>
+                    Weiter zu Schritt 03: Spektrum berechnen
                 </button>
                 <details class="method-help" id="method-optimize">
                     <summary>Methoden und Interpretation</summary>
@@ -292,6 +298,9 @@ document their own choices.
                 </p>
                 <button id="calculate-spectrum" class="primary full" disabled>
                     Spektrum berechnen
+                </button>
+                <button id="next-build" class="next-step full" type="button" hidden>
+                    Zurück zu Schritt 01: nächste Struktur erstellen
                 </button>
                 <details class="method-help" id="method-spectrum">
                     <summary>Methoden und Interpretation</summary>

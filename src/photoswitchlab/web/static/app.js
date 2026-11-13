@@ -391,6 +391,10 @@ function updateControls() {
   $("structure-library").hidden = !selectableMolecules().length;
   $("structure-picker-title").textContent =
     state.step === "build" ? "Startstruktur auswählen" : "Struktur auswählen";
+  // Offer the next step for the same structure; the series tasks repeat this cycle.
+  $("next-optimize").hidden = state.busy || m?.kind !== "initial";
+  $("next-spectrum").hidden = state.busy || m?.kind !== "minimum";
+  $("next-build").hidden = state.busy || !m?.spectrum;
   $("result-heading").hidden = !m;
   $("viewer-toolbar").hidden = !m;
   $("image-download").disabled = !m;
@@ -1147,6 +1151,11 @@ $("optimize").onclick = handle(() =>
 $("calculate-spectrum").onclick = handle(() =>
   startJob({ kind: "uvvis", molecule_id: state.selected }),
 );
+for (const [id, step] of [["next-optimize", "optimize"], ["next-spectrum", "spectrum"], ["next-build", "build"]])
+  $(id).onclick = handle(() => {
+    state.resultSelection = state.selected;
+    navigate(step);
+  });
 $("cancel").onclick = handle(async () => {
   if (state.job) await api(`jobs/${state.job}`, { method: "DELETE" });
 });

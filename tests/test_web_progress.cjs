@@ -1693,3 +1693,33 @@ test("substituent options carry group names in accessible mode and formulas in g
   context.labelSubstituentOptions(false);
   assert.deepEqual(options.map((option) => option.text), ["H", "OCH₃", "N(CH₃)₂"]);
 });
+
+test("each step offers the next step for the selected structure and hides it while busy", () => {
+  const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
+  const elements = new Map();
+  let selected = { kind: "initial", settings: { configuration: "cis", substituents: Array(10).fill("H") } };
+  const context = vm.createContext({ScientificDisplay: globalThis.ScientificDisplay,
+    state: { molecules: [], busy: false, step: "build" },
+    current: () => selected,
+    selectableMolecules: () => [selected],
+    updateMode() {},
+    document: { querySelector: () => ({ value: "minimum" }) },
+    $: (id) => {
+      if (!elements.has(id)) elements.set(id, { value: "H" });
+      return elements.get(id);
+    },
+  });
+  vm.runInContext(app.slice(app.indexOf("function updateControls()"), app.indexOf("function renderSpectrum()")), context);
+  const visible = () => ["next-optimize", "next-spectrum", "next-build"].filter((id) => !elements.get(id).hidden);
+  context.updateControls();
+  assert.deepEqual(visible(), ["next-optimize"]);
+  selected = { ...selected, kind: "minimum" };
+  context.updateControls();
+  assert.deepEqual(visible(), ["next-spectrum"]);
+  selected = { ...selected, spectrum: {} };
+  context.updateControls();
+  assert.deepEqual(visible(), ["next-spectrum", "next-build"]);
+  context.state.busy = true;
+  context.updateControls();
+  assert.deepEqual(visible(), []);
+});

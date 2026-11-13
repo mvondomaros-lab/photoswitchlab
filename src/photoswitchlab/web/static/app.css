@@ -1554,3 +1554,5 @@ select {
 
 .solution-color-partner { display: flex; align-items: center; gap: .5rem; margin-top: .5rem; }
 .solution-color-partner-swatch { flex: none; width: 2rem; height: 2rem; border: 1px solid #b8c4d1; border-radius: 4px; }
+
+.next-step { margin-top: 12px; min-height: 44px; padding: 10px 14px; color: var(--blue); font-weight: 600; background: white; border: 1px solid #8eafea; border-radius: 7px; }
