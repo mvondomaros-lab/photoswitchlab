@@ -605,10 +605,13 @@ were not checked in a browser or with a screen reader.
 - The graphical spectrum overlays the automatically paired other configuration as
   a dashed curve with a legend entry, and shows its color estimate next to the
   selected one. The PNG export names the dashed curve. No control was added.
-- Each step offers the next step for the selected structure (commit `689d038`).
+- A next-step button (commit `689d038`) was removed again: for sighted students it
+  duplicated the step bar, and screen-reader users reach the labelled step
+  navigation directly.
 - Chart2Music 1.20.0 (MIT, vendored) makes the broadened curves explorable by
-  keyboard, speech and pitch: on the graphical spectrum canvas, where a marker shows
-  the explored point, and as a focusable element in the accessible spectrum result.
+  keyboard, speech and pitch as a focusable element in the accessible spectrum
+  result only. The graphical spectrum stays a described image, so no sound can start
+  in a lab room full of sighted students.
   Both configurations are groups on a common 0.05 eV grid; values below 0.001 are
   spoken as “unter 0,001”. Without the library the canvas remains a described image.
 
@@ -617,3 +620,11 @@ role, tab stop, German summary, arrow-key movement, group switching and the focu
 callback behaved as expected. No real browser, audio output, JAWS, NVDA or Braille
 test was possible in this session; Chart2Music's help dialog partly shows English
 key names.
+
+A later native check used headless Chrome on the local preview with real GFN1-xTB
+minima and INDO/S–CIS spectra of cis- and trans-azobenzene. Graphical mode showed the
+dashed trans curve, both color estimates, an image-role canvas without a tab stop,
+and no sonification element. Accessible mode exposed the sonification as a focusable
+application with the German summary; 26 right-arrow steps announced “2,8 eV, 443 nm,
+0,034”, and Page Down switched to trans-azobenzene. Audio and screen readers were not
+tested.

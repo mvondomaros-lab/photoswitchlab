@@ -391,10 +391,6 @@ function updateControls() {
   $("structure-library").hidden = !selectableMolecules().length;
   $("structure-picker-title").textContent =
     state.step === "build" ? "Startstruktur auswählen" : "Struktur auswählen";
-  // Offer the next step for the same structure; the series tasks repeat this cycle.
-  $("next-optimize").hidden = state.busy || m?.kind !== "initial";
-  $("next-spectrum").hidden = state.busy || m?.kind !== "minimum";
-  $("next-build").hidden = state.busy || !m?.spectrum;
   $("result-heading").hidden = !m;
   $("viewer-toolbar").hidden = !m;
   $("image-download").disabled = !m;
@@ -408,8 +404,7 @@ function renderSpectrum() {
   renderSolutionColor();
   if (state.step === "spectrum") {
     renderSpectrumChart(spec);
-    renderSonification("spectrum-chart", markSonifiedPoint);
-    renderSonification("spectrum-sonification");
+    if (globalThis.AccessibilityView?.prefersText) renderSonification();
   }
   const peak = spec.absorption.indexOf(Math.max(...spec.absorption)),
     e = spec.energy_ev[peak];
@@ -806,8 +801,6 @@ function renderSpectrumChart(spec) {
         // The other configuration of the same derivative, dashed so it does not rely on color.
         { label: "Andere Konfiguration", order: 2, data: [], borderColor: plotStyle.text,
           borderWidth: plotStyle.curveWidth, borderDash: [7, 5], pointRadius: 0, tension: 0 },
-        { label: "Abgehörter Punkt", order: -2, data: [], borderColor: plotStyle.ink,
-          backgroundColor: "white", borderWidth: 3, pointRadius: 7, showLine: false },
       ] },
       options: {
         locale: "de-DE", color: plotStyle.text, font: plotStyle.font,
@@ -833,7 +826,6 @@ function renderSpectrumChart(spec) {
   }
   if (spectrumChart.spectrumData !== spec) {
     spectrumChart.data.datasets[2].data = [];
-    spectrumChart.data.datasets[4].data = [];
     $("spectrum-selection-values").textContent = "Wählen Sie eine orange Linie oder ihre Markierung, um Anregungsenergie, Wellenlänge und ";
     $("spectrum-selection-strength").textContent = " abzulesen.";
   }
@@ -854,47 +846,38 @@ function renderSpectrumChart(spec) {
   spectrumChart.update("none");
 }
 // Chart2Music makes the broadened curves explorable by keyboard, speech and pitch.
-// Both presentations get an instance; the graphical one marks the explored point.
-const sonifications = {};
-function renderSonification(id, onFocus) {
-  const element = $(id), m = current();
-  if (!element) return;
-  // Without the library the canvas remains a described image.
-  const fallback = () => { if (element.tagName === "CANVAS") element.setAttribute("role", "img"); };
-  if (!globalThis.c2mChart) return fallback();
+// Accessible mode only: sound in a shared lab room must never start by accident.
+let sonification = null;
+function renderSonification() {
+  const id = "spectrum-sonification", element = $(id), m = current();
+  if (!element || !globalThis.c2mChart) return;
   const partner = spectrumPartner();
   const series = AccessibleData.sonificationSeries([m, partner].filter(Boolean)
     .map((molecule) => ({ name: structureLabel(molecule), spectrum: molecule.spectrum })));
   if (!series.length) return;
   const key = JSON.stringify([m.id, partner?.id, series.map((s) => s.name)]);
-  if (sonifications[id]?.key === key) return;
+  if (sonification?.key === key) return;
   const data = Object.fromEntries(series.map((s) => [s.name, s.points]));
   const axes = {
     x: { label: "Energie / eV", format: (x) => `${fmt(x, 2)} eV, ${fmt(HC / x, 0)} nm` },
     y: { label: "Relative Absorption", minimum: 0,
       // Gaussian tails would otherwise be spoken as long powers of ten.
-      format: (y) => y < 0.001 ? "unter 0,001" : ScientificDisplay.significant(y, 2) },
+      format: (y) => y > 0 && y < 0.001 ? "unter 0,001" : ScientificDisplay.significant(y, 2) },
   };
   try {
-    if (sonifications[id]) sonifications[id].chart.setData(data, axes);
+    if (sonification) sonification.chart.setData(data, axes);
     else {
       const { err, data: chart } = c2mChart({ type: "line", element, cc: $(`${id}-cc`), lang: "de",
-        title: "UV/Vis-Spektrum", data, axes, options: { onFocusCallback: onFocus } });
+        title: "UV/Vis-Spektrum", data, axes });
       if (err) throw new Error(err);
-      sonifications[id] = { chart };
+      sonification = { chart };
     }
-    sonifications[id].key = key;
+    sonification.key = key;
     element.hidden = false;
     $(`${id}-hint`).hidden = false;
   } catch (exc) {
     console.warn("Sonification unavailable", exc);
-    fallback();
   }
-}
-function markSonifiedPoint({ point }) {
-  if (!spectrumChart) return;
-  spectrumChart.data.datasets[4].data = Number.isFinite(point?.y) ? [{ x: point.x, y: point.y }] : [];
-  spectrumChart.update("none");
 }
 function selectSpectrumTransition(event, _elements, chart) {
   const area = chart.chartArea, spec = chart.spectrumData;
@@ -1201,11 +1184,6 @@ $("optimize").onclick = handle(() =>
 $("calculate-spectrum").onclick = handle(() =>
   startJob({ kind: "uvvis", molecule_id: state.selected }),
 );
-for (const [id, step] of [["next-optimize", "optimize"], ["next-spectrum", "spectrum"], ["next-build", "build"]])
-  $(id).onclick = handle(() => {
-    state.resultSelection = state.selected;
-    navigate(step);
-  });
 $("cancel").onclick = handle(async () => {
   if (state.job) await api(`jobs/${state.job}`, { method: "DELETE" });
 });
