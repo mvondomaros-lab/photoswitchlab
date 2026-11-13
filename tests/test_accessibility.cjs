@@ -305,7 +305,6 @@ test("a weak visible line remains discoverable while curve maximum and same-ener
   assert.ok(report.includes("Weitere Übergänge im sichtbaren Bereich"));
   assert.ok(report.includes("2,1</td>"));
   assert.ok(report.includes("2 mal zehn hoch minus 7"));
-  assert.equal(lab.node("transition-table-body").options.length, 6);
   assert.ok(!report.includes("Lokale Maxima"));
 });
 
@@ -340,6 +339,7 @@ test("inline structure selection calls the shared selection action without openi
   assert.ok(!template.includes('id="transition-point"'));
   assert.ok(!template.includes('id="color-comparison"'));
   assert.ok(!template.includes('id="remember-observation"'));
+  assert.ok(!template.includes('id="full-spectrum-data"'));
   assert.ok(template.includes('id="accessible-molecule-select"'));
 });
 
@@ -349,59 +349,31 @@ test("stored broadened-curve overview finds visible and ultraviolet maxima witho
   assert.deepEqual(curve.peaks.map((peak) => peak.low), [1.7, 2.3, 4]);
   assert.deepEqual(curve.peaks.map((peak) => peak.visible), [true, true, false]);
   assert.equal(curve.visible.coverage, "full");
-  const description = data.describeCurve(spectrum);
-  assert.equal(description.bands.length, 3);
-  assert.ok(description.bands[0].startsWith("Sichtbarer Bereich"));
-  assert.ok(description.bands[0].includes("1,7 eV"));
-  assert.ok(description.bands[2].includes("Außerhalb des sichtbaren Bereichs"));
-  assert.ok(description.bands[2].includes("relative Absorption 3"));
 });
 
 test("curve overview treats plateaus, clipped boundaries, flat curves and partial visible coverage explicitly", () => {
   const plateau = {energy_ev: [1, 2, 3, 4], absorption: [0, 0.7, 0.7, 0]};
   assert.deepEqual(data.curveOverview(plateau).peaks.map((peak) => [peak.low, peak.high]), [[2, 3]]);
-  assert.ok(data.describeCurve(plateau).bands[0].includes("2–3 eV"));
-  assert.ok(data.describeCurve(plateau).bands[0].includes("Plateau"));
-  assert.ok(!data.describeCurve(plateau).bands[0].includes("2,5000"));
   const boundary = {energy_ev: [1.5, 2, 3.5, 4], absorption: [0, 1, 0.5, 2]};
   assert.deepEqual(data.curveOverview(boundary).peaks.map((peak) => peak.low), [2]);
-  assert.ok(data.describeCurve(boundary).note.includes("am oberen Rand"));
-  assert.ok(!data.describeCurve(boundary).bands.join(" ").includes("4 eV"));
   const flat = {energy_ev: [1, 2, 3, 4], absorption: [0.2, 0.2, 0.2, 0.2]};
   assert.equal(data.curveOverview(flat).flat, true);
-  assert.equal(data.describeCurve(flat).bands.length, 0);
-  assert.ok(data.describeCurve(flat).note.includes("konstant"));
   const partial = {energy_ev: [2, 2.5, 3], absorption: [1, 2, 3]};
   assert.equal(data.curveOverview(partial).visible.coverage, "partial");
-  assert.ok(data.describeCurve(partial).coverage.includes("nur von"));
-  assert.ok(data.describeCurve(partial).note.includes("steigen dort mit steigender Energie"));
-  assert.ok(data.describeCurve(partial).note.includes("kein inneres lokales Maximum"));
+  assert.ok(data.visibleCoverage(partial).includes("nur von"));
   assert.equal(data.curveOverview({energy_ev: [4, 5], absorption: [1, 2]}).visible.coverage, "none");
   assert.equal(data.curveOverview({energy_ev: [2, 2], absorption: [0, 1]}), null);
   assert.equal(data.curveOverview({energy_ev: [2, 3], absorption: [0, -1]}), null);
 });
 
-test("full spectral data exposes every broadened-curve maximum when the compact overview omits weak peaks", () => {
+test("curve queries and the saved report reach weak maxima without a full spectral data listing", () => {
   const energy_ev = Array.from({length: 41}, (_value, i) => Number((1.4 + i * 0.1).toFixed(1)));
   const absorption = energy_ev.map(() => 0);
   [3, 5, 7, 9, 11, 21, 25, 29].forEach((index, i) => { absorption[index] = (i + 1) / 10; });
   const spectrum = {energy_ev, absorption, excitations_ev: [2.1], oscillator_strengths: [0.2]};
-  const overview = data.describeCurve(spectrum);
-  assert.equal(overview.bands.length, 6);
-  assert.equal(overview.allBands.length, 8);
-  assert.ok(!overview.bands.some((band) => band.includes("1,7 eV")));
-  assert.ok(!overview.bands.some((band) => band.includes("3,5 eV")));
-  assert.ok(overview.allBands.some((band) => band.includes("1,7 eV")));
-  assert.ok(overview.allBands.some((band) => band.includes("3,5 eV")));
-  assert.ok(overview.note.includes("2 weitere lokale Maxima sind"));
-  const fewer = {...spectrum, absorption: [...absorption]};
-  fewer.absorption[21] = 0;
-  assert.ok(data.describeCurve(fewer).note.includes("1 weiteres lokales Maximum ist"));
   const lab = accessibleLab();
   lab.molecule.spectrum = spectrum;
   lab.view.render();
-  assert.equal(lab.node("spectrum-all-band-list").options.length, 8);
-  assert.ok(lab.node("spectrum-all-band-list").options[0].textContent.includes("1,7 eV"));
   lab.node("curve-energy").value = "1,7";
   lab.node("curve-query").onclick();
   lab.node("data-report").onclick();
@@ -589,8 +561,6 @@ test("all positive visible transitions supplement the strongest five without dup
   const visible = sections.find((section) => section.title === "Weitere Übergänge im sichtbaren Bereich").rows;
   assert.deepEqual(Array.from(strongest, (row) => row[0]), [8, 7, 6, 5, 4]);
   assert.deepEqual(Array.from(visible, (row) => row[0]), [1, 2]);
-  const full = lab.node("transition-table-body").options.map((row) => Number(row.children[0].textContent));
-  assert.deepEqual(Array.from(full), [8, 7, 6, 5, 4, 1, 2, 3]); // f = 0 remains in the complete list.
   assert.equal(JSON.stringify(lab.molecule.spectrum), original);
   const tie = data.strongestTransitions({energy_ev: [1, 5], absorption: [0, 1], excitations_ev: [4, 3, 3], oscillator_strengths: [.5, .5, .5]});
   assert.deepEqual(tie.map((transition) => transition.index), [2, 3, 1]);
@@ -656,12 +626,10 @@ test("close paired maxima and absorption values keep distinguishable displays wi
   lab.view.render();
   const pair = lab.view.reportSections.find((section) => section.title === "Zugehöriges cis/trans-Paar");
   assert.deepEqual(Array.from(pair.rows, (row) => row[2]), ["3,0011", "3,0012"]);
-  const transitions = lab.node("transition-table-body").options;
+  const transitions = lab.view.reportSections.find((section) => section.title === "Stärkste elektronische Übergänge").rows;
   assert.equal(transitions.length, 2);
-  assert.equal(transitions[0].children[1].textContent, "3,0012");
-  assert.equal(transitions[1].children[1].textContent, "3,0011");
-  assert.equal(transitions[0].children[2].textContent, "413");
-  assert.equal(transitions[1].children[2].textContent, "413");
+  assert.deepEqual(Array.from(transitions, (row) => row[1]), ["3,0012", "3,0011"]);
+  assert.deepEqual(Array.from(transitions, (row) => row[2]), ["413", "413"]);
   lab.node("curve-energy").value = "3,00115";
   lab.node("curve-query").onclick();
   assert.match(lab.node("curve-value").innerHTML, /0,2341|0,2342/);

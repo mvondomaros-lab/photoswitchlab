@@ -134,7 +134,6 @@ globalThis.AccessibleData = {
   outputMethods: [
     "Kurvenabfragen: Zwischen gespeicherten Kurvenpunkten wird die relative Absorption linear interpoliert.",
     "Farbvergleich: CIE76 ist der Abstand der berechneten sRGB-Bildschirmfarben im CIE-L*a*b*-Farbraum mit D65-Referenzweiß. Größere Werte bedeuten größere Modellabstände, keine proportional empfundenen Unterschiede. Die Umrechnung begrenzt die Farben auf sRGB. Beide Farben verwenden dieselbe feste Absorbanzskalierung.",
-    "Bandenübersicht: Lokale Maxima werden an den gespeicherten Kurvenpunkten bestimmt; gleich hohe benachbarte Punkte erscheinen als Intervall. Randwerte werden nicht als innere Bandenmaxima ausgegeben. Bei vielen Maxima nennt die Kurzansicht die vier höchsten im sichtbaren Bereich und zwei weitere. Die vollständigen Spektraldaten enthalten alle lokalen Maxima; die Kurvenabfrage bleibt für alle gespeicherten Energien verfügbar.",
   ],
   curveOverview(spectrum) {
     const energy = spectrum?.energy_ev, values = spectrum?.absorption;
@@ -156,38 +155,13 @@ globalThis.AccessibleData = {
     return {maximum, flat, peaks, lowerBoundaryHighest: !flat && values[0] === maximum, upperBoundaryHighest: !flat && values.at(-1) === maximum,
       visible: {coverage: overlapLow > overlapHigh ? "none" : energy[0] <= visibleLow && energy.at(-1) >= visibleHigh ? "full" : "partial", low: overlapLow, high: overlapHigh, samples: visibleValues.length, trend}};
   },
-  describeCurve(spectrum) {
+  visibleCoverage(spectrum) {
     const curve = this.curveOverview(spectrum);
-    if (!curve) return {summary: "Für die Bandenübersicht fehlen gültige Kurvenwerte.", coverage: "", bands: [], allBands: [], note: ""};
-    const fmt = (value, digits = 2) => ScientificDisplay.fixed(value, digits);
-    const height = (value) => ScientificDisplay.significant(value, 2);
-    const coverage = curve.visible.coverage === "full" ? "Sichtbarer Bereich (380–780 nm): vollständig abgedeckt."
+    if (!curve) return "";
+    const fmt = (value) => ScientificDisplay.fixed(value, 0);
+    return curve.visible.coverage === "full" ? "Sichtbarer Bereich (380–780 nm): vollständig abgedeckt."
       : curve.visible.coverage === "none" ? "Der sichtbare Bereich (380–780 nm) liegt außerhalb des berechneten Energiebereichs."
-      : `Sichtbarer Bereich (380–780 nm): nur von ${fmt(1239.8419843320026 / curve.visible.high, 0)} bis ${fmt(1239.8419843320026 / curve.visible.low, 0)} nm abgedeckt.`;
-    const inVisible = curve.peaks.filter((peak) => peak.visible), elsewhere = curve.peaks.filter((peak) => !peak.visible);
-    const select = (peaks, count) => [...peaks].sort((a, b) => b.height - a.height).slice(0, count).sort((a, b) => a.low - b.low);
-    const selected = [...select(inVisible, 4), ...select(elsewhere, 2)];
-    const describePeak = (peak) => {
-      const range = peak.first === peak.last ? `${fmt(peak.low, 2)} eV (${fmt(1239.8419843320026 / peak.low, 0)} nm)`
-        : `${fmt(peak.low, 2)}–${fmt(peak.high, 2)} eV (${fmt(1239.8419843320026 / peak.high, 0)}–${fmt(1239.8419843320026 / peak.low, 0)} nm), Plateau`;
-      return `${peak.visible ? "Sichtbarer Bereich" : "Außerhalb des sichtbaren Bereichs"}: lokales Maximum bei ${range}; relative Absorption ${height(peak.height)}.`;
-    };
-    const bands = selected.map(describePeak), allBands = curve.peaks.map(describePeak);
-    const notes = [];
-    if (curve.flat) notes.push("Die gespeicherte Kurve ist konstant; es gibt kein abgegrenztes Maximum.");
-    else {
-      if (curve.visible.coverage !== "none" && !inVisible.length) {
-        notes.push("Im sichtbaren Teilbereich liegt kein inneres lokales Maximum.");
-        if (curve.visible.trend === "rising") notes.push("Die gespeicherten Werte steigen dort mit steigender Energie.");
-        if (curve.visible.trend === "falling") notes.push("Die gespeicherten Werte fallen dort mit steigender Energie.");
-        if (curve.visible.trend === "flat") notes.push("Die gespeicherten Werte sind dort konstant.");
-        if (!curve.visible.samples) notes.push("In diesem Teilbereich liegen keine gespeicherten Kurvenpunkte.");
-      }
-      if (curve.lowerBoundaryHighest || curve.upperBoundaryHighest) notes.push(`Der höchste gespeicherte Wert liegt ${curve.lowerBoundaryHighest && curve.upperBoundaryHighest ? "an beiden Rändern" : curve.lowerBoundaryHighest ? "am unteren Rand" : "am oberen Rand"} des Energiebereichs; dort ist kein inneres Bandenmaximum bestimmt.`);
-    }
-    const omitted = curve.peaks.length - selected.length;
-    if (omitted) notes.push(`${omitted === 1 ? "1 weiteres lokales Maximum ist" : `${omitted} weitere lokale Maxima sind`} in der Kurzansicht nicht aufgeführt. Die vollständige Übersicht steht in den Spektraldaten der App.`);
-    return {summary: `Höchste gespeicherte relative Absorption: ${height(curve.maximum)}.`, coverage, bands, allBands, note: notes.join(" ")};
+      : `Sichtbarer Bereich (380–780 nm): nur von ${fmt(1239.8419843320026 / curve.visible.high)} bis ${fmt(1239.8419843320026 / curve.visible.low)} nm abgedeckt.`;
   },
   // Coarse common energy grid for sonification: one point per 0.05 eV is fine enough to
   // hear band shapes and few enough to step through with arrow keys.
@@ -547,21 +521,13 @@ globalThis.AccessibilityView = {
           return tr;
         }));
         table("energy-table-body", energyRows, [String, (value) => fmt(value, 4), (value) => ScientificDisplay.significant(value, 3), (value) => fmt(value, 1), (value) => fmt(value, 0), (value) => fmt(value, 1), (value) => fmt(value, 1)]);
-        const transitionEnergies = ScientificDisplay.compare(spectrum?.excitations_ev || [], "energy");
-        const allTransitions = (spectrum?.excitations_ev || []).map((energy, index) => ({energy, index, strength: spectrum.oscillator_strengths[index]}))
-          .sort((a, b) => b.strength - a.strength || a.energy - b.energy || a.index - b.index);
-        table("transition-table-body", allTransitions.map((transition) => [transition.index + 1, transitionEnergies[transition.index], 1239.8419843320026 / transition.energy, transition.strength]), [String, String, (value) => fmt(value, 0), strength]);
-        const overview = data.describeCurve(spectrum);
-        setText("spectrum-visible-coverage", overview.coverage);
-        $("spectrum-all-band-list").replaceChildren(...overview.allBands.map((text) => { const item = document.createElement("li"); item.textContent = text; if (ScientificDisplay.spoken(text) !== text) item.innerHTML = ScientificDisplay.html(text); return item; }));
-        setText("spectrum-all-band-note", overview.allBands.length ? "" : "Keine inneren lokalen Maxima in der gespeicherten Kurve.");
       }
       $("path-point").value = pointIndex == null ? "" : String(pointIndex);
       setText("accessible-point", selected ? `${path ? "Pfadstruktur" : "Rechenschritt"} ${path ? pointIndex + 1 : selected.step}: E = ${fmt(selected.energy_ev, 4)} eV; ΔE = ${ScientificDisplay.significant(selected.energy_ev - points[0].energy_ev, 3)} eV. ${azoAngles}` : "");
       $("accessible-spectrum").hidden = step !== "spectrum" || !spectrum;
       colorComparisonRecord = null;
       if (step === "spectrum" && spectrum) {
-        const overview = data.describeCurve(spectrum), transitions = data.strongestTransitions(spectrum), color = SolutionColor.estimate(spectrum);
+        const transitions = data.strongestTransitions(spectrum), color = SolutionColor.estimate(spectrum);
         const transitionEnergies = ScientificDisplay.compare(spectrum.excitations_ev || [], "energy");
         const transitionRows = transitions.map((transition) => [transition.index, transitionEnergies[transition.index - 1], fmt(1239.8419843320026 / transition.energy, 0), strength(transition.strength)]);
         const visible = (spectrum.excitations_ev || []).map((energy, index) => ({energy, index, strength: spectrum.oscillator_strengths?.[index]}))
@@ -575,7 +541,7 @@ globalThis.AccessibilityView = {
           columns: ["Übergang", "E / eV", "λ / nm", "Oszillatorstärke f"], rows: transitionRows});
         if (additionalVisible.length) reportSections.push({title: "Weitere Übergänge im sichtbaren Bereich", columns: ["Übergang", "E / eV", "λ / nm", "Oszillatorstärke f"],
           rows: additionalVisible.map((transition) => [transition.index + 1, transitionEnergies[transition.index], fmt(1239.8419843320026 / transition.energy, 0), strength(transition.strength)])});
-        reportSections.push({title: "UV/Vis-Spektrum", paragraphs: [maximumText(spectrum), overview.coverage, spectralNote]});
+        reportSections.push({title: "UV/Vis-Spektrum", paragraphs: [maximumText(spectrum), data.visibleCoverage(spectrum), spectralNote]});
         const partner = data.partner(m, context.state.molecules, true);
         const paired = [m, ...(partner ? [partner] : [])].sort((a, b) => (a.settings?.configuration || "").localeCompare(b.settings?.configuration || ""));
         if (partner) {

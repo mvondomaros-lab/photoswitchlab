@@ -25,7 +25,7 @@ document their own choices.
     <script src="static/solution-color.js?v=1" defer></script>
     <script src="static/vendor/chart2music.js?v=1.20.0" defer></script>
     <script src="static/presentation.js?v=5" defer></script>
-    <script src="static/accessibility.js?v=12" defer></script>
+    <script src="static/accessibility.js?v=13" defer></script>
     <script src="static/app.js?v=ui-110" defer></script>
 </head>
 <body>
@@ -455,7 +455,7 @@ document their own choices.
                             <tbody id="energy-table-body"></tbody>
                         </table></div>
                     </details>
-                    <section id="accessible-spectrum" hidden aria-label="Absorptionsvergleich und weitere Spektraldaten">
+                    <section id="accessible-spectrum" hidden aria-label="Spektrum und Absorptionsvergleich">
                         <div id="simple-spectrum-plot" class="simple-only"></div>
                         <div id="spectrum-sonification" class="sonification" aria-describedby="spectrum-sonification-hint"
                              aria-label="Hörbares UV/Vis-Spektrum" hidden>Hörbares UV/Vis-Spektrum</div>
@@ -465,19 +465,6 @@ document their own choices.
                         <input id="curve-energy" type="text" inputmode="decimal" autocomplete="off" aria-describedby="curve-value"/>
                         <button id="curve-query" class="text-button" type="button">Absorption bestimmen</button>
                         <div id="curve-value" role="status"></div>
-                        <details id="full-spectrum-data"><summary>Weitere Spektraldaten</summary>
-                            <h4>Alle berechneten elektronischen Übergänge</h4>
-                            <div class="table-scroll" role="region" aria-label="Alle elektronischen Übergänge"><table>
-                                <caption class="sr-only">Berechnete elektronische Übergänge</caption>
-                                <thead><tr><th scope="col">Übergang</th><th scope="col">E / eV</th><th scope="col">λ / nm</th><th scope="col">Oszillatorstärke f</th></tr></thead>
-                                <tbody id="transition-table-body"></tbody>
-                            </table></div>
-                            <h4>Lokale Maxima der verbreiterten Kurve</h4>
-                            <p id="spectrum-visible-coverage"></p>
-                            <ul id="spectrum-all-band-list"></ul>
-                            <p id="spectrum-all-band-note" class="note"></p>
-                            <p class="note">Maxima werden an den gespeicherten Kurvenpunkten bestimmt; gleich hohe benachbarte Punkte erscheinen als Intervall. Randwerte sind keine inneren Bandenmaxima.</p>
-                        </details>
                     </section>
                 </div>
                 <figure id="simple-structure-figure" class="simple-only" hidden>

@@ -645,3 +645,9 @@ position without the marker. A visible copy of the announced value was removed a
 at the instructor's request: the marker shows the position, screen readers speak the
 value, and exact values remain available from the absorption query field. The live
 region is visually hidden (`sr-only`).
+
+The “Weitere Spektraldaten” disclosure (all transitions and all local curve maxima)
+was removed. No task needs these lists: the saved report contains the five strongest
+transitions, every further visible transition, Emax, the cis/trans pair and the
+color, while the absorption query, sonification and chart cover the curve. Complete
+data remain in the JSON/CSV export.
