@@ -684,3 +684,15 @@ test("sonification series share one coarse energy grid within the common window"
   assert.ok(series[1].points.every((p) => p.y === 0.2));
   assert.deepEqual(data.sonificationSeries([{name: "x", spectrum: {energy_ev: [1], absorption: [1]}}]), []);
 });
+
+test("close contacts skip atoms within three bonds and list the shortest remaining pairs", () => {
+  // Chain 1–2–3–4–5 folded so that atom 1 and atom 5 come close; atom 6 is unbound.
+  const bonded = (number, ...others) => ({number, element: "C", neighbors: others.map((other) => ({number: other, bond_order: 1}))});
+  const graph = [bonded(1, 2), bonded(2, 1, 3), bonded(3, 2, 4), bonded(4, 3, 5), bonded(5, 4), bonded(6)];
+  const positions = [0, 0, 0, 1.5, 0, 0, 2, 1.4, 0, 1.5, 2.8, 0, 0, 2, 0, 10, 0, 0];
+  const contacts = data.closeContacts(graph, positions, 2);
+  assert.deepEqual([contacts[0].first, contacts[0].second], [0, 4]);
+  assert.equal(Math.round(contacts[0].distance), 200);
+  assert.ok(contacts.every((contact) => !(contact.first === 0 && contact.second === 3)));
+  assert.ok(data.closeContacts(graph, positions, 20).every(({first, second}) => second - first > 3 || first === 5 || second === 5));
+});

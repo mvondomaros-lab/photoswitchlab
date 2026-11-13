@@ -107,11 +107,11 @@ globalThis.AccessibleData = {
   substituentName(value) {
     return {Me: "Methylgruppe", OMe: "Methoxygruppe", NMe2: "Dimethylaminogruppe", CF3: "Trifluormethylgruppe", CN: "Cyanogruppe", NO2: "Nitrogruppe"}[value] || value;
   },
-  atomLabel(graph, index, settings) {
+  // Nearest ring position in the bond sequence; substituent atoms inherit it.
+  ringReference(graph, index) {
     const atom = graph[index];
-    if (!atom) return "Atom nicht verfügbar";
-    let position = atom.position;
-    if (!position) {
+    let position = atom?.position;
+    if (atom && !position) {
       const seen = new Set([atom.number]), pending = [...(atom.neighbors || []).map((n) => n.number)];
       while (pending.length && !position) {
         const number = pending.shift();
@@ -123,6 +123,12 @@ globalThis.AccessibleData = {
         if (!position) pending.push(...neighbor.neighbors.map((n) => n.number));
       }
     }
+    return position;
+  },
+  atomLabel(graph, index, settings) {
+    const atom = graph[index];
+    if (!atom) return "Atom nicht verfügbar";
+    const position = this.ringReference(graph, index);
     const site = position?.match(/^C([2-6])(′)?$/);
     const substituent = site && settings?.substituents?.[Number(site[1]) - 2 + (site[2] ? 5 : 0)];
     const group = substituent && substituent !== "H" ? `, ${atom.position ? "trägt " : "zugeordnet: "}${this.substituentName(substituent)}` : "";
@@ -179,6 +185,29 @@ globalThis.AccessibleData = {
   coordinates(xyz) {
     return (xyz || "").trim().split("\n").slice(2).flatMap((line) =>
       line.trim().split(/\s+/).slice(1, 4).map(Number));
+  },
+  // Shortest distances between the two halves of the molecule (first ring with its
+  // substituents and azo nitrogen versus the primed side), more than three bonds apart.
+  closeContacts(graph, positions, count = 5) {
+    const side = graph.map((_atom, index) => { const reference = this.ringReference(graph, index); return reference ? reference.endsWith("′") : null; });
+    const near = graph.map((_atom, start) => {
+      const seen = new Set([start]);
+      let frontier = [start];
+      for (let depth = 0; depth < 3; depth++) {
+        frontier = frontier.flatMap((index) => (graph[index]?.neighbors || []).map((neighbor) => neighbor.number - 1)
+          .filter((next) => !seen.has(next) && seen.add(next)));
+      }
+      return seen;
+    });
+    const pairs = [];
+    for (let first = 0; first < graph.length; first++) {
+      for (let second = first + 1; second < graph.length; second++) {
+        const across = side[first] != null && side[second] != null && side[first] !== side[second];
+        const distance = !across || near[first].has(second) ? null : this.distance(positions, first, second);
+        if (distance != null) pairs.push({first, second, distance});
+      }
+    }
+    return pairs.sort((a, b) => a.distance - b.distance || a.first - b.first || a.second - b.second).slice(0, count);
   },
   distance(positions, first, second) {
     if (!positions || !Number.isInteger(first) || !Number.isInteger(second)) return null;
@@ -283,7 +312,7 @@ globalThis.AccessibilityView = {
     preference.onchange = graphicPreference.onchange = changePreference;
     let moleculeKey = null, graphKey = null, pointIndex = null, points = [], path = false;
     let positions = [], graph = [], csvRows = [], tableSignature = "", selectorSignature = "";
-    let curveQuery = null, measurementSelected = false, reportSections = [], querySections = [], measurementSections = [], methodSections = [];
+    let curveQuery = null, contactSignature = "", measurementSelected = false, reportSections = [], querySections = [], measurementSections = [], methodSections = [];
     let colorComparisonRecord = null;
     const rendered = new Map();
     const updateTableFocus = () => {
@@ -425,6 +454,8 @@ globalThis.AccessibilityView = {
         reportSections = querySections = measurementSections = methodSections = [];
         csvRows = [];
         moleculeKey = graphKey = null;
+        contactSignature = "";
+        $("atom-contacts").replaceChildren();
         return;
       }
       const key = `${m.id}:${step}`;
@@ -480,14 +511,39 @@ globalThis.AccessibilityView = {
           ["Betrag der imaginären Frequenz / cm⁻¹", Number.isFinite(ts.validation?.imaginary_frequency_cm1) ? ScientificDisplay.frequency(ts.validation.imaginary_frequency_cm1) : "nicht verfügbar"],
         ]});
       }
+      const previousElements = graph.map((atom) => atom.element).join();
       graph = m.atom_graph || [];
       if (graphKey !== m.id) {
         graphKey = m.id;
         const options = graph.map((_atom, index) => [data.atomLabel(graph, index, m.settings), index]);
+        // Optimizations keep the atom order, so a chosen pair stays comparable between start and minimum.
+        const keep = previousElements && previousElements === graph.map((atom) => atom.element).join();
         for (const [id, value] of [["atom-first", 0], ["atom-second", Math.min(1, graph.length - 1)], ["atom-third", Math.min(2, graph.length - 1)]]) {
-          fillSelect($(id), options, value); $(id).disabled = !graph.length;
+          fillSelect($(id), options, keep ? $(id).value : value); $(id).disabled = !graph.length;
         }
         setText("atom-scaffold", "Grundgerüst: C1–N=N–C1′. Erster Ring: C1–C2–C3–C4–C5–C6–C1. Zweiter Ring: C1′–C2′–C3′–C4′–C5′–C6′–C1′. Diese Positionsnummern bezeichnen Ringatome; die zusätzlichen Atomnummern gelten für die gespeicherten Koordinaten.");
+      }
+      if (!context.state.busy) {
+        const contacts = graph.length ? data.closeContacts(graph, positions) : [];
+        const signature = JSON.stringify([m.id, contacts.map((contact) => [contact.first, contact.second, Math.round(contact.distance)])]);
+        if (signature !== contactSignature) {
+          contactSignature = signature;
+          const label = (index) => data.atomLabel(graph, index, m.settings);
+          $("atom-contacts").replaceChildren(...contacts.map((contact) => {
+            const item = document.createElement("li"), button = document.createElement("button");
+            button.type = "button";
+            button.className = "text-button";
+            button.textContent = `${label(contact.first)} und ${label(contact.second)}: ${fmt(contact.distance, 0)} pm`;
+            button.onclick = () => {
+              $("atom-first").value = String(contact.first);
+              $("atom-second").value = String(contact.second);
+              measurementSelected = true;
+              measurement();
+            };
+            item.append(button);
+            return item;
+          }));
+        }
       }
       measurement();
       // Live steps arrive every poll; rebuilding tables then would move a screen reader's reading position.

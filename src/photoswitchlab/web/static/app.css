@@ -1560,3 +1560,5 @@ select {
 .sonification:focus-visible { outline: 3px solid var(--blue); outline-offset: 3px; }
 body:not(.text-preferred) .sonification, body:not(.text-preferred) #spectrum-sonification-hint { display: none !important; }
 .text-preferred #simple-spectrum-plot .spectrum-plot { margin: 0 0 1rem; padding: 0; }
+.atom-contacts { margin: .25rem 0 1rem; padding-left: 1.25rem; }
+.atom-contacts .text-button { text-align: left; white-space: normal; }

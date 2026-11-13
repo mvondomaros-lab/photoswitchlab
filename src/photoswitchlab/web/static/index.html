@@ -17,7 +17,7 @@ document their own choices.
     <meta name="description" content="$brand_title · $brand_subtitle"/>
     <link rel="icon" type="image/svg+xml" href="static/brand-mark.svg"/>
     <link rel="stylesheet" href="static/header.css?v=7"/>
-    <link rel="stylesheet" href="static/app.css?v=ui-75"/>
+    <link rel="stylesheet" href="static/app.css?v=ui-76"/>
     <script src="static/vendor/ngl.js" defer></script>
     <script src="static/vendor/chart.js" defer></script>
     <script src="static/progress.js?v=ui-36" defer></script>
@@ -26,8 +26,8 @@ document their own choices.
     <script src="static/vendor/chart2music.js?v=1.20.0" defer></script>
     <script src="static/sonification-audio.js?v=1" defer></script>
     <script src="static/presentation.js?v=5" defer></script>
-    <script src="static/accessibility.js?v=13" defer></script>
-    <script src="static/app.js?v=ui-111" defer></script>
+    <script src="static/accessibility.js?v=14" defer></script>
+    <script src="static/app.js?v=ui-112" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
@@ -478,6 +478,9 @@ document their own choices.
                     <p id="accessible-spectrum-geometry"></p>
                     <p id="atom-scaffold" class="note"></p>
                     <p class="note">Atomnummern gelten innerhalb dieser Struktur und ihrer gespeicherten Rechenschritte. Sie sind keine chemischen Positionsnummern. Bei Atomen außerhalb der Ringe nennt der Ringbezug die nächste Ringposition in der Bindungsfolge.</p>
+                    <h4 id="atom-contacts-title">Kürzeste Abstände</h4>
+                    <p class="note">Atompaare aus den beiden Molekülhälften, also je ein Atom mit Ringbezug im ersten und im zweiten Ring, nach Abstand geordnet. Direkt oder über bis zu drei Bindungen verbundene Atome sind ausgenommen. Die Auswahl eines Paars übernimmt es in die Abstandsmessung.</p>
+                    <ul id="atom-contacts" class="atom-contacts" aria-labelledby="atom-contacts-title"></ul>
                     <label for="atom-first">Erstes Atom</label><select id="atom-first"></select>
                     <p id="atom-neighbors"></p>
                     <label for="atom-second">Zweites Atom</label><select id="atom-second"></select>

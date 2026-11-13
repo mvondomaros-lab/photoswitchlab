@@ -670,3 +670,15 @@ lab without a joint trial. The Safari-compatible audio engine moved to the share
 `sonification-audio.js`. In headless Chrome the field stayed hidden and Chart2Music
 unloaded in graphical mode; in accessible mode 30 right-arrow steps reached
 “3,00 eV, 413 nm, 0,5” in the live region.
+
+## Phase 3: closest contacts for task 4
+
+The atom explorer lists the five shortest distances between the two halves of the
+molecule (atoms whose nearest ring reference lies in the first versus the primed
+ring), excluding pairs within three bonds. Choosing an entry fills the distance
+measurement; the selection is kept when the next structure has the same atom
+order, so start and minimum structures can be compared directly. The list is not
+rebuilt while a calculation runs. For trans-2,6,2′,6′-tetramethoxyazobenzene in
+headless Chrome, the start structure listed methoxy–methoxy H···H contacts
+(267 and 275 pm) and O···N contacts (280 and 282 pm) across the azo bridge; the chosen
+H···H pair changed from 267 to 295 pm after optimization.
