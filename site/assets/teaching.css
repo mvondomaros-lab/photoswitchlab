@@ -85,6 +85,7 @@ figcaption .image-credit p { margin: .2rem 0 0; }
 table { display: block; overflow-x: auto; border-collapse: collapse; margin: 1.5rem 0; }
 th, td { padding: .6rem .9rem; text-align: left; border-bottom: 1px solid var(--line); }
 th { background: var(--panel); }
+@media (max-width: 400px) { th, td { padding: .5rem .6rem; } }
 pre { padding: 1rem; background: var(--panel); border: 1px solid var(--line); border-radius: 7px; overflow-x: auto; font-size: .9rem; }
 code { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
 div.arithmatex { overflow-x: auto; padding: 1rem .2rem; }

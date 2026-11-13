@@ -82,7 +82,7 @@ Diese lichtinduzierte Isomerisierung bildet die Grundlage für die photoschaltba
 Die beiden Formen unterscheiden sich darin, bei welchen Photonenenergien und wie stark sie Licht absorbieren.
 
 <figure markdown="1">
-<img src="../../figures/drawings/azobenzene_isomerism.svg" alt="Die lichtinduzierte Isomerisierung des Azobenzols." width="800" loading="lazy">
+<img src="../../figures/drawings/azobenzene_isomerism.svg" alt="Strukturformeln von trans-Azobenzol links und cis-Azobenzol rechts. Ein mit Licht beschrifteter Pfeil führt von trans nach cis, ein unbeschrifteter Pfeil zurück." width="800" loading="lazy">
 
 <figcaption markdown="1">
 Die lichtinduzierte Isomerisierung des Azobenzols.
@@ -192,6 +192,13 @@ bei Interesse anhand der folgenden Regeln nachvollziehen.
 Feste Positionsnummern der Eingabemaske. Der chemische Name wird anschließend nach den Nomenklaturregeln nummeriert.
 </figcaption>
 </figure>
+
+<details class="text-alternative" markdown="1">
+<summary>Positionsnummern als Text</summary>
+
+In jedem Ring ist Position 1 an die Azogruppe gebunden. Die Positionen 2 und 6 liegen direkt daneben, 3 und 5 jeweils eine Ringposition weiter, und Position 4 liegt Position 1 im Ring gegenüber. Der zweite Ring ist ebenso nummeriert; seine Nummern tragen einen Strich, von 1′ bis 6′. Substituenten an 2, 6, 2′ oder 6′ befinden sich also unmittelbar neben der Azogruppe, Substituenten an 4 oder 4′ am weitesten von ihr entfernt.
+
+</details>
 
 <p><strong>Substituentennamen</strong></p>
 

@@ -316,6 +316,19 @@ class SiteBuildTests(unittest.TestCase):
         self.assertIn('echo "$HOME"', unescape(content))
         self.assertEqual(content.count("<math"), 1)
 
+    def test_math_keeps_upright_words_and_decimal_commas_whole(self):
+        content, _ = site.render(
+            "$E_\\mathrm{cis} = -932{,}48$"
+        )
+        self.assertIn('<mi mathvariant="normal">cis</mi>', content)
+        self.assertIn("<mn>932,48</mn>", content)
+        self.assertNotIn('<mi mathvariant="normal">c</mi>', content)
+
+    def test_position_numbers_have_a_text_alternative(self):
+        source = (ROOT / "site/theory/structures.md").read_text()
+        self.assertIn("Positionsnummern als Text", source)
+        self.assertIn("Position 4 liegt Position 1 im Ring gegenüber", source)
+
     def test_rebuild_cleans_stale_output_and_preserves_last_build_on_failure(self):
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp) / "public"

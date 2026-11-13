@@ -651,3 +651,14 @@ was removed. No task needs these lists: the saved report contains the five stron
 transitions, every further visible transition, Emax, the cis/trans pair and the
 color, while the absorption query, sonification and chart cover the curve. Complete
 data remain in the JSON/CSV export.
+
+## Website review against the same criteria
+
+axe-core 4.10 found no violations on eight pages in either presentation (headless
+Chrome, all disclosures open). Corrections: a text alternative now describes where
+the fixed input positions lie relative to the azo group (needed for steric reasoning
+and the 2-, 3- and 4-substituted series); two alt texts name the shown content
+instead of only the topic; the build merges upright MathML letters (`cis` as one
+identifier) and decimal-comma numbers (`932,48` as one number) so screen readers and
+Braille displays do not split them; table cells use less padding below 400 px.
+Not tested: screen-reader speech of the corrected MathML.

@@ -63,12 +63,35 @@ def render(source: str) -> tuple[str, str]:
 
     def math(match):
         display = "block" if "mode=display" in match[1] else "inline"
-        return convert(html.unescape(match[2]), display=display)
+        return speakable_math(convert(html.unescape(match[2]), display=display))
 
     content = re.sub(
         r'<script type="(math/tex[^"]*)">(.*?)</script>', math, content, flags=re.S
     )
     return content, md.toc
+
+
+UPRIGHT_LETTER = r'<mi mathvariant="normal">([^<])</mi>'
+
+
+def speakable_math(mathml: str) -> str:
+    """Keep upright words and decimal-comma numbers as single tokens.
+
+    latex2mathml emits \\mathrm{cis} as three letter identifiers and 1{,}5 as two
+    numbers around a comma, which screen readers and Braille displays split apart.
+    """
+    mathml = re.sub(
+        f"(?:{UPRIGHT_LETTER}){{2,}}",
+        lambda match: '<mi mathvariant="normal">'
+        + "".join(re.findall(UPRIGHT_LETTER, match[0]))
+        + "</mi>",
+        mathml,
+    )
+    return re.sub(
+        r"<mn>(\d+)</mn><mrow><mo>&#x0002C;</mo></mrow><mn>(\d+)</mn>",
+        r"<mn>\1,\2</mn>",
+        mathml,
+    )
 
 
 def page_url(slug: str) -> str:

@@ -16,7 +16,7 @@ Die lichtinduzierte Isomerisierung lässt sich vereinfacht in folgende Schritte 
    oder wieder die *trans*-Form annehmen. Eine Lichtabsorption führt daher nicht zwangsläufig zur Isomerisierung.
 
 <figure markdown="1">
-<img src="../../figures/outputs/photoswitch.svg" alt="Vereinfachtes Schema der lichtinduzierten Isomerisierung mit angedeutetem angeregtem Zustand." width="600" loading="lazy">
+<img src="../../figures/outputs/photoswitch.svg" alt="Energie entlang der Reaktionskoordinate. Die Kurve des Grundzustands hat ein tieferes Minimum bei trans und ein höheres bei cis, getrennt durch ein Maximum. Ein Pfeil führt von trans hinauf zu einer gestrichelten Linie für den angeregten Zustand, ein zweiter Pfeil von dort hinab zu cis." width="600" loading="lazy">
 
 <figcaption markdown="1">
 Stark vereinfachtes Schema der lichtinduzierten Isomerisierung. Die gestrichelte Linie deutet einen
