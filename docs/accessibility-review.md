@@ -456,3 +456,91 @@ switch modes during a running calculation or run a transition-structure search;
 the relevant state handling has source and regression-test coverage. There was
 no actual JAWS/NVDA/Braille trial or student usability test. No chatbot or
 application-owned speech input/output was added. No push or deployment occurred.
+
+## Task embedding and numerical display refinement
+
+The next user feedback requested a permanent task section, removal of technical
+identifiers even from optional readable results, a fresh assessment of controls,
+shorter numerical output, descending transition strength order, and a general
+layout check. The fundamentals link should follow the converter, and the energy
+probe needed space between its input and action. D implemented this consolidated
+refinement in commit `74d921e`; B, S, and R reviewed that frozen commit in parallel.
+
+The accessible task section now loads automatically in the reading flow before
+the inputs. Its outer open/close controls are absent, and Escape cannot hide it.
+Individual tasks retain their native disclosures to avoid presenting all long
+exercises at once. This is an explicit information-density decision, distinct
+from retaining a popup task panel. Loading failures have an inline retry.
+Asynchronous responses cannot reopen a closed graphical panel, replace the wrong
+mode's tasks, or steal focus. A deliberate retry only transfers focus to the
+task heading if the retry control still has focus when loading finishes.
+
+The control audit retains native structure, substituent, atom, and path choices
+where an actual scientific selection is needed. One substituent disclosure
+avoids ten unnecessary fields in the unsubstituted starting case; atom tools
+remain one targeted secondary section. Actual reaction-path data are directly
+open, while optimization iterations stay optional. Additional positive-strength
+visible transitions are direct observations, without duplicating the strongest
+five. Technical ring-index lists, duplicated transition-structure validation,
+and the nearly empty metadata disclosure are removed. All readable identifiers,
+including collision suffixes, are replaced with chemical names, structure types,
+and human calculation numbers. Internal IDs remain in state and explicit
+machine-data exports.
+
+All transition lists now follow the user's requested descending raw oscillator
+strength order, with energy and original transition number breaking ties. This
+supersedes the energy-order presentation recorded earlier. Stored arrays and
+the energy ordering of plotted curves are unchanged.
+
+`ScientificDisplay` applies common presentation rules to both app modes,
+readable reports, plots and the converter:
+
+| Quantity | Normal presentation |
+| --- | --- |
+| Absolute electronic energy | Up to four decimal places, allowing student subtraction. |
+| Energy difference or electronic energy barrier | Three significant digits. |
+| Spectral maximum or transition energy | Two decimal places, locally increased for close distinct values. |
+| Wavelength or distance | Whole nm or pm. |
+| Angle | Up to one decimal place. |
+| Oscillator strength or relative absorption | Two significant digits; tiny nonzero values use scientific notation. |
+| Percentage | Up to one decimal place, without falsely rounding an interior value to an exact endpoint. |
+| Frequency magnitude | Whole cm⁻¹, with explicit distinction near the 20 cm⁻¹ threshold. |
+| Derived converter field | Up to four significant digits as editable, ungrouped decimal text. |
+
+Padding zeros and negative zero are removed. A bounded local precision increase
+distinguishes nearby comparison values; remaining display equality is identified
+as rounding. Scientific-notation math spans provide German spoken alternatives.
+Raw values continue to determine calculations, thresholds, selections, sorting,
+and machine exports. Active converter input is never rewritten.
+
+B found no current accessibility defect after the complete 86-test JavaScript
+suite and additional reversed-response/mode-change harness sequences. R found
+no precision or scientific-interpretation defect in the selected boundary cases.
+S found no demonstrated layout defect in source/tests and the coordinator's
+native observations. The independent reviews did not modify product files.
+
+The coordinator independently confirmed:
+
+- Fresh accessible-page loading shows the tasks without an open action and
+  preserves document focus. The converter precedes the fundamentals link.
+- The real trans spectrum displays transitions 2, 7, 3, 4 in descending strength
+  order. Most energies are short, while 4.1613/4.1614 eV remain distinguishable.
+  Safari's accessibility tree names the small strength as
+  `2,9 mal zehn hoch minus 4`, alongside its visual scientific notation.
+- At 3 eV the direct cis/trans comparison displays 0.021 and 0.013, retains the
+  unrounded calculation, and leaves keyboard focus on the query action.
+- The input/action gap is 8 CSS px. The tested transition table remains readable
+  and its numbers unbroken at 300% zoom; no overlap was observed. Zoom was
+  subsequently verified restored to 100%.
+- A manually closed graphical task panel stays closed after a round trip through
+  accessible mode. Returning to accessible mode restores the fixed task section,
+  selected spectrum, and shared-energy query without losing data.
+
+All 86 JavaScript tests and 196 Python tests passed; 21 Python tests remained
+skipped, with the same existing Starlette/httpx warning. D's targeted Python,
+syntax, configured Ruff and whitespace checks also passed. Both task sources and
+both protocol binaries are unchanged from the preceding completed revision;
+their existing render review therefore remains applicable. App tables receive
+an extra keyboard stop only when overflowing; standalone HTML reports retain a
+static scroll-focus fallback. Actual JAWS/NVDA/Braille testing remains unavailable.
+Nothing was pushed or deployed.
