@@ -10,14 +10,20 @@ if (textPreference) {
   if (query === '1' || query === '0') {
     try { localStorage.setItem('photoswitchlab.textPreferred', String(textPreference.checked)); } catch (_) {}
   }
+  const descriptions = [...document.querySelectorAll('details.text-alternative')];
+  const disclosureStates = {
+    graphical: descriptions.map(description => description.open),
+    text: descriptions.map(() => true),
+  };
+  let activeMode = textPreference.checked ? 'text' : 'graphical';
   const apply = () => {
-    document.body.classList.toggle('text-preferred', textPreference.checked);
-    for (const description of document.querySelectorAll('details.text-alternative')) {
-      if (textPreference.checked) description.open = true;
-    }
+    document.body.classList.toggle('text-preferred', activeMode === 'text');
+    descriptions.forEach((description, index) => { description.open = disclosureStates[activeMode][index]; });
   };
   apply();
   textPreference.addEventListener('change', () => {
+    disclosureStates[activeMode] = descriptions.map(description => description.open);
+    activeMode = textPreference.checked ? 'text' : 'graphical';
     apply();
     try { localStorage.setItem('photoswitchlab.textPreferred', String(textPreference.checked)); } catch (_) {}
   });

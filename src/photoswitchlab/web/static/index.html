@@ -23,8 +23,8 @@ document their own choices.
     <script src="static/progress.js?v=ui-36" defer></script>
     <script src="static/vendor/cie-color.js?v=1" defer></script>
     <script src="static/solution-color.js?v=1" defer></script>
-    <script src="static/accessibility.js?v=3" defer></script>
-    <script src="static/app.js?v=ui-96" defer></script>
+    <script src="static/accessibility.js?v=4" defer></script>
+    <script src="static/app.js?v=ui-97" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
@@ -422,35 +422,10 @@ document their own choices.
             </div>
             <details id="accessible-results" class="accessible-results" hidden>
                 <summary>Struktur und Ergebnisse als Text und Tabellen</summary>
-                <p id="accessible-identity"></p>
-                <p id="accessible-geometry"></p>
-                <details><summary>Strukturzuordnung und Rechenkontext</summary><p id="accessible-assumptions"></p><div id="accessible-output-methods"></div></details>
-                <div class="inline-actions">
-                    <button id="remember-observation" class="text-button" type="button">Auswahl merken</button>
-                    <button id="data-report" class="text-button" type="button">Ergebnisbericht speichern</button>
-                </div>
-                <details><summary id="observations-summary">Gemerkte Beobachtungen (0)</summary>
-                    <p class="note">Merken Sie ausgewählte Pfadstrukturen, Atomabstände oder Kurvenabfragen für den Bericht. Die Sammlung gilt bis zum Neuladen; speichern Sie Ihren Bericht rechtzeitig.</p>
-                    <ol id="observations-list"></ol>
-                    <button id="clear-observations" class="text-button" type="button" disabled>Sammlung leeren</button>
-                </details>
-                <details><summary>Vollständige Rohdaten exportieren</summary>
-                    <p class="note">CSV enthält alle gespeicherten Kurven- und Energiedaten; JSON enthält zusätzlich Strukturen und Rechenmetadaten. Für die direkte Lektüre verwenden Sie den Ergebnisbericht.</p>
-                    <div class="inline-actions"><button id="data-json" class="text-button" type="button">JSON speichern</button><button id="data-csv" class="text-button" type="button">CSV speichern</button></div>
-                </details>
-                <details id="atom-explorer">
-                    <summary>Atome, Bindungen und Abstände untersuchen</summary>
-                    <p class="note">Atomnummern gelten innerhalb dieser Struktur und ihrer gespeicherten Rechenschritte. Sie sind keine chemischen Positionsnummern. Bei Atomen außerhalb der Ringe nennt der Ringbezug die nächste Ringposition in der Bindungsfolge. Abstände werden aus den dargestellten Koordinaten berechnet.</p>
-                    <label for="atom-first">Erstes Atom</label><select id="atom-first"></select>
-                    <p id="atom-neighbors"></p>
-                    <label for="atom-second">Zweites Atom</label><select id="atom-second"></select>
-                    <p id="atom-distance"></p>
-                    <label for="atom-third">Drittes Atom für den Winkel am zweiten Atom</label><select id="atom-third"></select>
-                    <p id="atom-angle"></p>
-                    <p id="atom-rings" class="note"></p>
-                    <p id="accessible-azo-angles"></p>
-                </details>
-                <details id="accessible-path" hidden>
+                <div id="accessible-current">
+                    <p id="accessible-identity"></p>
+                    <p id="accessible-geometry"></p>
+                    <details id="accessible-path" hidden>
                     <summary>Rechenschritte untersuchen</summary>
                     <p id="accessible-path-note" class="note"></p>
                     <label for="path-point">Schritt oder Pfadstruktur</label><select id="path-point"></select>
@@ -463,12 +438,17 @@ document their own choices.
                     </table></div>
                     </details>
                 </details>
-                <details id="accessible-spectrum" hidden>
-                    <summary>Spektrum untersuchen</summary>
+                    <section id="accessible-spectrum" hidden>
+                    <h3>UV/Vis-Spektrum</h3>
                     <p id="accessible-spectrum-summary"></p>
+                    <p id="accessible-color"></p>
                     <p id="accessible-spectrum-note" class="note"></p>
                     <label for="transition-point">Elektronischen Übergang auswählen</label><select id="transition-point"></select>
                     <p id="transition-value"></p>
+                    <label for="curve-energy">Absorptionskurve abfragen: Energie / eV</label>
+                    <input id="curve-energy" type="text" inputmode="decimal" autocomplete="off" aria-describedby="curve-value"/>
+                    <button id="curve-query" class="text-button" type="button">Absorption bestimmen</button>
+                    <p id="curve-value" role="status"></p>
                     <details><summary>Vollständige Übergangstabelle</summary>
                     <div class="table-scroll" tabindex="0" role="region" aria-label="Elektronische Übergänge"><table>
                         <caption>Berechnete elektronische Übergänge</caption>
@@ -476,15 +456,38 @@ document their own choices.
                         <tbody id="transition-table-body"></tbody>
                     </table></div>
                     </details>
-                    <label for="curve-energy">Absorptionskurve abfragen: Energie / eV</label>
-                    <input id="curve-energy" type="text" inputmode="decimal" autocomplete="off" aria-describedby="curve-value"/>
-                    <button id="curve-query" class="text-button" type="button">Absorption bestimmen</button>
-                    <p id="curve-value" role="status"></p>
-                    <p id="accessible-color"></p>
                     <details><summary>Farben zweier Strukturen vergleichen</summary>
                         <label for="color-comparison">Zweite Struktur</label><select id="color-comparison"></select>
                         <p id="color-comparison-value"></p>
                     </details>
+                </section>
+                </div>
+                <div class="inline-actions">
+                    <button id="remember-observation" class="text-button" type="button">Auswahl merken</button>
+                    <button id="data-report" class="text-button" type="button">Ergebnisbericht speichern</button>
+                </div>
+                <details id="atom-explorer">
+                    <summary>Atome, Bindungen und Abstände untersuchen</summary>
+                    <p id="accessible-spectrum-geometry" hidden></p>
+                    <p class="note">Atomnummern gelten innerhalb dieser Struktur und ihrer gespeicherten Rechenschritte. Sie sind keine chemischen Positionsnummern. Bei Atomen außerhalb der Ringe nennt der Ringbezug die nächste Ringposition in der Bindungsfolge. Abstände werden aus den dargestellten Koordinaten berechnet.</p>
+                    <label for="atom-first">Erstes Atom</label><select id="atom-first"></select>
+                    <p id="atom-neighbors"></p>
+                    <label for="atom-second">Zweites Atom</label><select id="atom-second"></select>
+                    <p id="atom-distance"></p>
+                    <label for="atom-third">Drittes Atom für den Winkel am zweiten Atom</label><select id="atom-third"></select>
+                    <p id="atom-angle"></p>
+                    <p id="atom-rings" class="note"></p>
+                    <p id="accessible-azo-angles"></p>
+                </details>
+                <details><summary id="observations-summary">Gemerkte Beobachtungen (0)</summary>
+                    <p class="note">Merken Sie ausgewählte Pfadstrukturen, Atomabstände oder Kurvenabfragen für den Bericht. Die Sammlung gilt bis zum Neuladen; speichern Sie Ihren Bericht rechtzeitig.</p>
+                    <ol id="observations-list"></ol>
+                    <button id="clear-observations" class="text-button" type="button" disabled>Sammlung leeren</button>
+                </details>
+                <details id="accessible-context"><summary>Strukturzuordnung und Rechenkontext</summary><p id="accessible-assumptions"></p><div id="accessible-output-methods"></div></details>
+                <details id="accessible-raw"><summary>Vollständige Rohdaten exportieren</summary>
+                    <p class="note">CSV enthält alle gespeicherten Kurven- und Energiedaten; JSON enthält zusätzlich Strukturen und Rechenmetadaten. Für die direkte Lektüre verwenden Sie den Ergebnisbericht.</p>
+                    <div class="inline-actions"><button id="data-json" class="text-button" type="button">JSON speichern</button><button id="data-csv" class="text-button" type="button">CSV speichern</button></div>
                 </details>
             </details>
             <div id="molecular-panel">
@@ -688,18 +691,17 @@ document their own choices.
         <label
         >Energie / eV<input
                 id="convert-ev"
-                type="number"
-                step="any"
-                value="3.0000"/></label
+                type="text" inputmode="decimal" autocomplete="off" aria-describedby="conversion-status"
+                value="3,0000"/></label
         ><label
     >Energie / kJ mol⁻¹<input
             id="convert-kj"
-            type="number"
-            step="any"/></label
+            type="text" inputmode="decimal" autocomplete="off" aria-describedby="conversion-status"/></label
     ><label
-    >Wellenlänge / nm<input id="convert-nm" type="number" step="any"
+    >Wellenlänge / nm<input id="convert-nm" type="text" inputmode="decimal" autocomplete="off" aria-describedby="conversion-status"
     /></label>
     </div>
+    <p id="conversion-status" role="status"></p>
     <p class="note">
         Für Energiedifferenzen sind auch negative Werte möglich. Eine
         Wellenlänge wird nur für positive Energien angegeben. Eine Energiedifferenz

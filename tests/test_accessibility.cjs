@@ -111,13 +111,14 @@ function accessibleLab(search = "", deniedStorage = false) {
     spectrum: {energy_ev: [1, 2], absorption: [0.1, 0.5], excitations_ev: [1.5], oscillator_strengths: [0.2], color: {rgb: [255, 255, 0], luminance: 0.5}},
   };
   const state = { step: "spectrum", molecules: [molecule, {...molecule, id: "b", name: "B"}] };
+  let selected = molecule;
   const view = context.AccessibilityView;
-  view.initialize({ state, current: () => molecule, records: () => [], playback: () => ({records: []}),
+  view.initialize({ state, current: () => selected, records: () => [], playback: () => ({records: []}),
     render: () => view.render(), showResult: () => {}, selectFrame: () => {}, label: (m) => m.name,
     substituentLabel: (s) => s, filename: (extension) => `result.${extension}`,
     download: (content, filename) => { exported = {content, filename}; },
   });
-  return { view, node, saved, molecule, state, context, mutations: () => mutations, exported: () => exported };
+  return { view, node, saved, molecule, state, context, select: (value) => { selected = value; view.render(); }, mutations: () => mutations, exported: () => exported };
 }
 
 test("explicit text preference persists and turning it off restores graphical-first disclosure", () => {
@@ -176,6 +177,7 @@ test("explicit observation collection retains several named probes and geometrie
   const lab = accessibleLab();
   lab.view.render();
   lab.node("atom-explorer").open = true;
+  lab.node("atom-first").onchange();
   const initialCount = lab.node("observations-summary").textContent;
   lab.node("curve-energy").value = "1,2";
   lab.node("curve-query").onclick();
@@ -192,6 +194,7 @@ test("explicit observation collection retains several named probes and geometrie
     {image: 1, energy_ev: -9, positions: [0, 0, 0, 2, 0, 0, 2, 2, 0]},
   ]};
   lab.view.render();
+  lab.node("atom-first").onchange();
   for (const index of ["0", "1"]) {
     lab.node("path-point").value = index;
     lab.node("path-point").onchange();
@@ -200,10 +203,163 @@ test("explicit observation collection retains several named probes and geometrie
   lab.node("data-report").onclick();
   const report = lab.exported().content;
   for (const text of ["1,2000 eV", "1,8000 eV", "Pfadstruktur 1", "Pfadstruktur 2", "Ringposition C1", "100,0 pm", "200,0 pm"]) assert.ok(report.includes(text), text);
-  assert.equal((report.match(/<h2>Beobachtung /g) || []).length, 4);
+  assert.equal((report.match(/<h3>Beobachtung /g) || []).length, 4);
   lab.node("clear-observations").onclick();
   lab.node("data-report").onclick();
   assert.ok(!lab.exported().content.includes("Beobachtung 1"));
+});
+
+test("remembered spectral evidence keeps frozen source context without unrelated current or default geometry", () => {
+  const lab = accessibleLab();
+  lab.molecule.name = "Spektrum A";
+  lab.molecule.converged = true;
+  lab.molecule.spectrum.coverage_complete = false;
+  lab.view.render();
+  lab.node("atom-explorer").open = true; // Opening optional geometry alone is not a measurement selection.
+  for (const energy of ["1,2", "1,8"]) {
+    lab.node("curve-energy").value = energy;
+    lab.node("curve-query").onclick();
+    lab.node("remember-observation").onclick();
+  }
+  // Later state changes must not rewrite the provenance of retained observations.
+  lab.molecule.spectrum.coverage_complete = true;
+  const start = {...lab.molecule, id: "new", name: "Unbeteiligte Startstruktur B", kind: "initial", spectrum: null};
+  lab.select(start);
+  lab.node("atom-explorer").open = true;
+  lab.node("data-report").onclick();
+  const report = lab.exported().content;
+  assert.equal(lab.exported().filename, "photoswitchlab-beobachtungen.html");
+  assert.ok(!report.includes("Unbeteiligte Startstruktur B"));
+  assert.ok(!report.includes("Aktuelle Auswahl"));
+  assert.ok(!report.includes("Diederwinkel"));
+  assert.ok(!report.includes("Ringposition"));
+  assert.equal((report.match(/INDO\/S–CIS/g) || []).length, 1);
+  assert.equal((report.match(/Absorption kann dort unterschätzt werden/g) || []).length, 1);
+  for (const energy of ["1,2000", "1,8000"]) assert.ok(report.includes(energy));
+  lab.select(null);
+  assert.equal(lab.node("accessible-results").hidden, false);
+  assert.equal(lab.node("accessible-current").hidden, true);
+  assert.equal(lab.node("remember-observation").disabled, true);
+  assert.equal(lab.node("data-report").disabled, false);
+  lab.node("data-report").onclick();
+  assert.equal(lab.exported().content, report);
+  lab.node("clear-observations").onclick();
+  assert.equal(lab.node("accessible-results").hidden, true);
+  assert.equal(lab.node("data-report").disabled, true);
+});
+
+test("remembered path evidence retains its own convergence and validation after selecting another structure", () => {
+  const lab = accessibleLab();
+  lab.state.step = "optimize";
+  lab.molecule.name = "Pfadstruktur A";
+  lab.molecule.kind = "ts";
+  lab.molecule.converged = true;
+  lab.molecule.ts_search = {
+    connectivity: {verified: false},
+    validation: {imaginary_count: 1, imaginary_frequency_cm1: -230},
+    path: [
+      {image: 0, energy_ev: -10, positions: [0, 0, 0, 1, 0, 0, 1, 2, 0]},
+      {image: 1, energy_ev: -9, positions: [0, 0, 0, 2, 0, 0, 2, 2, 0]},
+    ],
+  };
+  lab.view.render();
+  for (const point of ["0", "1"]) {
+    lab.node("path-point").value = point;
+    lab.node("path-point").onchange();
+    lab.node("remember-observation").onclick();
+  }
+  lab.molecule.ts_search.validation.imaginary_count = 3;
+  lab.select({...lab.molecule, id: "other", name: "Andere Minimumstruktur B", kind: "minimum", ts_search: null});
+  lab.node("data-report").onclick();
+  const report = lab.exported().content;
+  assert.ok(!report.includes("Andere Minimumstruktur B"));
+  assert.equal((report.match(/Verbindung zwischen cis und trans bestätigt/g) || []).length, 1);
+  assert.ok(report.includes('Verbindung zwischen cis und trans bestätigt</th><td>nein</td>'));
+  assert.ok(report.includes('Betrag über 20 cm⁻¹</th><td>1</td>'));
+  assert.ok(report.includes("230,0"));
+  assert.ok(report.includes("erste Pfadstruktur"));
+  assert.equal((report.match(/Optimierung abgeschlossen/g) || []).length, 1);
+});
+
+test("spectrum presentation prioritizes its own results while geometry remains optional", () => {
+  const lab = accessibleLab("?text=1");
+  lab.view.render();
+  assert.equal(lab.node("accessible-spectrum").hidden, false);
+  assert.equal(lab.node("accessible-geometry").hidden, true);
+  assert.equal(lab.node("accessible-spectrum-geometry").hidden, false);
+  lab.node("data-report").onclick();
+  assert.ok(lab.exported().content.includes("Maximum im berechneten Kurvenbereich"));
+  assert.ok(!lab.exported().content.includes("Diederwinkel"));
+  lab.state.step = "optimize";
+  lab.view.render();
+  assert.equal(lab.node("accessible-spectrum").hidden, true);
+  assert.equal(lab.node("accessible-geometry").hidden, false);
+});
+
+test("unit conversion accepts comma or dot consistently in all fields and rejects invalid wavelengths", () => {
+  const nodes = new Map();
+  const node = (id) => {
+    if (!nodes.has(id)) nodes.set(id, {value: "", textContent: "", attributes: {}, setAttribute(key, value) { this.attributes[key] = value; }});
+    return nodes.get(id);
+  };
+  const context = vm.createContext({$: node, AccessibleData: data, EV_KJ: 96.48533212331002, HC: 1239.8419843320026});
+  const app = fs.readFileSync("src/photoswitchlab/web/static/app.js", "utf8");
+  vm.runInContext(app.slice(app.indexOf("function convert(source)"), app.indexOf('for (const key of ["ev", "kj", "nm"])\n  $("convert-" + key).oninput')), context);
+  const convert = (source, value) => { node(`convert-${source}`).value = value; context.convert(source); };
+  const value = (key) => data.decimal(node(`convert-${key}`).value);
+  convert("ev", "0,3");
+  assert.ok(Math.abs(value("kj") - 28.945599637) < 1e-6);
+  convert("ev", "3,5");
+  assert.ok(Math.abs(value("nm") - 354.24056695) < 1e-6);
+  const expected = node("convert-nm").value;
+  convert("ev", "3.5");
+  assert.equal(node("convert-nm").value, expected);
+  convert("kj", "0,3");
+  assert.ok(Math.abs(value("ev") - 0.3 / context.EV_KJ) < 1e-10);
+  convert("nm", "3,5");
+  assert.ok(Math.abs(value("ev") - context.HC / 3.5) < 1e-6);
+  for (const energy of ["0", "-0,3"]) {
+    convert("ev", energy);
+    assert.equal(node("convert-nm").value, "");
+    assert.equal(node("convert-ev").attributes["aria-invalid"], "false");
+    assert.ok(value("kj") <= 0);
+  }
+  for (const wavelength of ["0", "-3,5"]) {
+    convert("nm", wavelength);
+    assert.equal(node("convert-ev").value, "");
+    assert.equal(node("convert-nm").attributes["aria-invalid"], "true");
+    assert.ok(node("conversion-status").textContent.includes("positive Wellenlänge"));
+  }
+  for (const source of ["ev", "kj", "nm"]) {
+    convert(source, "3,5.1");
+    assert.equal(node(`convert-${source}`).attributes["aria-invalid"], "true");
+    assert.ok(node("conversion-status").textContent.includes("Dezimalkomma oder Dezimalpunkt"));
+  }
+});
+
+test("website preference restores separate manual disclosure choices in each presentation", () => {
+  const listeners = new Map();
+  const preference = {checked: false, addEventListener(type, listener) { listeners.set(type, listener); }};
+  const descriptions = [{open: true}, {open: false}];
+  const context = vm.createContext({
+    document: {currentScript: {src: "https://example.org/assets/site.js"}, querySelector: () => preference,
+      querySelectorAll: () => descriptions, body: {classList: {toggle() {}}}},
+    location: {search: ""}, URL, URLSearchParams,
+    localStorage: {getItem: () => null, setItem() {}},
+  });
+  const site = fs.readFileSync("site/assets/site.js", "utf8");
+  vm.runInContext(site.slice(0, site.indexOf("const mobileNavigation")), context);
+  const toggle = (checked) => { preference.checked = checked; listeners.get("change")(); };
+  toggle(true);
+  assert.deepEqual(descriptions.map((description) => description.open), [true, true]);
+  descriptions[0].open = false;
+  toggle(false);
+  assert.deepEqual(descriptions.map((description) => description.open), [true, false]);
+  descriptions[1].open = true;
+  toggle(true);
+  assert.deepEqual(descriptions.map((description) => description.open), [false, true]);
+  toggle(false);
+  assert.deepEqual(descriptions.map((description) => description.open), [true, true]);
 });
 
 test("calculation focus follows completion only while the user has not moved", async () => {

@@ -1417,8 +1417,16 @@ document
     (button) => (button.onclick = () => $(button.dataset.close).close()),
   );
 function convert(source) {
-  const value = Number($("convert-" + source).value);
-  if (!Number.isFinite(value) || $("convert-" + source).value === "") {
+  const input = $("convert-" + source);
+  const value = AccessibleData.decimal(input.value);
+  const empty = !input.value.trim();
+  const invalid = !empty && (value == null || (source === "nm" && value <= 0));
+  for (const key of ["ev", "kj", "nm"]) $("convert-" + key).setAttribute("aria-invalid", String(key === source && invalid));
+  $("conversion-status").textContent = empty ? "" : value == null
+    ? "Geben Sie eine Zahl mit Dezimalkomma oder Dezimalpunkt ein."
+    : source === "nm" && value <= 0 ? "Geben Sie eine positive Wellenlänge ein."
+    : source !== "nm" && value <= 0 ? "Für Energien kleiner oder gleich null wird keine Photonenwellenlänge berechnet." : "";
+  if (value == null || invalid) {
     for (const key of ["ev", "kj", "nm"])
       if (key !== source) $("convert-" + key).value = "";
     return;
@@ -1435,7 +1443,7 @@ function convert(source) {
   for (const key in values)
     if (key !== source)
       $("convert-" + key).value = Number.isFinite(values[key])
-        ? key === "ev" ? values[key].toFixed(4) : Number(values[key].toPrecision(9))
+        ? values[key].toLocaleString("de-DE", {useGrouping: false, maximumSignificantDigits: 9})
         : "";
 }
 for (const key of ["ev", "kj", "nm"])

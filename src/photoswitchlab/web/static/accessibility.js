@@ -82,10 +82,11 @@ globalThis.AccessibleData = {
   },
   report(sections) {
     const escape = (value) => String(value ?? "").replace(/[&<>"']/g, (c) => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"})[c]);
-    const content = sections.map(({title, paragraphs = [], rows = [], optional = false}) => {
+    const content = sections.map(({title, paragraphs = [], rows = [], observations = [], optional = false}) => {
       const body =
       paragraphs.map((p) => `<p>${escape(p)}</p>`).join("") +
-      (rows.length ? `<table><caption>${escape(title)}</caption><thead><tr><th scope="col">Größe oder Angabe</th><th scope="col">Wert</th></tr></thead><tbody>` + rows.map(([label, value]) => `<tr><th scope="row">${escape(label)}</th><td>${escape(value)}</td></tr>`).join("") + "</tbody></table>" : "");
+      (rows.length ? `<table><caption>${escape(title)}</caption><thead><tr><th scope="col">Größe oder Angabe</th><th scope="col">Wert</th></tr></thead><tbody>` + rows.map(([label, value]) => `<tr><th scope="row">${escape(label)}</th><td>${escape(value)}</td></tr>`).join("") + "</tbody></table>" : "") +
+      observations.map((entry) => `<section><h3>${escape(entry.title)}</h3>${entry.paragraphs.map((p) => `<p>${escape(p)}</p>`).join("")}</section>`).join("");
       return optional ? `<details><summary>${escape(title)}</summary>${body}</details>` : `<section><h2>${escape(title)}</h2>${body}</section>`;
     }).join("");
     return `<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>PhotoSwitchLab Ergebnisbericht</title><style>body{font:1rem/1.6 system-ui,sans-serif;max-width:75ch;margin:2rem auto;padding:0 1rem;color:#192d43;background:white}h1,h2{line-height:1.3}section{margin:2rem 0}table{border-collapse:collapse;width:100%}caption{text-align:left;font-weight:600}th,td{border:1px solid #b8c4d0;padding:.5rem;text-align:left;overflow-wrap:anywhere}thead{background:#edf2f7}th[scope=row]{width:45%}@media(max-width:400px){th,td{padding:.3rem}}@media print{body{max-width:none;margin:0}}</style><main><h1>PhotoSwitchLab Ergebnisbericht</h1><p>Gespeicherte Struktur und gezielt ausgewählte Daten. Wissenschaftliche Deutungen ergänzen Sie selbst im Protokoll.</p>${content}</main></html>`;
@@ -135,6 +136,7 @@ globalThis.AccessibilityView = {
     let moleculeKey = null, pointIndex = null, points = [], path = false;
     let positions = [], graph = [], csvRows = [], tableSignature = "", graphKey = null;
     let selectedTransition = null, curveQuery = null, comparison = null, comparisonSignature = "";
+    let measurementSelected = false;
     let reportSections = [], colorComparisonRecord = null;
     const observations = [];
     let observationNumber = 0;
@@ -155,6 +157,7 @@ globalThis.AccessibilityView = {
       setText("atom-angle", graph.length ? `Winkel ${[first, second, third].map((index) => data.atomLabel(graph, index)).join(" – ")}: ${fmt(data.angle(positions, first, second, third), 1)} °.` : "");
     };
     $("atom-first").onchange = $("atom-second").onchange = $("atom-third").onchange = () => {
+      measurementSelected = true;
       measurement();
       this.announce($("atom-distance").textContent + " " + $("atom-angle").textContent);
     };
@@ -192,41 +195,66 @@ globalThis.AccessibilityView = {
         ? `Geben Sie eine Energie zwischen ${fmt(spec?.energy_ev?.[0])} und ${fmt(spec?.energy_ev?.at(-1))} eV ein.`
         : `${fmt(energy)} eV · ${fmt(1239.8419843320026 / energy, 1)} nm · relative Absorption ${fmt(value)}.`);
     };
+    const sourceContext = (m, spectral = false, color = false) => {
+      const paragraphs = [`Elektronische Energien: GFN1-xTB.`];
+      const rows = [];
+      if (m.kind === "initial") paragraphs.push("Generierte, noch nicht quantenchemisch optimierte Startstruktur.");
+      else rows.push(["Optimierung abgeschlossen", m.converged === true ? "ja" : m.converged === false ? "nein" : "nicht angegeben"]);
+      if (spectral) {
+        paragraphs.push("UV/Vis-Spektrum: INDO/S–CIS. Relative Absorption in willkürlichen Einheiten.");
+        if (m.spectrum?.coverage_complete === false) paragraphs.push("Am oberen Rand des berechneten Energiebereichs fehlen möglicherweise Beiträge weiterer Übergänge; die Absorption kann dort unterschätzt werden.");
+      }
+      if (color) paragraphs.push("Farbmodell ohne festgelegte Konzentration oder Schichtdicke.");
+      if (m.ts_search) {
+        const ts = m.ts_search;
+        rows.push(
+          ["Verbindung zwischen cis und trans bestätigt", ts.connectivity?.verified === true ? "ja" : ts.connectivity?.verified === false ? "nein" : "noch nicht geprüft"],
+          ["Imaginäre Frequenzen mit einem Betrag über 20 cm⁻¹", ts.validation?.imaginary_count ?? "noch nicht geprüft"],
+          ["Betrag der imaginären Frequenz / cm⁻¹", Number.isFinite(ts.validation?.imaginary_frequency_cm1) ? fmt(Math.abs(ts.validation.imaginary_frequency_cm1), 1) : "nicht verfügbar"],
+        );
+        if (ts.failure_reason) paragraphs.push(ts.failure_reason);
+      }
+      return {id: m.id, title: context.label(m), identity: $("accessible-identity").textContent, paragraphs, rows};
+    };
     const snapshot = (force = false) => {
       const m = context.current();
       if (!m) return null;
-      const paragraphs = [$("accessible-identity").textContent, $("accessible-geometry").textContent];
+      const spectral = context.state.step === "spectrum";
+      const paragraphs = spectral ? [] : [$("accessible-geometry").textContent];
       const selected = points[pointIndex];
       let hasSelection = false;
       if (selected && context.state.step === "optimize") {
         paragraphs.push($("accessible-point").textContent, $("accessible-path-note").textContent, $("accessible-azo-angles").textContent);
         hasSelection = true;
       }
-      if ($("atom-explorer").open && graph.length) {
+      if (measurementSelected && $("atom-explorer").open && graph.length) {
+        if (spectral) paragraphs.push($("accessible-geometry").textContent);
         paragraphs.push($("atom-distance").textContent, $("atom-angle").textContent);
         hasSelection = true;
       }
       if (curveQuery) {
         paragraphs.push($("curve-value").textContent);
-        if (m.spectrum?.coverage_complete === false) paragraphs.push("Am oberen Rand des berechneten Energiebereichs fehlen möglicherweise Beiträge weiterer Übergänge; die Absorption kann dort unterschätzt werden.");
         hasSelection = true;
       }
       if (selectedTransition != null) { paragraphs.push($("transition-value").textContent); hasSelection = true; }
       if (colorComparisonRecord) { paragraphs.push($("color-comparison-value").textContent); hasSelection = true; }
       if (!force && !hasSelection) return null;
-      return {key: JSON.stringify([m.id, paragraphs]), hasColor: !!colorComparisonRecord, hasCurve: !!curveQuery, section: {title: "Aktuelle Auswahl", paragraphs}};
+      if (spectral && !hasSelection) paragraphs.push($("accessible-spectrum-summary").textContent, $("accessible-color").textContent);
+      const source = sourceContext(m, spectral, spectral && (!hasSelection || !!colorComparisonRecord));
+      return {key: JSON.stringify([m.id, paragraphs]), source, hasColor: !!colorComparisonRecord, hasCurve: !!curveQuery, section: {title: "Aktuelle Auswahl", paragraphs}};
     };
     const renderObservations = () => {
       setText("observations-summary", `Gemerkte Beobachtungen (${observations.length})`);
       $("clear-observations").disabled = !observations.length;
       $("observations-list").replaceChildren(...observations.map((entry) => {
         const item = document.createElement("li"), label = document.createElement("p"), remove = document.createElement("button");
-        label.textContent = `${entry.section.title}: ${entry.section.paragraphs.join(" ")}`;
+        label.textContent = `${entry.section.title} · ${entry.source.title}: ${entry.section.paragraphs.join(" ")}`;
         remove.type = "button";
         remove.textContent = `${entry.section.title} entfernen`;
         remove.onclick = () => {
           observations.splice(observations.indexOf(entry), 1);
           renderObservations();
+          this.render();
           $("observations-summary").focus?.();
           this.announce("Beobachtung entfernt.");
         };
@@ -250,22 +278,36 @@ globalThis.AccessibilityView = {
     $("clear-observations").onclick = () => {
       observations.length = 0;
       renderObservations();
+      this.render();
       $("observations-summary").focus?.();
       this.announce("Sammlung geleert.");
     };
     $("data-report").onclick = () => {
       this.render();
-      const sections = reportSections.filter((section) => !section.selected);
-      if (observations.some((entry) => entry.hasColor) && !SolutionColor.estimate(context.current()?.spectrum)) sections.push({title: "Farbvergleiche der Sammlung", paragraphs: ["Farbmodell ohne festgelegte Konzentration oder Schichtdicke."]});
-      sections.push(...observations.map((entry) => entry.section));
-      const current = snapshot();
-      if (current && !observations.some((saved) => saved.key === current.key)) sections.push(current.section);
-      const evidence = current ? [...observations, current] : observations;
+      const sections = [];
+      let evidence;
+      if (observations.length) {
+        const groups = new Map();
+        for (const entry of observations) {
+          if (!groups.has(entry.source.id)) groups.set(entry.source.id, {source: entry.source, paragraphs: new Set([entry.source.identity]), rows: new Map(), observations: []});
+          const group = groups.get(entry.source.id);
+          entry.source.paragraphs.forEach((paragraph) => group.paragraphs.add(paragraph));
+          entry.source.rows.forEach((row) => group.rows.set(JSON.stringify(row), row));
+          group.observations.push(entry.section);
+        }
+        for (const group of groups.values()) sections.push({title: group.source.title, paragraphs: [...group.paragraphs], rows: [...group.rows.values()], observations: group.observations});
+        evidence = observations;
+      } else {
+        sections.push(...reportSections.filter((section) => !section.selected));
+        const current = snapshot();
+        if (current) sections.push(current.section);
+        evidence = current ? [current] : [];
+      }
       const methods = [];
       if (evidence.some((entry) => entry.hasCurve)) methods.push(data.outputMethods[0]);
       if (evidence.some((entry) => entry.hasColor)) methods.push(data.outputMethods[1]);
       if (methods.length) sections.push({title: "Methoden zur Datenausgabe", paragraphs: methods, optional: true});
-      context.download(data.report(sections), context.filename("html"), "text/html;charset=utf-8");
+      if (sections.length) context.download(data.report(sections), observations.length ? "photoswitchlab-beobachtungen.html" : context.filename("html"), "text/html;charset=utf-8");
     };
     $("data-json").onclick = () => context.download(JSON.stringify({
       molecule: context.current(), displayed_record: points[pointIndex] || null,
@@ -276,8 +318,19 @@ globalThis.AccessibilityView = {
     $("data-csv").onclick = () => context.download(data.csv(csvRows), context.filename("csv"), "text/csv;charset=utf-8");
     this.render = () => {
       const m = context.current();
-      $("accessible-results").hidden = !m;
-      if (!m) return;
+      $("accessible-results").hidden = !m && !observations.length;
+      $("accessible-current").hidden = !m;
+      $("accessible-context").hidden = !m;
+      $("atom-explorer").hidden = !m;
+      $("accessible-raw").hidden = !m;
+      $("remember-observation").disabled = !m;
+      $("data-report").disabled = !m && !observations.length;
+      if (!m) {
+        reportSections = [];
+        csvRows = [];
+        moleculeKey = graphKey = null;
+        return;
+      }
       const key = `${m.id}:${context.state.step}`;
       if (key !== moleculeKey) {
         moleculeKey = key;
@@ -285,6 +338,7 @@ globalThis.AccessibilityView = {
         selectedTransition = null;
         curveQuery = null;
         comparison = null;
+        measurementSelected = false;
         setText("curve-value", "");
       }
       const labels = { initial: "Startstruktur", minimum: "Minimumstruktur", ts: "Übergangsstruktur", unconverged: "Optimierung nicht abgeschlossen" };
@@ -306,6 +360,9 @@ globalThis.AccessibilityView = {
       const props = preview ? { ...OptimizationProgress.geometryProperties(positions, m.geometry_definition), energy_ev: selected.energy_ev } : m.properties;
       const geometryText = `${preview ? path ? `Pfadstruktur ${pointIndex + 1}` : `Rechenschritt ${selected.step}` : "Gespeicherte Struktur"}: elektronische Energie ${fmt(props?.energy_ev)} eV; Diederwinkel C–N=N–C ${fmt(props?.dihedral_deg, 1)} °; Ringabstand ${fmt(props?.ring_distance_pm, 1)} pm.`;
       setText("accessible-geometry", geometryText);
+      $("accessible-geometry").hidden = context.state.step === "spectrum";
+      $("accessible-spectrum-geometry").hidden = context.state.step !== "spectrum";
+      setText("accessible-spectrum-geometry", geometryText);
       let azoAngles = "";
       if (m.geometry_definition) {
         const [a, b, c, d] = m.geometry_definition.dihedral_indices;
@@ -355,9 +412,9 @@ globalThis.AccessibilityView = {
       }
       $("path-point").value = pointIndex == null ? "" : String(pointIndex);
       setText("accessible-point", selected ? `${path ? "Pfadstruktur" : "Rechenschritt"} ${path ? pointIndex + 1 : selected.step}: E = ${fmt(selected.energy_ev)} eV; ΔE = ${fmt(selected.energy_ev - points[0].energy_ev)} eV.` : "");
-      $("accessible-spectrum").hidden = !m.spectrum;
+      $("accessible-spectrum").hidden = context.state.step !== "spectrum" || !m.spectrum;
       const spec = m.spectrum;
-      reportSections = [{title: "Gespeicherte Struktur", paragraphs: [identity, assumptions], rows: [
+      reportSections = [{title: "Gespeicherte Struktur", paragraphs: [identity, assumptions], rows: context.state.step === "spectrum" ? [] : [
         ["Elektronische Energie / eV", fmt(m.properties?.energy_ev)],
         ["Diederwinkel C–N=N–C / °", fmt(m.properties?.dihedral_deg, 1)],
         ["Ringabstand / pm", fmt(m.properties?.ring_distance_pm, 1)],
@@ -390,7 +447,7 @@ globalThis.AccessibilityView = {
         setText("transition-value", Number.isFinite(transition) ? `Übergang ${selectedTransition + 1}: ${fmt(transition)} eV · ${fmt(1239.8419843320026 / transition, 1)} nm · Oszillatorstärke ${fmt(spec.oscillator_strengths[selectedTransition])}.` : "");
         const color = SolutionColor.estimate(spec);
         setText("accessible-color", color ? `Geschätzte Lösungsfarbe: ${data.color(color.rgb)}; gewichtete Lichtdurchlässigkeit ${fmt(100 * color.luminance, 1)} %. Farbmodell ohne festgelegte Konzentration oder Schichtdicke.` : "Keine Farbschätzung verfügbar: Das Spektrum ist unvollständig oder enthält keine auswertbaren Absorptionsdaten.");
-        reportSections.push({title: "Berechnetes UV/Vis-Spektrum", paragraphs: [$("accessible-spectrum-summary").textContent, $("accessible-spectrum-note").textContent, $("accessible-color").textContent]});
+        if (context.state.step === "spectrum") reportSections.push({title: "Berechnetes UV/Vis-Spektrum", paragraphs: [$("accessible-spectrum-summary").textContent, $("accessible-spectrum-note").textContent, $("accessible-color").textContent]});
         const candidates = context.state.molecules.filter((other) => other.id !== m.id && SolutionColor.estimate(other.spectrum));
         const candidateSignature = JSON.stringify([m.id, candidates.map((other) => [other.id, context.label(other)])]);
         if (candidateSignature !== comparisonSignature) {
