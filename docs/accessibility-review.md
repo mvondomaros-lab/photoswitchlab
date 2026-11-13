@@ -682,3 +682,13 @@ rebuilt while a calculation runs. For trans-2,6,2′,6′-tetramethoxyazobenzene
 headless Chrome, the start structure listed methoxy–methoxy H···H contacts
 (267 and 275 pm) and O···N contacts (280 and 282 pm) across the azo bridge; the chosen
 H···H pair changed from 267 to 295 pm after optimization.
+
+## Phase 3: grouped structure selection
+
+The accessible structure select groups entries by derivative and configuration with
+`<optgroup>`, using the graphical picker's group names and kind order (start,
+minimum, unfinished optimization, transition structure). Option texts keep the full
+name because not every screen reader speaks group labels. When every group holds a
+single entry, as in the build step, the list stays flat so names are not repeated.
+Verified in headless Chrome: flat list of three start structures in the build step;
+in the optimization step trans-Azobenzol grouped its start and minimum structures.

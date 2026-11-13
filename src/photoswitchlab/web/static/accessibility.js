@@ -443,7 +443,23 @@ globalThis.AccessibilityView = {
       const choiceSignature = JSON.stringify(choices.map((other) => [other.id, recordLabel(other)]));
       if (choiceSignature !== selectorSignature) {
         selectorSignature = choiceSignature;
-        fillSelect($("accessible-molecule-select"), choices.map((other) => [recordLabel(other), other.id]), m?.id);
+        // Group by derivative and configuration like the graphical structure picker.
+        const order = {initial: 0, minimum: 1, unconverged: 2, ts: 3}, groups = new Map();
+        for (const other of choices) {
+          const name = context.groupLabel?.(other) ?? context.label(other);
+          if (!groups.has(name)) groups.set(name, []);
+          groups.get(name).push(other);
+        }
+        const options = (members) => members.sort((a, b) => (order[a.kind] ?? 4) - (order[b.kind] ?? 4)).map((other) => new Option(recordLabel(other), other.id));
+        // One entry per group would only repeat each name; a flat list is shorter to hear.
+        $("accessible-molecule-select").replaceChildren(...([...groups.values()].every((members) => members.length === 1)
+          ? options(choices.slice())
+          : [...groups].map(([name, members]) => {
+            const group = document.createElement("optgroup");
+            group.label = name;
+            group.append(...options(members));
+            return group;
+          })));
       }
       $("accessible-molecule-select").value = m?.id || "";
       $("accessible-molecule-select").disabled = context.state.busy || !choices.length;

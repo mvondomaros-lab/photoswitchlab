@@ -518,9 +518,14 @@ test("human reports and collision labels contain chemical names and calculation 
   lab.molecule.name = "cis-Azobenzol";
   lab.state.molecules[1].name = "trans-Azobenzol";
   lab.state.molecules[1].id = "ffeeddccbbaa99887766554433221100";
+  lab.view.render();
+  assert.equal(lab.node("accessible-molecule-select").options[0].text, "cis-Azobenzol · Minimumstruktur"); // flat: one entry per group
   lab.state.molecules.push({...lab.molecule, id: "0123456789abcdef0123456789abcdef"});
   lab.view.render();
-  const options = lab.node("accessible-molecule-select").options.map((option) => option.text).join(" ");
+  const groups = lab.node("accessible-molecule-select").options;
+  assert.deepEqual(Array.from(groups, (group) => group.label), ["cis-Azobenzol", "trans-Azobenzol"]);
+  assert.deepEqual(Array.from(groups, (group) => group.children.length), [2, 1]);
+  const options = groups.flatMap((group) => group.children).map((option) => option.text).join(" ");
   assert.ok(options.includes("Berechnung 1") && options.includes("Berechnung 2"));
   lab.node("data-report").onclick();
   for (const molecule of lab.state.molecules) {

@@ -1655,7 +1655,7 @@ async function boot() {
 globalThis.AccessibilityView?.initialize({
   state, current, records: energyRecords, playback: playbackData,
   selectFrame: selectPlaybackFrame, showResult, render: renderState,
-  label: structureLabel, substituentLabel, download, filename,
+  label: structureLabel, groupLabel: structureGroupLabel, substituentLabel, download, filename,
   selectableMolecules,
   selectMolecule: (id) => { state.live = null; selectMolecule(id, state.step !== "build" || id !== state.selected); error(""); renderState(); },
   presentationChanged: () => {
