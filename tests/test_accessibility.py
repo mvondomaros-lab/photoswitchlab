@@ -83,6 +83,7 @@ def test_autonomous_accessible_tasks_are_shared_with_text_protocol_and_course_fi
     assert "Emax bezeichnet" in source
     assert "gemerkten" not in document_text
     assert "zusätzlich speichern" in document_text
+    # Both task routes require the same descriptive color quantities; none is optional.
     for task_id, task in tasks:
         if task_id in {
             "task-compare-isomer-spectra",
@@ -90,14 +91,15 @@ def test_autonomous_accessible_tasks_are_shared_with_text_protocol_and_course_fi
             "task-compare-substituent-series",
             "task-plan-experiment-series",
         }:
-            assert "Farb" not in task
-            assert "Lichtdurchlässigkeit" not in task
-    assert "Diese Angaben gehören nicht zu den Pflichtabgaben" in document_text
+            assert "Farb" in task
+            assert "Lichtdurchlässigkeit" in task
+    assert "Pflichtabgaben" not in source
+    assert "Farbabstand" not in source
     table_text = " ".join(
         "".join(table.itertext()) for table in tree.findall(".//w:tbl", ns)
     )
-    assert "Farb" not in table_text
-    assert "Lichtdurchlässigkeit" not in table_text
+    assert table_text.count("Farbvorhersage") == 3
+    assert table_text.count("Lichtdurchlässigkeit") == 3
     assert "Gemeinsame Photonenenergie" in table_text
     assert "Absorption cis" in table_text and "Absorption trans" in table_text
     with TestClient(create_app(course="marburg")) as client:

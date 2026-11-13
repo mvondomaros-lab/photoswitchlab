@@ -294,7 +294,7 @@ globalThis.AccessibilityView = {
     preference.onchange = graphicPreference.onchange = changePreference;
     let moleculeKey = null, graphKey = null, pointIndex = null, points = [], path = false;
     let positions = [], graph = [], csvRows = [], tableSignature = "", selectorSignature = "";
-    let curveQuery = null, measurementSelected = false, reportSections = [], querySections = [], measurementSections = [], methodSections = [], colorSections = [];
+    let curveQuery = null, measurementSelected = false, reportSections = [], querySections = [], measurementSections = [], methodSections = [];
     let colorComparisonRecord = null;
     const rendered = new Map();
     const updateTableFocus = () => {
@@ -398,7 +398,7 @@ globalThis.AccessibilityView = {
     };
     $("data-report").onclick = () => {
       this.render();
-      if (reportSections.length) context.download(data.report([...reportSections, ...querySections, ...measurementSections, ...colorSections, ...methodSections]), context.filename("html"), "text/html;charset=utf-8");
+      if (reportSections.length) context.download(data.report([...reportSections, ...querySections, ...measurementSections, ...methodSections]), context.filename("html"), "text/html;charset=utf-8");
     };
     $("data-json").onclick = () => context.download(JSON.stringify({molecule: context.current(), displayed_record: points[pointIndex] || null,
       optimization_records: context.records(), color_comparison: colorComparisonRecord}, null, 2), context.filename("json"), "application/json");
@@ -418,7 +418,7 @@ globalThis.AccessibilityView = {
       $("data-report").disabled = !m;
       if (!m) {
         $("simple-structure-figure").hidden = true;
-        reportSections = querySections = measurementSections = methodSections = colorSections = [];
+        reportSections = querySections = measurementSections = methodSections = [];
         csvRows = [];
         moleculeKey = graphKey = null;
         return;
@@ -529,7 +529,6 @@ globalThis.AccessibilityView = {
       setText("accessible-point", selected ? `${path ? "Pfadstruktur" : "Rechenschritt"} ${path ? pointIndex + 1 : selected.step}: E = ${fmt(selected.energy_ev, 4)} eV; ΔE = ${ScientificDisplay.significant(selected.energy_ev - points[0].energy_ev, 3)} eV. ${azoAngles}` : "");
       $("accessible-spectrum").hidden = step !== "spectrum" || !spectrum;
       colorComparisonRecord = null;
-      colorSections = [];
       if (step === "spectrum" && spectrum) {
         const overview = data.describeCurve(spectrum), transitions = data.strongestTransitions(spectrum), color = SolutionColor.estimate(spectrum);
         const transitionEnergies = ScientificDisplay.compare(spectrum.excitations_ev || [], "energy");
@@ -557,18 +556,15 @@ globalThis.AccessibilityView = {
         } else reportSections.push({title: "cis/trans-Vergleich", paragraphs: ["Kein eindeutig zuordenbares cis/trans-Paar mit abgeschlossenen Minimumsuchen und Spektren gespeichert. Berechnen Sie beide Konfigurationen desselben Substitutionsmusters."]});
         const second = partner && SolutionColor.estimate(partner.spectrum), distance = color && second ? data.colorDistance(color.rgb, second.rgb) : null;
         if (distance != null) colorComparisonRecord = {first_id: m.id, second_id: partner.id, first_rgb: color.rgb, second_rgb: second.rgb, cie76_distance: distance, reference_white: "D65", gamut: "clipped_sRGB", color_assumption: "fixed_absorbance_scale_no_concentration_or_path_length"};
-        colorSections = [{title: "Freiwillige Farbauswertung", optional: true,
-          paragraphs: ["Diese Schätzung ergänzt die elektronischen Übergänge und Absorptionswerte.",
-            "Feste Absorbanzskalierung, keiner bestimmten Konzentration oder Schichtdicke zugeordnet.",
-            ...(distance != null ? [`cis/trans-Farbabstand: ${ScientificDisplay.significant(distance, 3)}. ${data.outputMethods[1]}`] : [])],
+        // Color is reported descriptively; the CIE76 distance stays in the JSON export only.
+        reportSections.push({title: "Farbvorhersage",
+          paragraphs: ["Modellvorhersage mit fester Absorbanzskalierung, keiner bestimmten Konzentration oder Schichtdicke zugeordnet."],
           columns: ["Struktur", "Konfiguration", "Geschätzte Lösungsfarbe", "Gewichtete Lichtdurchlässigkeit / %"],
-          rows: paired.map((other) => { const result = SolutionColor.estimate(other.spectrum); return [identity(other), other.settings?.configuration || "nicht angegeben", result ? data.color(result.rgb) : "nicht verfügbar: unvollständige oder nicht auswertbare Spektraldaten", result ? ScientificDisplay.percent(100 * result.luminance) : "nicht verfügbar"]; })}];
+          rows: paired.map((other) => { const result = SolutionColor.estimate(other.spectrum); return [identity(other), other.settings?.configuration || "nicht angegeben", result ? data.color(result.rgb) : "nicht verfügbar: unvollständige oder nicht auswertbare Spektraldaten", result ? ScientificDisplay.percent(100 * result.luminance) : "nicht verfügbar"]; })});
 
       }
       methodSections = step === "spectrum" && spectrum ? [{title: "Methoden der Datenausgabe", optional: true,
         paragraphs: [data.outputMethods[0], ScientificDisplay.note]}] : [];
-      // The surrounding spectral-data disclosure already makes this section optional.
-      display("optional-color-data", colorSections.map((section) => ({...section, optional: false})));
       display("result-report-content", reportSections);
       updateQuery();
       this.reportSections = reportSections;

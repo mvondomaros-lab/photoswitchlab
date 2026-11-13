@@ -240,18 +240,17 @@ test("paired spectra retain source-specific coverage warnings and explain unavai
   assert.ok(lab.exported().content.includes("trans-Azobenzol · Minimumstruktur: Am oberen Rand"));
 });
 
-test("color analysis is an optional supplement and tables keep one visible title plus an accessible caption", () => {
+test("color is a descriptive primary result without a distance metric and tables keep one visible title plus an accessible caption", () => {
   const lab = accessibleLab("?text=1");
   lab.view.render();
   const main = lab.node("result-report-content").innerHTML;
-  for (const optionalQuantity of ["Lösungsfarbe", "Lichtdurchlässigkeit", "Farbabstand"]) assert.ok(!main.includes(optionalQuantity));
-  const colors = lab.node("optional-color-data").innerHTML;
-  assert.ok(colors.includes("Freiwillige Farbauswertung"));
-  assert.ok(colors.includes("Lichtdurchlässigkeit"));
-  assert.ok(!colors.includes("<details>")); // Reuses the existing spectral-data disclosure.
+  assert.ok(main.includes("<h3>Farbvorhersage</h3>"));
+  assert.ok(main.includes("Geschätzte Lösungsfarbe") && main.includes("Lichtdurchlässigkeit"));
+  assert.ok(!main.includes("Farbabstand") && !main.includes("CIE76"));
   lab.node("data-report").onclick();
   const exported = lab.exported().content;
-  assert.ok(exported.includes("<details><summary>Freiwillige Farbauswertung</summary>"));
+  assert.ok(exported.includes("<section><h3>Farbvorhersage</h3>"));
+  assert.ok(!exported.includes("Freiwillige"));
   assert.ok(exported.includes('<div class="table-scroll" tabindex="0" role="region"')); // Standalone exports have no resize observer.
   assert.ok(exported.includes(".sr-only{position:absolute"));
   const body = data.reportBody([{title: "Testtabelle", columns: ["Struktur", "Wert"], rows: [["cis", "1"]]}]);
@@ -551,7 +550,7 @@ test("human reports and collision labels contain chemical names and calculation 
   assert.ok(options.includes("Berechnung 1") && options.includes("Berechnung 2"));
   lab.node("data-report").onclick();
   for (const molecule of lab.state.molecules) {
-    for (const output of [options, lab.node("result-report-content").innerHTML, lab.node("optional-color-data").innerHTML, lab.exported().content]) assert.ok(!output.includes(molecule.id));
+    for (const output of [options, lab.node("result-report-content").innerHTML, lab.exported().content]) assert.ok(!output.includes(molecule.id));
   }
   assert.ok(!lab.exported().content.includes("Gespeicherte Kennung"));
   lab.node("data-json").onclick();

@@ -544,3 +544,28 @@ their existing render review therefore remains applicable. App tables receive
 an extra keyboard stop only when overflowing; standalone HTML reports retain a
 static scroll-focus fallback. Actual JAWS/NVDA/Braille testing remains unavailable.
 Nothing was pushed or deployed.
+
+## Identical deliverables for both task routes
+
+An independent review of the frozen branch found that the graphical and accessible
+spectrum tasks required different quantities and group results: color was required
+in the graphical route but optional in the accessible route, and the task 9 group
+comparison used a visually judged color difference in one route and same-energy
+absorption in the other. A mixed group could not agree on one result.
+
+The user decided, for a pass/fail course without optional deliverables:
+
+- Predicted solution color and weighted transmission are descriptive required
+  quantities in tasks 6–9 of both routes, marked as model predictions. No task ranks
+  derivatives by color. The accessible report shows them as a primary section; the
+  CIE76 distance remains only in the JSON export.
+- In both routes, task 9 uses one group-chosen photon energy between 1.5 and 5.5 eV
+  (the common observation window of all spectra) and the largest cis/trans difference
+  of relative absorption there. The graphical route changed in two sentences and one
+  protocol field. A difference is used rather than a ratio, which is unstable where
+  one configuration barely absorbs.
+
+Both protocols were regenerated. A paragraph-level text comparison against the
+previous binaries shows only the intended changes; the rendered pages 7 (visual)
+and 5, 6, 8 and 9 (text) were inspected without layout defects. All 86 JavaScript
+tests and 196 Python tests passed (21 skipped). No screen-reader test was performed.

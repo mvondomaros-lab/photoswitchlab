@@ -96,9 +96,10 @@ source-specific gap while retaining values available for the other source. Local
 maxima and visible-range coverage remain in additional spectral data; plateau locations
 are intervals of stored samples, and edge values are not described as inner peaks.
 
-In accessible mode, solution color, weighted transmission and color distance are
-voluntary supplements in the existing additional-spectral-data disclosure, not primary
-result or required protocol columns. HTML exports mark this same section as optional.
+Solution color and weighted transmission are descriptive required quantities in both
+task routes. In accessible mode they are one primary report section for the selected
+structure and its unique cis/trans partner. No task ranks derivatives by color; the
+CIE76 color distance appears only in the machine-readable JSON export.
 Solution-color words and the graphical swatch use the same color calculation. Near-white
 transmission is described as nearly colorless. The result states once that its fixed
 absorbance scale has no specified concentration or path length. Color-space details
@@ -140,10 +141,11 @@ and `scripts/build_protocol.py --text`. Both task routes apply course filtering.
 Preserve the graphical tasks and `protokollvorlage.docx` when adjusting the accessible
 workflow. The text protocol requires selected numeric evidence and student
 interpretation, without requiring report or raw-data exports. Required spectral tasks
-use transition energies/strengths, curve maxima, same-energy absorption and student
-interpretation. The group comparison of the free derivatives uses one photon energy
-chosen by the group and available for all investigated pairs; the app does not choose or
-rank them. Color-related quantities are introduced once as optional extensions. Build
+use transition energies/strengths, curve maxima, same-energy absorption, descriptive
+color predictions and student interpretation. Both task routes require the same
+quantities and contain no optional deliverables. In both, the group comparison of the
+free derivatives uses one photon energy chosen by the group within the common
+1.5–5.5 eV observation window; the app does not choose or rank them. Build
 the protocol using the document-authoring runtime and render and inspect every page.
 Both protocol downloads are available in the Marburg course. No voice service or
 generative model is required.
@@ -155,7 +157,7 @@ transition filtering, visible weak lines, probes, convergence, validation and au
 task/protocol consistency. Manual keyboard, screen-reader, zoom and graphical checks
 remain necessary; automated tests do not establish WCAG conformance.
 
-The optional color comparison uses the CIE76 Euclidean distance in CIELAB with
+The JSON color comparison uses the CIE76 Euclidean distance in CIELAB with
 D65 reference white, calculated from the same clipped sRGB triples as the swatch.
 It does not rank derivatives automatically or predict measured colors at a
 specified concentration. The value is a color-space distance, not an energy

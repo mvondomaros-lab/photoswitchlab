@@ -250,16 +250,23 @@ def build(text_based=False):
         )
 
         doc.add_page_break()
-        doc.add_heading("UV Vis Spektren vergleichen", 1)
-        for paragraph in source.xpath(
-            './/p[@class="spectrum-definition" or @class="optional-extension"]'
-        ):
+        doc.add_heading("UV/Vis-Spektren vergleichen", 1)
+        for paragraph in source.xpath('.//p[@class="spectrum-definition"]'):
             p(" ".join(paragraph.text_content().split()))
         task("task-compare-isomer-spectra")
         table(
-            ["Konfiguration", "Emax / eV", "UV oder sichtbar"],
-            [["cis", "[Wert]", "[Bereich]"], ["trans", "[Wert]", "[Bereich]"]],
-            [4, 5, 8],
+            [
+                "Konfiguration",
+                "Emax / eV",
+                "UV oder sichtbar",
+                "Farbvorhersage",
+                "Lichtdurchlässigkeit / %",
+            ],
+            [
+                ["cis", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"],
+                ["trans", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"],
+            ],
+            [2.8, 3.0, 3.1, 3.8, 4.3],
         )
         table(
             ["Energie / eV", "Absorption cis", "Absorption trans"],
@@ -273,12 +280,19 @@ def build(text_based=False):
         task("task-compare-substituent-spectra")
         answer("Untersuchte Reihe: [4-X, 2-X, 3-X oder 4,4′-X₂]")
         table(
-            ["X", "Emax / eV", "ΔEmax / eV", "UV oder sichtbar"],
             [
-                [label, "[Wert]", "[Wert]", "[Bereich]"]
+                "X",
+                "Emax / eV",
+                "ΔEmax / eV",
+                "UV oder sichtbar",
+                "Farbvorhersage",
+                "Lichtdurchlässigkeit / %",
+            ],
+            [
+                [label, "[Wert]", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"]
                 for label in ["CH₃", "OCH₃", "N(CH₃)₂", "CF₃", "CN", "NO₂"]
             ],
-            [3, 4, 4, 6],
+            [2.0, 2.7, 2.8, 2.7, 3.2, 3.6],
         )
         answer("Kleinstes und größtes ΔEmax: [Derivate und Werte]")
         answer(
@@ -302,7 +316,7 @@ def build(text_based=False):
         )
         answer("Abweichung oder begrenzter Gültigkeitsbereich: [Beobachtung]")
         answer(
-            "Gewählter Substituent und Spektrenvergleich einschließlich sichtbarer Übergänge: [Substituent und Werte]"
+            "Gewählter Substituent und Spektrenvergleich einschließlich sichtbarer Übergänge, Farbvorhersage und Lichtdurchlässigkeit: [Substituent und Werte]"
         )
 
         doc.add_page_break()
@@ -314,9 +328,18 @@ def build(text_based=False):
             "Positionen und Substituenten: [Auswahl]\nBezug zur systematischen Reihe und Begründung: [Ergebnis und Begründung]\nVermutung vor den Rechnungen: [Ihre Vermutung]"
         )
         table(
-            ["Konfiguration", "Emax / eV", "UV oder sichtbar"],
-            [["cis", "[Wert]", "[Bereich]"], ["trans", "[Wert]", "[Bereich]"]],
-            [4, 5, 8],
+            [
+                "Konfiguration",
+                "Emax / eV",
+                "UV oder sichtbar",
+                "Farbvorhersage",
+                "Lichtdurchlässigkeit / %",
+            ],
+            [
+                ["cis", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"],
+                ["trans", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"],
+            ],
+            [2.8, 3.0, 3.1, 3.8, 4.3],
         )
         table(
             ["Gemeinsame Photonenenergie / eV", "Absorption cis", "Absorption trans"],
@@ -529,7 +552,7 @@ def build(text_based=False):
         "Gruppenresultat mit der kleinsten Energie des Absorptionsmaximums: [Positionen, Gruppen und Energie]"
     )
     answer(
-        "Stärkster vorhergesagter cis/trans-Farbunterschied: [Positionen, Gruppen und Farben]"
+        "Gruppenresultat mit dem größten Absorptionsunterschied: [Positionen, Gruppen, gemeinsame Photonenenergie sowie Absorption cis und trans]"
     )
     output = OUTPUT.with_name("protokollvorlage-text.docx") if text_based else OUTPUT
     output.parent.mkdir(parents=True, exist_ok=True)

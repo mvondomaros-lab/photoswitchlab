@@ -42,9 +42,8 @@ geforderten Strukturansichten, Energieprofile und Spektren ein. Kennzeichnen Sie
 Modellvorhersagen, wo die Aufgaben es verlangen.
 
 Alternativ steht die [Protokollvorlage für textbasierte Auswertung im DOCX-Format](../../src/photoswitchlab/web/static/materials/protokollvorlage-text.docx)
-bereit. Sie dokumentieren darin ausgewählte, beschriftete Beobachtungen und
-Messwerte in lesbaren Ergebnisberichten oder kompakten Tabellen anstelle der
-Abbildungen. Die wissenschaftlichen Fragestellungen bleiben gleich.
+bereit. Sie dokumentieren darin dieselben Größen in kompakten Tabellen anstelle der
+Abbildungen. Fragestellungen und Gruppenergebnisse sind in beiden Vorlagen gleich.
 
 Speichern Sie die Vorlage und exportierte Abbildungen beziehungsweise Ergebnisberichte während der Arbeit auf
 Ihrem Computer. Ergebnisse in der Webapp gehen beim Serverneustart verloren und
