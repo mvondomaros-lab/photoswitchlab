@@ -9,7 +9,7 @@
   color: #192d43;
   background: #f3f6fa;
   font-synthesis: none;
-  font-size: 16px;
+  font-size: 100%;
   --blue: #165de1;
   --line: #dce4ed;
   --muted: #586b80;
@@ -47,7 +47,7 @@ summary:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid #6ba1ff;
+  outline: 3px solid var(--blue);
   outline-offset: 3px;
 }
 button {
@@ -94,7 +94,7 @@ a {
   color: #dce9fa;
   padding: 10px 15px;
   border-radius: 7px;
-  font-size: 14px;
+  font-size: 0.875rem;
   text-decoration: none;
 }
 .steps {
@@ -110,13 +110,13 @@ a {
   border: 0;
   border-bottom: 3px solid transparent;
   color: var(--muted);
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
 }
 .step span {
   margin-right: 9px;
   color: #7e8da1;
-  font-size: 12px;
+  font-size: 0.75rem;
   letter-spacing: 0.6px;
 }
 .step.active {
@@ -138,27 +138,27 @@ main {
   margin-bottom: 20px;
 }
 .eyebrow {
-  font-size: 12px;
+  font-size: 0.75rem;
   letter-spacing: 1.7px;
   font-weight: 700;
   color: var(--muted);
   margin: 0 0 9px;
 }
 h1 {
-  font-size: 28px;
+  font-size: 1.75rem;
   font-weight: 620;
   letter-spacing: -0.8px;
   margin: 0 0 9px;
 }
 h2 {
-  font-size: 18px;
+  font-size: 1.125rem;
   line-height: 1.4;
   margin: 0 0 20px;
   font-weight: 650;
   letter-spacing: -0.25px;
 }
 h3 {
-  font-size: 19px;
+  font-size: 1.1875rem;
   font-weight: 600;
 }
 p {
@@ -168,13 +168,13 @@ p {
 .workspace-heading p:last-child {
   color: var(--muted);
   margin: 0;
-  font-size: 15px;
+  font-size: 0.9375rem;
 }
 .text-button {
   background: transparent;
   border: 0;
   color: var(--blue);
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 550;
   padding: 5px 0;
 }
@@ -201,7 +201,7 @@ p {
 }
 label,
 legend {
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 550;
 }
 label {
@@ -214,13 +214,13 @@ label {
   color: #44617d;
   border-radius: 4px;
   padding: 1px 6px;
-  font-size: 12px;
+  font-size: 0.75rem;
 }
 input:not([type="radio"]):not([type="range"]),
 select,
 textarea {
   width: 100%;
-  border: 1px solid #cbd7e4;
+  border: 1px solid #7d8fa3;
   border-radius: 6px;
   background: white;
   padding: 10px 11px;
@@ -229,17 +229,17 @@ textarea {
 }
 input::placeholder,
 textarea::placeholder {
-  color: #75869a;
-  font-size: 14px;
+  color: #66788c;
+  font-size: 0.875rem;
 }
 select {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 textarea {
   resize: vertical;
   line-height: 1.5;
   font-family: ui-monospace, monospace;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .inline-actions {
   display: flex;
@@ -254,12 +254,12 @@ textarea {
 }
 .step-panel > p,
 .step-panel details p {
-  font-size: 14px;
+  font-size: 0.875rem;
   color: var(--muted);
 }
 .method-help h3 {
   margin: 20px 0 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
 }
 .method-help p {
@@ -299,10 +299,12 @@ legend {
 .segmented input:checked + span {
   background: #fff;
   color: var(--blue);
-  box-shadow: 0 1px 4px #10223816;
+  box-shadow:
+    0 1px 4px #10223816,
+    inset 0 0 0 1px var(--blue);
 }
 .segmented input:focus-visible + span {
-  outline: 3px solid #6ba1ff;
+  outline: 3px solid var(--blue);
 }
 .rings {
   display: grid;
@@ -310,7 +312,7 @@ legend {
   gap: 18px;
 }
 .rings legend {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 .ring-row {
@@ -323,14 +325,14 @@ legend {
   min-width: 20px;
   margin: 0;
   color: #6c7f93;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .ring-row select {
   padding: 7px 5px;
   min-height: 35px;
 }
 .optional {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 400;
   color: var(--muted);
   float: right;
@@ -341,7 +343,7 @@ legend {
   border: 1px solid var(--blue);
   padding: 12px 15px;
   border-radius: 7px;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 600;
 }
 .full {
@@ -349,7 +351,7 @@ legend {
   margin-top: 18px;
 }
 .note {
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.6;
   color: var(--muted);
   padding: 0;
@@ -368,11 +370,11 @@ legend {
 }
 .result-heading p {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 .badge {
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
   padding: 6px 9px;
   border-radius: 5px;
@@ -445,7 +447,7 @@ legend {
   border-radius: 9px;
   background: #f3f6fa;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 .build-view-toggle span {
@@ -487,7 +489,7 @@ legend {
   right: 0;
   pointer-events: none;
   text-align: center;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: #677d94;
   margin: 0;
 }
@@ -504,7 +506,7 @@ legend {
 }
 .empty-symbol {
   font-family: Georgia, serif;
-  font-size: 43px;
+  font-size: 2.6875rem;
   letter-spacing: 3px;
   color: #99b4d4;
   margin-bottom: 12px;
@@ -514,7 +516,7 @@ legend {
   margin: 0 0 12px;
 }
 .empty p {
-  font-size: 14px;
+  font-size: 0.875rem;
   margin: 0;
 }
 .properties-grid {
@@ -535,24 +537,24 @@ legend {
 }
 .properties-grid span {
   display: block;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
   margin-bottom: 7px;
 }
 .properties-grid strong {
-  font-size: 25px;
+  font-size: 1.5625rem;
   font-weight: 550;
   letter-spacing: -0.6px;
   font-variant-numeric: tabular-nums;
 }
 .properties-grid small {
-  font-size: 12px;
+  font-size: 0.75rem;
   display: block;
   color: #718299;
   margin-top: 5px;
 }
 details {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 summary {
   padding: 14px 24px;
@@ -576,7 +578,7 @@ details[open] summary {
   display: flex;
   justify-content: space-between;
   gap: 12px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   padding: 10px 0;
   border-bottom: 1px solid #edf1f6;
 }
@@ -605,12 +607,12 @@ details[open] summary {
 }
 .radio-card strong {
   display: block;
-  font-size: 14px;
+  font-size: 0.875rem;
   font-weight: 550;
 }
 .radio-card small {
   display: block;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 400;
   color: var(--muted);
   margin-top: 5px;
@@ -628,18 +630,18 @@ details[open] summary {
   flex-wrap: wrap;
 }
 .job-status strong {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .job-status span {
   display: block;
-  font-size: 12px;
+  font-size: 0.75rem;
   color: var(--muted);
   margin-top: 5px;
 }
 #job-detail {
   margin: 8px 0 0;
   max-width: 64ch;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
   color: var(--muted);
 }
@@ -647,7 +649,7 @@ details[open] summary {
   border-left-color: var(--blue);
 }
 .small-button {
-  font-size: 13px;
+  font-size: 0.8125rem;
   padding: 7px 11px;
   background: white;
   border: 1px solid #c7d5e7;
@@ -667,7 +669,7 @@ details[open] summary {
   justify-content: space-between;
   flex-wrap: wrap;
   gap: 8px;
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .energy-heading span {
   color: var(--muted);
@@ -675,11 +677,11 @@ details[open] summary {
 }
 .energy-heading h3 {
   margin: 0;
-  font-size: 18px;
+  font-size: 1.125rem;
   font-weight: 600;
 }
 .energy-heading span {
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 400;
 }
 #energy-play {
@@ -707,7 +709,7 @@ details[open] summary {
 }
 .energy-history .energy-notes .note {
   margin: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 
@@ -718,7 +720,7 @@ details[open] summary {
   color: #873c2e;
   border-radius: 8px;
   margin-bottom: 20px;
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 .spectrum-empty {
   height: 250px;
@@ -737,7 +739,7 @@ details[open] summary {
   flex-direction: column;
   flex: 1 1 280px;
   margin: 0;
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 #spectrum-png {
@@ -752,7 +754,7 @@ details[open] summary {
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 13px;
+  font-size: 0.8125rem;
   text-align: right;
 }
 td,
@@ -766,7 +768,7 @@ th {
   background: #f5f8fc;
 }
 footer {
-  font-size: 12px;
+  font-size: 0.75rem;
   line-height: 1.6;
   color: #6b7d92;
   padding: 22px 0;
@@ -805,7 +807,7 @@ dialog::backdrop {
   background: #edf2f8;
   border: 0;
   border-radius: 50%;
-  font-size: 25px;
+  font-size: 1.5625rem;
   line-height: 30px;
   width: 34px;
   flex-shrink: 0;
@@ -816,7 +818,7 @@ dialog h3 {
 }
 dialog p,
 dialog li {
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.7;
 }
 dialog li {
@@ -848,7 +850,7 @@ dialog textarea {
   color: white;
   padding: 12px 22px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 0.875rem;
   box-shadow: 0 5px 20px #10223830;
   z-index: 10;
 }
@@ -874,7 +876,7 @@ dialog textarea {
     gap: 12px;
   }
   .step {
-    font-size: 14px;
+    font-size: 0.875rem;
   }
   .workbench {
     grid-template-columns: 280px minmax(0, 1fr);
@@ -905,7 +907,7 @@ dialog textarea {
     text-align: right;
   }
   .properties-grid strong {
-    font-size: 21px;
+    font-size: 1.3125rem;
   }
 
   footer span {
@@ -917,7 +919,7 @@ dialog textarea {
     width: 100%;
   }
   .quiet {
-    font-size: 13px;
+    font-size: 0.8125rem;
     padding: 8px 11px;
   }
   .steps {
@@ -927,7 +929,7 @@ dialog textarea {
     overflow: auto;
   }
   .step {
-    font-size: 12px;
+    font-size: 0.75rem;
     padding: 15px 8px;
     min-width: 95px;
   }
@@ -942,7 +944,7 @@ dialog textarea {
     display: block;
   }
   h1 {
-    font-size: 24px;
+    font-size: 1.5rem;
   }
   .workspace-heading > button {
     max-width: none;
@@ -965,7 +967,7 @@ dialog textarea {
     padding: 20px;
   }
   .result-heading h2 {
-    font-size: 17px;
+    font-size: 1.0625rem;
   }
   .viewer-toolbar {
     margin: 0 15px;
@@ -980,7 +982,7 @@ dialog textarea {
     padding-left: 12px;
   }
   .properties-grid strong {
-    font-size: 22px;
+    font-size: 1.375rem;
   }
 
   .conversion-fields {
@@ -994,10 +996,10 @@ dialog textarea {
     padding: 22px;
   }
   .step-panel > p {
-    font-size: 15px;
+    font-size: 0.9375rem;
   }
   footer {
-    font-size: 12px;
+    font-size: 0.75rem;
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1054,11 +1056,11 @@ select {
   width: 100%;
   min-height: 44px;
   padding: 12px 30px 12px 12px;
-  border: 1px solid #cbd7e4;
+  border: 1px solid #7d8fa3;
   border-radius: 7px;
   background: white;
   color: #192d43;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.5;
   text-align: left;
   white-space: normal;
@@ -1090,14 +1092,14 @@ select {
 }
 .structure-option strong {
   display: block;
-  font-size: 15px;
+  font-size: 0.9375rem;
   line-height: 1.5;
   font-weight: 550;
 }
 .structure-option small {
   display: block;
   margin-top: 6px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 .structure-option.selected {
@@ -1114,7 +1116,7 @@ select {
   padding: 12px 16px;
   background: #f1f5fb;
   color: #26415d;
-  font-size: 15px;
+  font-size: 0.9375rem;
   font-weight: 600;
   line-height: 1.6;
   border-radius: 6px;
@@ -1144,7 +1146,7 @@ select {
   border-radius: 9px;
   background: #f3f6fa;
   color: var(--blue);
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 600;
 }
 #play::before,
@@ -1234,7 +1236,7 @@ select {
 .energy-path-meta {
   margin: 4px 0 0;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
 }
 .energy-heading {
@@ -1259,7 +1261,7 @@ select {
 }
 #substituents summary::before {
   content: "›";
-  font-size: 20px;
+  font-size: 1.25rem;
   line-height: 1;
 }
 #substituents[open] summary::before {
@@ -1270,12 +1272,12 @@ select {
 }
 #substituent-count {
   margin-left: auto;
-  font-size: 12px;
+  font-size: 0.75rem;
   font-weight: 400;
   color: var(--muted);
 }
 .field-hint {
-  font-size: 13px;
+  font-size: 0.8125rem;
   color: var(--muted);
 }
 #ts-details > summary {
@@ -1321,13 +1323,13 @@ select {
 }
 .structure-group h3 {
   margin: 0 0 4px;
-  font-size: 16px;
+  font-size: 1rem;
   overflow-wrap: anywhere;
 }
 .structure-group-formula {
   margin: 0 0 12px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
 }
 .structure-group .structure-row + .structure-row {
   margin-top: 8px;
@@ -1336,7 +1338,7 @@ select {
   padding: 10px 12px;
 }
 .structure-group .structure-option strong {
-  font-size: 14px;
+  font-size: 0.875rem;
 }
 
 #spectrum-chart { cursor: pointer; }
@@ -1359,7 +1361,7 @@ select {
 .solution-color-controls { min-width: 0; flex: 1; }
 .solution-color-controls h3 { margin: 0 0 8px; }
 .solution-color-controls input { width: 100%; accent-color: #165de1; }
-.solution-color-controls details { margin-top: 12px; font-size: 13px; line-height: 1.6; }
+.solution-color-controls details { margin-top: 12px; font-size: 0.8125rem; line-height: 1.6; }
 @media (max-width: 600px) {
   .solution-color { flex-direction: column; margin: 16px 12px; padding: 16px; }
   .solution-color-swatch { flex: none; width: 100%; height: 72px; }
@@ -1367,7 +1369,7 @@ select {
 .spectrum-selection {
   margin: 0 24px 12px;
   color: var(--muted);
-  font-size: 13px;
+  font-size: 0.8125rem;
   line-height: 1.5;
   min-height: 1.5em;
 }
@@ -1387,12 +1389,12 @@ select {
   line-height: 1.6; overflow-wrap: anywhere;
 }
 .task-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 24px; }
-.task-heading h2 { margin: 0; font-size: 20px; }
-.task-panel h3 { font-size: 16px; margin: 20px 0 10px; }
+.task-heading h2 { margin: 0; font-size: 1.25rem; }
+.task-panel h3 { font-size: 1rem; margin: 20px 0 10px; }
 .task-panel summary { padding: 8px 0; cursor: pointer; font-weight: 600; line-height: 1.4; color: inherit; }
-#guide-content > details > summary { font-size: 18px; }
+#guide-content > details > summary { font-size: 1.125rem; }
 .task-panel details.task > summary,
-.task-panel .next-steps > summary { font-size: 16px; }
+.task-panel .next-steps > summary { font-size: 1rem; }
 .task-panel details[open] > summary { color: var(--blue); }
 .task-panel details { margin: 8px 0; padding: 0; font-size: inherit; }
 .task-panel li { margin-bottom: 8px; }
@@ -1439,11 +1441,11 @@ select {
 }
 .property-help h2 {
   margin: 4px 0 0;
-  font-size: 17px;
+  font-size: 1.0625rem;
 }
 .property-help p {
   margin: 14px 0 0;
-  font-size: 14px;
+  font-size: 0.875rem;
   line-height: 1.6;
 }
 #dihedral-help {
@@ -1458,7 +1460,7 @@ select {
 
 .solution-color-values {
   margin-top: 14px;
-  font-size: 13px;
+  font-size: 0.8125rem;
   font-weight: 400;
   line-height: 1.5;
   color: var(--muted);
@@ -1487,7 +1489,11 @@ select {
 .text-preferred #play, .text-preferred #energy-play,
 .text-preferred #spectrum-result { display: none !important; }
 .text-preferred .accessible-results { border-color: #165de1; }
-@media (forced-colors: active) { button, select, input, summary { forced-color-adjust: auto; } :focus-visible { outline: 3px solid Highlight; } }
+@media (forced-colors: active) {
+  button, select, input, summary { forced-color-adjust: auto; }
+  :focus-visible, .segmented input:focus-visible + span { outline: 3px solid Highlight; }
+  .segmented input:checked + span { background: Highlight; color: HighlightText; forced-color-adjust: none; }
+}
 
 /* A linear workflow using the same controls and calculation state. */
 .simple-only { display: none; }

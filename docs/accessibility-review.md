@@ -692,3 +692,24 @@ name because not every screen reader speaks group labels. When every group holds
 single entry, as in the build step, the list stays flat so names are not repeated.
 Verified in headless Chrome: flat list of three start structures in the build step;
 in the optimization step trans-Azobenzol grouped its start and minimum structures.
+
+## Phase 4: low vision
+
+- Focus rings use `--blue` (#165de1, 5.7:1 on white) instead of #6ba1ff (2.6:1) in the
+  app and on the website; inside the dark header they use #8db8ff (8.0:1 on navy).
+- Input, select and textarea borders darken from #cbd7e4 (1.5:1) to #7d8fa3 (3.3:1);
+  placeholders from #75869a (3.7:1) to #66788c (4.5:1).
+- The selected cis/trans and 2D/3D segment gains a 1px blue inset outline, so the state
+  no longer depends on a near-white background shift alone. In forced-colors mode the
+  selected segment uses `Highlight`/`HighlightText` and the focused one a `Highlight`
+  outline; before, both states disappeared.
+- Font sizes are in rem and the root size is 100%, so a larger browser default font
+  scales the text of app and website (checked at 24px: layout stays intact). Browser
+  zoom behaved the same before and after.
+- Explanation popovers follow their quantity label while the page scrolls and close only
+  once the label leaves the viewport; before, any scroll closed them, which is awkward
+  under magnification.
+
+Verified in headless Chrome with CDP forced-colors emulation and `Page.setFontSizes`;
+axe reports no violations on the eight website pages in either mode. Not tested with
+Windows High Contrast, ZoomText or macOS Zoom.

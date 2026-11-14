@@ -2,7 +2,7 @@
   color-scheme: light;
   --navy: #102238; --blue: #165de1; --text: #192d43; --muted: #586b80;
   --line: #dce4ed; --page: #fff; --panel: #f3f6fa; --tint: #eaf1ff;
-  font: 16px/1.75 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font: 100%/1.75 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--text); background: var(--page);
 }
 * { box-sizing: border-box; }
@@ -13,7 +13,7 @@ body { margin: 0; }
 a { color: var(--blue); text-underline-offset: .2em; }
 button, input { font: inherit; }
 button, summary { cursor: pointer; }
-:focus-visible { outline: 3px solid #6ba1ff; outline-offset: 4px; }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 4px; }
 .skip-link { position: fixed; top: -6rem; left: 1rem; z-index: 10; background: var(--page); padding: .5rem 1rem; }
 .skip-link:focus { top: .5rem; }
 .header-actions { display: flex; gap: 8px; }

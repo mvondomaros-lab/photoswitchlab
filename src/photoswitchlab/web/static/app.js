@@ -1765,9 +1765,14 @@ window.addEventListener("resize", () => {
     positionPropertyHelp(popup);
   }
 });
-// Close explanations when their quantity labels move out of view.
+// Keep explanations beside their quantity labels while scrolling, for example
+// under screen magnification; close them only once the label leaves the view.
 window.addEventListener("scroll", (event) => {
   for (const popup of document.querySelectorAll(".property-help:popover-open")) {
-    if (!popup.contains(event.target)) popup.hidePopover();
+    if (popup.contains(event.target)) continue;
+    const trigger = document.querySelector(`[popovertarget="${popup.id}"].property-help-trigger`);
+    const rect = trigger.getBoundingClientRect();
+    if (rect.bottom < 0 || rect.top > window.innerHeight) popup.hidePopover();
+    else positionPropertyHelp(popup);
   }
 }, true);
