@@ -42,6 +42,13 @@ test("atom references carry chemical positions through substituent connectivity"
   const settings = {substituents: ["H", "H", "H", "H", "H", "OMe", "H", "H", "H", "H"]};
   assert.ok(data.atomLabel(graph, 2, settings).includes("zugeordnet: Methoxygruppe"));
   assert.ok(data.atomLabel(graph, 0, settings).includes("trägt Methoxygruppe"));
+  // Distance lists use short chemical names without atom numbers.
+  assert.equal(data.atomName(graph, 1, settings), "O der Methoxygruppe an C2′ im zweiten Ring");
+  assert.equal(data.atomName(graph, 0, settings), "Ringatom C2′ im zweiten Ring");
+  assert.equal(data.atomName(graph, 2), "C an C2′ im zweiten Ring");
+  const azo = [{number: 1, element: "N", position: null, neighbors: [{number: 2}, {number: 3}]},
+    {number: 2, element: "N", neighbors: [{number: 1}]}, {number: 3, element: "C", position: "C1", neighbors: [{number: 1}]}];
+  assert.equal(data.atomName(azo, 0), "N der Azogruppe an C1");
 });
 test("approximate color words distinguish achromatic, dark and selective colors", () => {
   assert.equal(data.color([255, 255, 255]), "nahezu farblos");
@@ -317,9 +324,6 @@ test("reports follow the selected saved structure and preserve convergence and t
   lab.view.render();
   const report = lab.node("result-report-content").innerHTML;
   for (const text of ["Verbindung zwischen cis und trans bestätigt</th><td>nein", "Betrag über 20 cm⁻¹</th><td>1", "230", "Verbindung nicht bestätigt"]) assert.ok(report.includes(text), text);
-  lab.node("path-point").value = "1";
-  lab.node("path-point").onchange();
-  assert.ok(lab.node("result-report-content").innerHTML.includes("Pfadstruktur 2"));
   lab.select({...lab.molecule, id: "different", name: "Andere Struktur", kind: "minimum", ts_search: null});
   lab.node("data-report").onclick();
   assert.ok(lab.exported().content.includes("Andere Struktur"));
@@ -544,7 +548,9 @@ test("reaction paths are directly open with short choices while optimization ite
   assert.equal(lab.node("accessible-path").hidden, false);
   assert.equal(lab.node("accessible-path").open, true);
   assert.equal(lab.node("accessible-path-summary").hidden, true);
-  assert.equal(lab.node("path-point").options[1].text, "Pfadstruktur 1");
+  const keyRows = lab.node("energy-table-body").options; // The mock stores replaced children here.
+  assert.deepEqual(keyRows.map((row) => row.children[0].textContent), ["Anfang", "Energiemaximum", "Ende"]);
+  assert.equal(keyRows[1].children[1].textContent, "2"); // The maximum is the second path structure.
   lab.records.push({step: 0, energy_ev: -10, positions: [0, 0, 0]}, {step: 1, energy_ev: -9, positions: [0, 0, 0]});
   lab.select({...lab.molecule, id: "iteration", ts_search: null});
   assert.equal(lab.node("accessible-path").hidden, false);
@@ -670,12 +676,12 @@ test("running optimizations keep step tables hidden and unchanged until the resu
   const before = lab.mutations();
   lab.records.push({step: 1, energy_ev: -10.2, positions: [0, 0, 0, 1, 0, 0, 1, 2, 0]});
   lab.view.render();
-  assert.equal(lab.node("path-point").options.length, 0); // Not rebuilt for each live step.
+  assert.equal(lab.node("accessible-path-note").textContent, ""); // Not rebuilt for each live step.
   assert.ok(lab.mutations() - before < 5);
   lab.state.busy = false;
   lab.view.render();
   assert.equal(lab.node("accessible-path").hidden, false);
-  assert.equal(lab.node("path-point").options.length, 3);
+  assert.ok(lab.node("accessible-path-note").textContent.includes("2 gespeicherte Rechenschritte"));
 });
 
 test("sonification series share one coarse energy grid within the common window", () => {
@@ -700,7 +706,8 @@ test("close contacts pair atoms across both molecule halves and skip atoms withi
   const pairs = contacts.map((contact) => `${contact.first + 1}-${contact.second + 1}`);
   assert.ok(!pairs.includes("1-5") && !pairs.includes("5-7"), "same half");
   assert.ok(!pairs.includes("1-4") && !pairs.includes("2-4") && !pairs.includes("1-3"), "within three bonds");
-  assert.ok(pairs.includes("3-7") && pairs.includes("7-8"));
+  assert.ok(pairs.includes("7-3") && pairs.includes("7-8")); // The unprimed ring's atom comes first.
+  assert.ok(contacts.every((contact) => !data.ringReference(graph, contact.first).endsWith("′")));
   assert.deepEqual(contacts.map((contact) => contact.distance), [...contacts.map((contact) => contact.distance)].sort((a, b) => a - b));
   assert.equal(data.closeContacts(graph, positions, 2).length, 2);
 });

@@ -1596,7 +1596,7 @@ async function guide(step, focus = true, {openGraphical = true, retry = false} =
   $("guide-retry").setAttribute("aria-disabled", "true");
   try {
     if (!guideCache.has(source)) {
-      const response = await fetch(`static/${source}?v=ui-81`);
+      const response = await fetch(`static/${source}?v=ui-82`);
       if (!response.ok) throw new Error("Task loading failed");
       guideCache.set(source, await response.text());
     }

@@ -740,3 +740,21 @@ saved result reports as attachments.
   table of the text template uses kJ/mol.
 - The sonification key hint is shortened in app and website; a capitalization error in
   a compound name on the structures page is fixed.
+
+## Reaction path and distances in the accessible mode
+
+The full path table (one row per path structure or optimization step, seven columns)
+is replaced by a three-row key-value table (start, energy maximum, end) with ΔE in
+kJ/mol and the C–N=N–C dihedral, matching the protocol table. In the accessible mode a
+Chart2Music energy profile steps through the path structures and speaks each one's
+dihedral and ΔE; pitch follows the energy. Minimum searches show one sentence with the
+number of steps and the energy change. Full per-step data remain in the CSV export of
+the graphical mode.
+
+Atom pairs in the closest-contacts list and the measured distance use short chemical
+names (“H der Methoxygruppe an C6 …”) instead of atom numbers and the internal terms
+“Ringbezug” and “zugeordnet”. The unprimed ring's atom comes first. Choosing a pair
+announces one sentence with its distance in the current structure and in its start or
+derived minimum structures, since optimizations keep the atom order. The free atom
+selection, bond list and numbering notes moved into a collapsed “Beliebige Atome
+untersuchen” section.

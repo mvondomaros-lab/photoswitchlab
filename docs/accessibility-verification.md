@@ -65,17 +65,18 @@ JAWS and NVDA differ most in live regions, select menus and virtual-cursor handl
 
 ### Task 4: steric effects
 
-11. **J** The closest-contacts list reads atom labels with ring reference and ring
-    (for example “Atom 25 (H, Ringbezug C2′ im zweiten Ring)”) and distances;
-    choosing an entry fills the distance measurement.
-12. After the optimization, the same atom pair is still selected and its new
-    distance is read.
+11. **J** The closest-contacts list reads short chemical names (for example
+    “H der Methoxygruppe an C6 und H der Methoxygruppe an C6′ im zweiten Ring:
+    267 pm”); choosing an entry announces the distance.
+12. After the optimization, the chosen pair reads its distance in both start and
+    minimum structure in one sentence.
 
 ### Task 5: reaction path
 
 13. **J** The transition-structure search announces its result and the connection
-    check; the path table gives energies and dihedrals for start, maximum and end.
-14. The energy query at a chosen path point answers in text.
+    check; the key-value table gives ΔE and dihedral for start, maximum and end.
+14. **J** The audible energy profile steps from path structure to path structure,
+    speaks dihedral and ΔE in kJ/mol, and the pitch peaks at the maximum.
 
 ### Task 6: spectra
 

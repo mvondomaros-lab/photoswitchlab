@@ -137,6 +137,21 @@ globalThis.AccessibleData = {
     const ring = position ? (position.endsWith("′") ? " im zweiten Ring" : " im ersten Ring") : "";
     return `Atom ${atom.number} (${atom.element}${position ? `, ${atom.position ? "Ringposition" : "Ringbezug"} ${position}${ring}` : ""}${group}${azo})`;
   },
+  // Short chemical name for distance lists: group and ring position, no atom number.
+  atomName(graph, index, settings) {
+    const atom = graph[index];
+    if (!atom) return "Atom nicht verfügbar";
+    const position = this.ringReference(graph, index);
+    if (!position) return atom.element;
+    const site = position.match(/^C([2-6])(′)?$/);
+    const substituent = site && settings?.substituents?.[Number(site[1]) - 2 + (site[2] ? 5 : 0)];
+    // Screen readers may not speak the prime, so the second ring is also named.
+    const at = position.endsWith("′") ? `${position} im zweiten Ring` : position;
+    if (atom.element === "N" && atom.neighbors?.some((neighbor) => graph[neighbor.number - 1]?.element === "N")) return `N der Azogruppe an ${at}`;
+    if (atom.position) return `Ringatom ${at}`;
+    if (substituent && substituent !== "H") return `${atom.element} der ${this.substituentName(substituent)} an ${at}`;
+    return `${atom.element} an ${at}`;
+  },
   outputMethods: [
     "Kurvenabfragen: Zwischen gespeicherten Kurvenpunkten wird die relative Absorption linear interpoliert.",
     "Farbvergleich: CIE76 ist der Abstand der berechneten sRGB-Bildschirmfarben im CIE-L*a*b*-Farbraum mit D65-Referenzweiß. Größere Werte bedeuten größere Modellabstände, keine proportional empfundenen Unterschiede. Die Umrechnung begrenzt die Farben auf sRGB. Beide Farben verwenden dieselbe feste Absorbanzskalierung.",
@@ -204,7 +219,8 @@ globalThis.AccessibleData = {
       for (let second = first + 1; second < graph.length; second++) {
         const across = side[first] != null && side[second] != null && side[first] !== side[second];
         const distance = !across || near[first].has(second) ? null : this.distance(positions, first, second);
-        if (distance != null) pairs.push({first, second, distance});
+        // The atom from the unprimed ring comes first, so every entry reads in the same order.
+        if (distance != null) pairs.push(side[first] ? {first: second, second: first, distance} : {first, second, distance});
       }
     }
     return pairs.sort((a, b) => a.distance - b.distance || a.first - b.first || a.second - b.second).slice(0, count);
@@ -346,6 +362,33 @@ globalThis.AccessibilityView = {
       if (value != null && [...select.options].some((option) => option.value === String(value))) select.value = value;
     }
     const strength = (value) => ScientificDisplay.significant(value, 2);
+    const kjPerEv = 96.48533212331002;
+    let pathSonification = null;
+    // Chart2Music makes the energy profile explorable by pitch and speech; accessible mode only,
+    // since sound in a shared lab room must never start by accident.
+    const renderPathSonification = (profile) => {
+      const element = $("path-sonification");
+      element.hidden = $("path-sonification-hint").hidden = !profile || !globalThis.c2mChart;
+      if (element.hidden || pathSonification?.key === profile.key) return;
+      const points = profile.relative.map((y, index) => ({x: index + 1, y}));
+      const axes = {
+        x: {label: "Pfadstruktur", format: (x) => `Pfadstruktur ${x}, C–N=N–C ${fmt(profile.dihedrals[x - 1], 0)} °`},
+        y: {label: "ΔE zum Anfang / (kJ/mol)", format: (y) => `${ScientificDisplay.significant(y, 3)} kJ/mol`},
+      };
+      try {
+        if (pathSonification) pathSonification.chart.setData(points, axes);
+        else {
+          const {err, data: chart} = globalThis.c2mChart({type: "line", element, cc: $("path-sonification-cc"), lang: "de",
+            title: "Energieverlauf entlang des Reaktionspfads", data: points, axes, audioEngine: globalThis.SonificationAudio?.()});
+          if (err) throw new Error(err);
+          pathSonification = {chart};
+        }
+        pathSonification.key = profile.key;
+      } catch (exc) {
+        element.hidden = $("path-sonification-hint").hidden = true;
+        console.warn("Sonification unavailable", exc);
+      }
+    };
     const identity = (m) => {
       const label = context.label(m);
       const collisions = context.state.molecules.filter((other) => context.label(other) === label && other.kind === m.kind);
@@ -375,27 +418,28 @@ globalThis.AccessibilityView = {
         const bond = neighbor.bond_order === 1.5 ? "aromatische Bindung" : neighbor.bond_order === 1 ? "Einfachbindung" : neighbor.bond_order === 2 ? "Doppelbindung" : `Bindungsordnung ${fmt(neighbor.bond_order, 1)}`;
         return `${label(neighbor.number - 1)}, ${bond}`;
       }).join("; ") : "keine gespeicherten Bindungen") + "." : "Für diese gespeicherte Struktur fehlen Atom- und Bindungsdaten. Erstellen Sie die Struktur erneut.");
-      setText("atom-distance", graph.length ? `Abstand ${label(first)} zu ${label(second)}: ${fmt(data.distance(positions, first, second), 0)} pm.` : "");
+      // Optimizations keep the atom order, so the same pair can be measured in related structures.
+      const m = context.current(), elements = graph.map((atom) => atom.element).join();
+      const related = m ? [source(m), ...context.state.molecules.filter((other) => other.parent_id === m.id)]
+        .filter((other) => other?.xyz && other.atom_graph?.map((atom) => atom.element).join() === elements) : [];
+      const order = {initial: 0, unconverged: 1, minimum: 2, ts: 3};
+      const values = [[m, positions], ...related.map((other) => [other, data.coordinates(other.xyz)])]
+        .sort(([a], [b]) => (order[a?.kind] ?? 4) - (order[b?.kind] ?? 4))
+        .map(([record, coordinates]) => `${fmt(data.distance(coordinates, first, second), 0)} pm${related.length ? ` in der ${inStructure(record)}` : ""}`);
+      const name = (index) => data.atomName(graph, index, m?.settings);
+      const distance = graph.length ? `Abstand ${name(first)} und ${name(second)}: ${values.join(", ")}.` : "";
+      setText("atom-distance", distance);
+      setText("contact-distance", measurementSelected ? distance : "");
       setText("atom-angle", graph.length ? `Winkel ${[first, second, third].map(label).join(" – ")}: ${fmt(data.angle(positions, first, second, third), 1)} °.` : "");
-      measurementSections = measurementSelected ? [{title: "Ausgewählter Atomabstand", paragraphs: [$("accessible-spectrum-geometry").textContent, $("atom-distance").textContent,
+      measurementSections = measurementSelected ? [{title: "Ausgewählter Atomabstand", paragraphs: [$("accessible-spectrum-geometry").textContent, distance,
         ...(!this.prefersText ? [$("atom-angle").textContent] : [])]}] : [];
     };
+    const inStructure = (m) => ({initial: "Startstruktur", minimum: "Minimumstruktur", ts: "Übergangsstruktur", unconverged: "nicht abgeschlossenen Optimierung"})[m?.kind] || "Struktur";
     $("atom-first").onchange = $("atom-second").onchange = $("atom-third").onchange = () => {
       measurementSelected = true;
       measurement();
     };
     $("accessible-molecule-select").onchange = () => context.selectMolecule?.($("accessible-molecule-select").value);
-    $("path-point").onchange = () => {
-      if ($("path-point").value === "") { pointIndex = null; context.showResult(); }
-      else {
-        pointIndex = Number($("path-point").value);
-        const point = points[pointIndex], playback = context.playback();
-        const index = playback.records.findIndex((record) => path ? record.image === point?.image : record.step === point?.step);
-        if (index >= 0 && !context.state.busy) context.selectFrame(index);
-      }
-      this.render();
-      this.announce($("accessible-point").textContent || "Gespeicherte Struktur ausgewählt.");
-    };
     function updateQuery() {
       const m = context.current();
       querySections = [];
@@ -544,17 +588,18 @@ globalThis.AccessibilityView = {
         const signature = JSON.stringify([m.id, contacts.map((contact) => [contact.first, contact.second, Math.round(contact.distance)])]);
         if (signature !== contactSignature) {
           contactSignature = signature;
-          const label = (index) => data.atomLabel(graph, index, m.settings);
+          const name = (index) => data.atomName(graph, index, m.settings);
           $("atom-contacts").replaceChildren(...contacts.map((contact) => {
             const item = document.createElement("li"), button = document.createElement("button");
             button.type = "button";
             button.className = "text-button";
-            button.textContent = `${label(contact.first)} und ${label(contact.second)}: ${fmt(contact.distance, 0)} pm`;
+            button.textContent = `${name(contact.first)} und ${name(contact.second)}: ${fmt(contact.distance, 0)} pm`;
             button.onclick = () => {
               $("atom-first").value = String(contact.first);
               $("atom-second").value = String(contact.second);
               measurementSelected = true;
               measurement();
+              this.announce($("contact-distance").textContent);
             };
             item.append(button);
             return item;
@@ -567,35 +612,30 @@ globalThis.AccessibilityView = {
       $("accessible-path-summary").hidden = this.prefersText && path;
       $("accessible-path-title").hidden = !this.prefersText || !path;
       if (this.prefersText && path) $("accessible-path").open = true;
-      setText("accessible-path-note", path ? "Reaktionspfad im elektronischen Grundzustand. ΔE bezieht sich auf die erste Pfadstruktur. Die Auswahl zeigt berechnete Geometrien, keine molekulare Dynamik."
-        : "Rechenschritte der Suche, keine Zeitachse. ΔE bezieht sich auf den ersten gespeicherten Suchschritt. Suchschritte einer Übergangsstruktursuche bilden noch keinen Reaktionspfad.");
-      setText("energy-table-caption", path ? "Berechnete Strukturen des Reaktionspfads" : "Gespeicherte Suchschritte");
-      const energyRows = points.map((point, index) => {
-        const geometry = OptimizationProgress.geometryProperties(point.positions, m.geometry_definition);
-        const indices = m.geometry_definition?.dihedral_indices;
-        return [path ? index + 1 : point.step, point.energy_ev, point.energy_ev - points[0].energy_ev, geometry.dihedral_deg, geometry.ring_distance_pm,
-          indices ? data.angle(point.positions, ...indices.slice(0, 3)) : null, indices ? data.angle(point.positions, ...indices.slice(1, 4)) : null];
-      });
-      const spectrum = m.spectrum, tableKey = JSON.stringify([m.id, energyRows, spectrum]);
+      setText("accessible-path-summary", path ? "Reaktionspfad" : "Rechenschritte der Optimierung");
+      $("path-key").hidden = !path;
+      const relative = points.map((point) => (point.energy_ev - points[0].energy_ev) * kjPerEv);
+      const dihedrals = points.map((point) => OptimizationProgress.geometryProperties(point.positions, m.geometry_definition).dihedral_deg);
+      if (!context.state.busy) setText("accessible-path-note", path ? "Reaktionspfad im elektronischen Grundzustand aus berechneten Strukturen, keine molekulare Dynamik. ΔE bezieht sich auf die erste Pfadstruktur."
+        : points.length ? `Rechenschritte der Suche, keine Zeitachse. ${points.length} gespeicherte Rechenschritte; die elektronische Energie ${relative.at(-1) < 0 ? "sank" : "stieg"} vom ersten zum letzten Schritt um ${ScientificDisplay.significant(Math.abs(relative.at(-1)), 3)} kJ/mol.` : "");
+      const spectrum = m.spectrum, tableKey = JSON.stringify([m.id, path, relative, dihedrals]);
       if (tableKey !== tableSignature && !context.state.busy) {
         tableSignature = tableKey;
-        fillSelect($("path-point"), [["Gespeicherte Struktur", ""], ...energyRows.map((row, index) => [`${path ? "Pfadstruktur" : "Rechenschritt"} ${row[0]}`, index])], pointIndex ?? "");
-        const table = (id, rows, formats) => $(id).replaceChildren(...rows.map((row) => {
+        const peak = relative.indexOf(Math.max(...relative));
+        const rows = path ? [["Anfang", 0], ["Energiemaximum", peak], ["Ende", points.length - 1]] : [];
+        $("energy-table-body").replaceChildren(...rows.map(([label, index]) => {
           const tr = document.createElement("tr");
-          row.forEach((value, index) => {
-            const cell = document.createElement(index ? "td" : "th");
-            if (!index) cell.scope = "row";
-            const text = formats[index](value);
+          [label, String(index + 1), ScientificDisplay.significant(relative[index], 3), fmt(dihedrals[index], 1)].forEach((text, column) => {
+            const cell = document.createElement(column ? "td" : "th");
+            if (!column) cell.scope = "row";
             cell.textContent = text;
             if (ScientificDisplay.spoken(text) !== text) cell.innerHTML = ScientificDisplay.html(text);
             tr.append(cell);
           });
           return tr;
         }));
-        table("energy-table-body", energyRows, [String, (value) => fmt(value, 4), (value) => ScientificDisplay.significant(value, 3), (value) => fmt(value, 1), (value) => fmt(value, 0), (value) => fmt(value, 1), (value) => fmt(value, 1)]);
       }
-      $("path-point").value = pointIndex == null ? "" : String(pointIndex);
-      setText("accessible-point", selected ? `${path ? "Pfadstruktur" : "Rechenschritt"} ${path ? pointIndex + 1 : selected.step}: E = ${fmt(selected.energy_ev, 4)} eV; ΔE = ${ScientificDisplay.significant(selected.energy_ev - points[0].energy_ev, 3)} eV. ${azoAngles}` : "");
+      renderPathSonification(path && this.prefersText && !context.state.busy ? {key: tableKey, relative, dihedrals} : null);
       $("accessible-spectrum").hidden = step !== "spectrum" || !spectrum;
       colorComparisonRecord = null;
       if (step === "spectrum" && spectrum) {
@@ -638,6 +678,10 @@ globalThis.AccessibilityView = {
       updateQuery();
       this.reportSections = reportSections;
       updateTableFocus();
+      const energyRows = points.map((point, index) => {
+        const geometry = OptimizationProgress.geometryProperties(point.positions, m.geometry_definition);
+        return [path ? index + 1 : point.step, point.energy_ev, point.energy_ev - points[0].energy_ev, geometry.dihedral_deg, geometry.ring_distance_pm];
+      });
       csvRows = [["structure", "kind", "data_type", "index", "energy_ev", "delta_energy_ev", "wavelength_nm", "oscillator_strength", "relative_absorption", "dihedral_deg", "ring_distance_pm"],
         [context.label(m), m.kind, "saved_geometry", "", m.properties?.energy_ev, "", "", "", "", m.properties?.dihedral_deg, m.properties?.ring_distance_pm],
         ...energyRows.map((row) => [context.label(m), m.kind, path ? "path_relative_to_first" : "search_relative_to_first", row[0], row[1], row[2], "", "", "", row[3], row[4]]),
