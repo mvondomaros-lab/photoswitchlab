@@ -418,21 +418,36 @@ globalThis.AccessibilityView = {
         const bond = neighbor.bond_order === 1.5 ? "aromatische Bindung" : neighbor.bond_order === 1 ? "Einfachbindung" : neighbor.bond_order === 2 ? "Doppelbindung" : `Bindungsordnung ${fmt(neighbor.bond_order, 1)}`;
         return `${label(neighbor.number - 1)}, ${bond}`;
       }).join("; ") : "keine gespeicherten Bindungen") + "." : "Für diese gespeicherte Struktur fehlen Atom- und Bindungsdaten. Erstellen Sie die Struktur erneut.");
-      // Optimizations keep the atom order, so the same pair can be measured in related structures.
-      const m = context.current(), elements = graph.map((atom) => atom.element).join();
-      const related = m ? [source(m), ...context.state.molecules.filter((other) => other.parent_id === m.id)]
-        .filter((other) => other?.xyz && other.atom_graph?.map((atom) => atom.element).join() === elements) : [];
-      const order = {initial: 0, unconverged: 1, minimum: 2, ts: 3};
-      const values = [[m, positions], ...related.map((other) => [other, data.coordinates(other.xyz)])]
-        .sort(([a], [b]) => (order[a?.kind] ?? 4) - (order[b?.kind] ?? 4))
-        .map(([record, coordinates]) => `${fmt(data.distance(coordinates, first, second), 0)} pm${related.length ? ` in der ${inStructure(record)}` : ""}`);
+      const m = context.current();
+      const values = pairDistances(first, second);
       const name = (index) => data.atomName(graph, index, m?.settings);
-      const distance = graph.length ? `Abstand ${name(first)} und ${name(second)}: ${values.join(", ")}.` : "";
+      const distance = graph.length ? `Abstand ${name(first)} und ${name(second)}: ${values}.` : "";
       setText("atom-distance", distance);
       setText("contact-distance", measurementSelected ? distance : "");
       setText("atom-angle", graph.length ? `Winkel ${[first, second, third].map(label).join(" – ")}: ${fmt(data.angle(positions, first, second, third), 1)} °.` : "");
       measurementSections = measurementSelected ? [{title: "Ausgewählter Atomabstand", paragraphs: [$("accessible-spectrum-geometry").textContent, distance,
         ...(!this.prefersText ? [$("atom-angle").textContent] : [])]}] : [];
+    };
+    // Optimizations keep the atom order, so a pair can be measured in the start structure
+    // and in the structures derived from it.
+    const sameAtoms = (a, b) => a?.atom_graph?.map((atom) => atom.element).join() === b?.atom_graph?.map((atom) => atom.element).join();
+    const startOf = (m) => {
+      let start = m;
+      for (let parent = source(m); parent && sameAtoms(parent, m); parent = source(parent)) start = parent;
+      return start;
+    };
+    const family = (m) => {
+      const start = startOf(m);
+      const members = [start, m, ...(m === start ? context.state.molecules.filter((other) => other.parent_id === m.id) : [])];
+      const order = {initial: 0, unconverged: 1, minimum: 2, ts: 3};
+      return members.filter((other, index) => other?.xyz && sameAtoms(other, m) && members.indexOf(other) === index)
+        .sort((a, b) => (order[a.kind] ?? 4) - (order[b.kind] ?? 4));
+    };
+    const pairDistances = (first, second) => {
+      const m = context.current(), members = m ? family(m) : [];
+      const coordinates = (record) => record === m ? positions : data.coordinates(record.xyz);
+      if (members.length < 2) return `${fmt(data.distance(positions, first, second), 0)} pm`;
+      return members.map((record) => `${fmt(data.distance(coordinates(record), first, second), 0)} pm in der ${inStructure(record)}`).join(", ");
     };
     const inStructure = (m) => ({initial: "Startstruktur", minimum: "Minimumstruktur", ts: "Übergangsstruktur", unconverged: "nicht abgeschlossenen Optimierung"})[m?.kind] || "Struktur";
     $("atom-first").onchange = $("atom-second").onchange = $("atom-third").onchange = () => {
@@ -589,8 +604,12 @@ globalThis.AccessibilityView = {
         setText("atom-scaffold", "Grundgerüst: C1–N=N–C1′. Erster Ring: C1–C2–C3–C4–C5–C6–C1. Zweiter Ring: C1′–C2′–C3′–C4′–C5′–C6′–C1′. Diese Positionsnummern bezeichnen Ringatome; die zusätzlichen Atomnummern gelten für die gespeicherten Koordinaten.");
       }
       if (!context.state.busy) {
-        const contacts = graph.length ? data.closeContacts(graph, positions) : [];
-        const signature = JSON.stringify([m.id, contacts.map((contact) => [contact.first, contact.second, Math.round(contact.distance)])]);
+        // Contacts come from the start structure: they show which groups crowd each other
+        // before the optimization, whichever related structure is selected.
+        const start = startOf(m), fromStart = start !== m && start.xyz;
+        const contacts = graph.length ? data.closeContacts(graph, fromStart ? data.coordinates(start.xyz) : positions) : [];
+        setText("atom-contacts-title", start.kind === "initial" ? "Kürzeste Abstände in der Startstruktur" : "Kürzeste Abstände zwischen den Molekülhälften");
+        const signature = JSON.stringify([m.id, family(m).map((record) => record.id), contacts.map((contact) => [contact.first, contact.second, Math.round(contact.distance)])]);
         if (signature !== contactSignature) {
           contactSignature = signature;
           const name = (index) => data.atomName(graph, index, m.settings);
@@ -598,7 +617,7 @@ globalThis.AccessibilityView = {
             const item = document.createElement("li"), button = document.createElement("button");
             button.type = "button";
             button.className = "text-button";
-            button.textContent = `${name(contact.first)} und ${name(contact.second)}: ${fmt(contact.distance, 0)} pm`;
+            button.textContent = `${name(contact.first)} und ${name(contact.second)}: ${pairDistances(contact.first, contact.second)}`;
             button.onclick = () => {
               $("atom-first").value = String(contact.first);
               $("atom-second").value = String(contact.second);

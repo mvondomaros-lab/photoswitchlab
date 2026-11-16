@@ -765,3 +765,10 @@ sections stay collapsible. A minimum search no longer opens a collapsible sectio
 one sentence; the step count and energy change are part of the report instead, and the
 section appears only for reaction paths, always open. The distance explorer is hidden
 in the spectrum step of the accessible mode, where no task needs it.
+
+The closest-contacts list is computed from the start structure whenever the selected
+structure derives from one, and each entry names the distance in the start and the
+derived minimum structure. Before, a list built from the minimum structure showed new
+contacts created by the ring twist (for tetramethoxyazobenzene H···N 285 → 229 pm),
+which suggested that groups move together; from the start structure the crowded
+methoxy hydrogens separate (267 → 414 pm).

@@ -68,8 +68,8 @@ JAWS and NVDA differ most in live regions, select menus and virtual-cursor handl
 11. **J** The closest-contacts list reads short chemical names (for example
     “H der Methoxygruppe an C6 und H der Methoxygruppe an C6′ im zweiten Ring:
     267 pm”); choosing an entry announces the distance.
-12. After the optimization, the chosen pair reads its distance in both start and
-    minimum structure in one sentence.
+12. After the optimization, the list still names the start structure's contacts,
+    each with its distance in start and minimum structure.
 
 ### Task 5: reaction path
 
