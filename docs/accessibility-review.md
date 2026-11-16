@@ -758,3 +758,10 @@ announces one sentence with its distance in the current structure and in its sta
 derived minimum structures, since optimizations keep the atom order. The free atom
 selection, bond list and numbering notes moved into a collapsed “Beliebige Atome
 untersuchen” section.
+
+Collapsible review of the accessible mode: tasks, the optional hint, substituent
+choice, the distance explorer with its nested free atom selection, and the method
+sections stay collapsible. A minimum search no longer opens a collapsible section for
+one sentence; the step count and energy change are part of the report instead, and the
+section appears only for reaction paths, always open. The distance explorer is hidden
+in the spectrum step of the accessible mode, where no task needs it.

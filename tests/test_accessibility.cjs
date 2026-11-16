@@ -540,7 +540,7 @@ test("human reports and collision labels contain chemical names and calculation 
   assert.ok(lab.exported().content.includes(lab.molecule.id)); // Deliberately chosen machine data retains provenance.
 });
 
-test("reaction paths are directly open with short choices while optimization iterations remain optional", () => {
+test("reaction paths are directly open while minimum searches need only one report sentence", () => {
   const lab = accessibleLab("?text=1");
   lab.state.step = "optimize";
   lab.molecule.ts_search = {path: [{image: 0, energy_ev: -10, positions: [0, 0, 0, 1, 0, 0, 1, 2, 0]}, {image: 1, energy_ev: -9.8, positions: [0, 0, 0, 2, 0, 0, 2, 2, 0]}]};
@@ -553,12 +553,11 @@ test("reaction paths are directly open with short choices while optimization ite
   assert.equal(keyRows[1].children[1].textContent, "2"); // The maximum is the second path structure.
   lab.records.push({step: 0, energy_ev: -10, positions: [0, 0, 0]}, {step: 1, energy_ev: -9, positions: [0, 0, 0]});
   lab.select({...lab.molecule, id: "iteration", ts_search: null});
-  assert.equal(lab.node("accessible-path").hidden, false);
-  assert.equal(lab.node("accessible-path").open, false);
-  assert.equal(lab.node("accessible-path-summary").hidden, false);
-  lab.node("accessible-path").open = true;
+  assert.equal(lab.node("accessible-path").hidden, true);
+  assert.ok(lab.node("result-report-content").innerHTML.includes("2 gespeicherte Rechenschritte; die elektronische Energie stieg"));
+  lab.state.step = "spectrum";
   lab.view.render();
-  assert.equal(lab.node("accessible-path").open, true);
+  assert.equal(lab.node("atom-explorer").hidden, true); // Distances are not needed for spectra.
 });
 
 test("all positive visible transitions supplement the strongest five without duplication, with consistent strength sorting", () => {
@@ -676,12 +675,11 @@ test("running optimizations keep step tables hidden and unchanged until the resu
   const before = lab.mutations();
   lab.records.push({step: 1, energy_ev: -10.2, positions: [0, 0, 0, 1, 0, 0, 1, 2, 0]});
   lab.view.render();
-  assert.equal(lab.node("accessible-path-note").textContent, ""); // Not rebuilt for each live step.
+  assert.ok(!lab.node("result-report-content").innerHTML.includes("Rechenschritte;")); // Not rebuilt for each live step.
   assert.ok(lab.mutations() - before < 5);
   lab.state.busy = false;
   lab.view.render();
-  assert.equal(lab.node("accessible-path").hidden, false);
-  assert.ok(lab.node("accessible-path-note").textContent.includes("2 gespeicherte Rechenschritte"));
+  assert.ok(lab.node("result-report-content").innerHTML.includes("2 gespeicherte Rechenschritte"));
 });
 
 test("sonification series share one coarse energy grid within the common window", () => {

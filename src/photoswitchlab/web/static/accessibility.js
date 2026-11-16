@@ -555,6 +555,11 @@ globalThis.AccessibilityView = {
         azoAngles = `Winkel C–N=N ${fmt(data.angle(positions, a, b, c), 1)} °; Winkel N=N–C ${fmt(data.angle(positions, b, c, d), 1)} °.`;
       }
       if (step === "optimize") {
+        // A minimum search needs one sentence, not its own collapsible section.
+        if (!path && points.length > 1 && !context.state.busy) {
+          const change = (points.at(-1).energy_ev - points[0].energy_ev) * kjPerEv;
+          reportSections[0].paragraphs.push(`${points.length} gespeicherte Rechenschritte; die elektronische Energie ${change < 0 ? "sank" : "stieg"} vom ersten zum letzten Schritt um ${ScientificDisplay.significant(Math.abs(change), 3)} kJ/mol.`);
+        }
         reportSections.push({title: "Geometrie", paragraphs: [geometryText, azoAngles].filter(Boolean)});
         const input = source(m), partner = data.partner(m, context.state.molecules);
         const related = [m, input, partner, partner && source(partner)].filter((item, index, all) => item && all.findIndex((other) => other?.id === item.id) === index);
@@ -608,16 +613,15 @@ globalThis.AccessibilityView = {
       }
       measurement();
       // Live steps arrive every poll; rebuilding tables then would move a screen reader's reading position.
-      $("accessible-path").hidden = step !== "optimize" || !points.length || !!context.state.busy;
-      $("accessible-path-summary").hidden = this.prefersText && path;
-      $("accessible-path-title").hidden = !this.prefersText || !path;
+      $("accessible-path").hidden = step !== "optimize" || !path || !!context.state.busy;
+      $("accessible-path-summary").hidden = this.prefersText;
+      $("accessible-path-title").hidden = !this.prefersText;
       if (this.prefersText && path) $("accessible-path").open = true;
-      setText("accessible-path-summary", path ? "Reaktionspfad" : "Rechenschritte der Optimierung");
-      $("path-key").hidden = !path;
+      // Distances matter for structures, not for spectra; the text mode hides them there.
+      $("atom-explorer").hidden = this.prefersText && step === "spectrum";
       const relative = points.map((point) => (point.energy_ev - points[0].energy_ev) * kjPerEv);
       const dihedrals = points.map((point) => OptimizationProgress.geometryProperties(point.positions, m.geometry_definition).dihedral_deg);
-      if (!context.state.busy) setText("accessible-path-note", path ? "Reaktionspfad im elektronischen Grundzustand aus berechneten Strukturen, keine molekulare Dynamik. ΔE bezieht sich auf die erste Pfadstruktur."
-        : points.length ? `Rechenschritte der Suche, keine Zeitachse. ${points.length} gespeicherte Rechenschritte; die elektronische Energie ${relative.at(-1) < 0 ? "sank" : "stieg"} vom ersten zum letzten Schritt um ${ScientificDisplay.significant(Math.abs(relative.at(-1)), 3)} kJ/mol.` : "");
+      setText("accessible-path-note", "Reaktionspfad im elektronischen Grundzustand aus berechneten Strukturen, keine molekulare Dynamik. ΔE bezieht sich auf die erste Pfadstruktur.");
       const spectrum = m.spectrum, tableKey = JSON.stringify([m.id, path, relative, dihedrals]);
       if (tableKey !== tableSignature && !context.state.busy) {
         tableSignature = tableKey;
