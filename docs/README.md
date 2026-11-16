@@ -12,6 +12,8 @@ For student guidance, see the [website](https://mvondomaros-lab.github.io/photos
 
 - [Sensitivity to calculation settings](science-benchmark.md)
 - [Comparison with experimental spectra](solution-color-validation.md)
+- [Accessibility review](accessibility-review.md)
+- [Accessibility verification with assistive technology](accessibility-verification.md)
 
 Reports describe the software and calculations evaluated at the time.
 

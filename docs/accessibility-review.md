@@ -282,7 +282,8 @@ Native Safari integration checks confirmed:
 ## Remaining verification and scope limits
 
 No JAWS, NVDA-on-Windows, physical Braille display, or blind-student usability
-trial was available. Native accessibility-tree inspection and functional tests
+trial was available; [accessibility-verification.md](accessibility-verification.md)
+lists the checks to run with them. Native accessibility-tree inspection and functional tests
 do not establish WCAG conformance. Asynchronous website 3D/fallback transitions
 have regression coverage; they were not additionally exercised natively in the
 final integration pass. Optional longer scientific tests remained skipped as
