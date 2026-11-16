@@ -83,9 +83,11 @@ def speakable_math(mathml: str) -> str:
     """
     mathml = re.sub(
         f"(?:{UPRIGHT_LETTER}){{2,}}",
-        lambda match: '<mi mathvariant="normal">'
-        + "".join(re.findall(UPRIGHT_LETTER, match[0]))
-        + "</mi>",
+        lambda match: (
+            '<mi mathvariant="normal">'
+            + "".join(re.findall(UPRIGHT_LETTER, match[0]))
+            + "</mi>"
+        ),
         mathml,
     )
     return re.sub(

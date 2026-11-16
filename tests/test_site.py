@@ -334,9 +334,7 @@ class SiteBuildTests(unittest.TestCase):
         self.assertEqual(content.count("<math"), 1)
 
     def test_math_keeps_upright_words_and_decimal_commas_whole(self):
-        content, _ = site.render(
-            "$E_\\mathrm{cis} = -932{,}48$"
-        )
+        content, _ = site.render("$E_\\mathrm{cis} = -932{,}48$")
         self.assertIn('<mi mathvariant="normal">cis</mi>', content)
         self.assertIn("<mn>932,48</mn>", content)
         self.assertNotIn('<mi mathvariant="normal">c</mi>', content)

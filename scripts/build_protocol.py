@@ -261,13 +261,21 @@ def build(text_based=False):
     )
     if text_based:
         table(
-            ["Atompaar benachbarter Gruppen", "Startstruktur / pm", "Minimumstruktur / pm"],
+            [
+                "Atompaar benachbarter Gruppen",
+                "Startstruktur / pm",
+                "Minimumstruktur / pm",
+            ],
             [["[Atome und Gruppen]", "[Wert]", "[Wert]"]],
             [8, 4.5, 4.5],
         )
     else:
-        figure("Startstruktur: [gleich ausgerichtete 3D-Ansicht einfügen und beschriften]")
-        figure("Minimumstruktur: [gleich ausgerichtete 3D-Ansicht einfügen und beschriften]")
+        figure(
+            "Startstruktur: [gleich ausgerichtete 3D-Ansicht einfügen und beschriften]"
+        )
+        figure(
+            "Minimumstruktur: [gleich ausgerichtete 3D-Ansicht einfügen und beschriften]"
+        )
     answer(
         "Sterischer Einfluss und Vergleich mit unsubstituiertem trans-Azobenzol: [höchstens vier Sätze]"
     )
@@ -276,7 +284,10 @@ def build(text_based=False):
     if text_based:
         table(
             ["Pfadstruktur", "ΔE zum Anfang / (kJ/mol)", "C–N=N–C / °"],
-            [[label, "[Wert]", "[Wert]"] for label in ("Anfang", "Energiemaximum", "Ende")],
+            [
+                [label, "[Wert]", "[Wert]"]
+                for label in ("Anfang", "Energiemaximum", "Ende")
+            ],
             [5, 6, 6],
         )
     else:
@@ -286,12 +297,20 @@ def build(text_based=False):
         [["trans → cis", "[Wert]", "[Wert]"], ["cis → trans", "[Wert]", "[Wert]"]],
         [5, 6, 6],
     )
-    answer("Pfad, Verbindungsprüfung, Barrieren- und RT-Vergleich: [höchstens drei Sätze]")
+    answer(
+        "Pfad, Verbindungsprüfung, Barrieren- und RT-Vergleich: [höchstens drei Sätze]"
+    )
 
     doc.add_heading("Spektrum berechnen", 1).paragraph_format.page_break_before = True
     task("task-compare-isomer-spectra")
     table(
-        ["Konfiguration", "Emax / eV", "UV oder sichtbar", "Farbvorhersage", "Lichtdurchlässigkeit / %"],
+        [
+            "Konfiguration",
+            "Emax / eV",
+            "UV oder sichtbar",
+            "Farbvorhersage",
+            "Lichtdurchlässigkeit / %",
+        ],
         [
             ["cis", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"],
             ["trans", "[Wert]", "[Bereich]", "[Farbe]", "[Wert]"],
@@ -336,7 +355,10 @@ def build(text_based=False):
     )
     table(
         ["Konfiguration", "Emax / eV", "Farbvorhersage", "Lichtdurchlässigkeit / %"],
-        [["cis", "[Wert]", "[Farbe]", "[Wert]"], ["trans", "[Wert]", "[Farbe]", "[Wert]"]],
+        [
+            ["cis", "[Wert]", "[Farbe]", "[Wert]"],
+            ["trans", "[Wert]", "[Farbe]", "[Wert]"],
+        ],
         [3.5, 4.0, 4.5, 5.0],
     )
     if text_based:

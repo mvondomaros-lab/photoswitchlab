@@ -77,8 +77,12 @@ def test_autonomous_accessible_tasks_are_shared_with_text_protocol_and_course_fi
     )
     for _, task in tasks:
         # The hint stays in the app; question, steps and deliverables go into the protocol.
-        printed = re.sub(r'<details class="task-hint">.*?</details>', "", task, flags=re.S)
-        printed = re.sub(r"<li>([^<]*)<ul>.*?</ul>", r"<li>\1</li>", printed, flags=re.S)
+        printed = re.sub(
+            r'<details class="task-hint">.*?</details>', "", task, flags=re.S
+        )
+        printed = re.sub(
+            r"<li>([^<]*)<ul>.*?</ul>", r"<li>\1</li>", printed, flags=re.S
+        )
         for paragraph in re.findall(r"<(?:p|li)[^>]*>(.*?)</(?:p|li)>", printed, re.S):
             wording = " ".join(unescape(re.sub(r"<[^>]+>", "", paragraph)).split())
             if wording != "Für Ihr Protokoll:":
