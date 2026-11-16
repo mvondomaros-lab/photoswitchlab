@@ -714,3 +714,29 @@ in the optimization step trans-Azobenzol grouped its start and minimum structure
 Verified in headless Chrome with CDP forced-colors emulation and `Page.setFontSizes`;
 axe reports no violations on the eight website pages in either mode. Not tested with
 Windows High Contrast, ZoomText or macOS Zoom.
+
+## Content review of tasks, protocols and fundamentals
+
+Both task guides now share one structure: a guiding question, numbered steps, an
+optional hint in its own collapsible element, and the protocol deliverables as a short
+list. Mode-specific steps differ only where the graphical route uses images (3D views,
+energy profile, spectra) and the accessible route uses atom distances, path tables or
+saved result reports as attachments.
+
+- Task 6 no longer states the answer to its own protocol question; a hint links to the
+  fundamentals on composition under irradiation.
+- The series assignment follows one fixed order in the tasks; the course page no longer
+  says the supervisors assign series.
+- Task 7 drops the UV/visible and weighted-transmission columns (Emax, ΔEmax and color
+  remain); task 8 drops its second spectrum comparison; task 9 lists its four possible
+  aims and separates the group records.
+- The accessible guide gains the two text-workable optional explorations and the
+  protocol discussion and submission section.
+- Emax is defined in the absorption-maximum help of the app; the accessible report
+  already explains it inline.
+- Both protocol templates use the three app steps as level-1 and the tasks as level-2
+  headings; the second template is consistently called “Protokollvorlage ohne
+  Abbildungen”. The graphical template gains the prediction field for task 3; the path
+  table of the text template uses kJ/mol.
+- The sonification key hint is shortened in app and website; a capitalization error in
+  a compound name on the structures page is fixed.

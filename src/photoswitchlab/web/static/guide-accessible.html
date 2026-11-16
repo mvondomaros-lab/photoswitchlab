@@ -1,92 +1,221 @@
 <!-- Autonomous accessible tasks; shared with scripts/build_protocol.py --text. -->
 <section id="guide-build">
-<p>Untersuchen Sie Strukturen, Energien und Spektren von Azobenzol. Dokumentieren Sie Ihre eigenen Vergleiche und Deutungen.</p>
+<p>Untersuchen Sie die Strukturen, Energien und Spektren von Azobenzol Schritt für Schritt.</p>
 <!-- course:marburg -->
-<p>Laden Sie die <a href="static/materials/protokollvorlage-text.docx" download>Protokollvorlage für tabellarische Auswertung</a> herunter und dokumentieren Sie darin Ihre Ergebnisse.</p>
+<p>Bearbeiten Sie die Pflichtaufgaben zu allen drei Versuchsschritten. Laden Sie die <a href="static/materials/protokollvorlage-text.docx" download>Protokollvorlage ohne Abbildungen</a> herunter und dokumentieren Sie darin Ihre Ergebnisse. Wenn Sie mit Abbildungen arbeiten, verwenden Sie die <a href="static/materials/protokollvorlage.docx" download>Protokollvorlage</a>.</p>
 <!-- /course -->
 <details class="task" id="task-compare-configurations">
 <summary>Konfigurationen vergleichen</summary>
-<p>Erstellen Sie unsubstituiertes cis- und trans-Azobenzol. Vergleichen Sie die Zusammensetzung, die Verknüpfung der Atome und ihre räumliche Anordnung. Prüfen Sie, ob eine Drehung des gesamten Moleküls die beiden Konfigurationen zur Deckung bringen kann, ohne die innere Geometrie zu verändern.</p>
+<p class="task-question">Worin unterscheiden sich cis- und trans-Azobenzol?</p>
+<ol>
+<li>Erstellen Sie unsubstituiertes cis- und trans-Azobenzol.</li>
+<li>Prüfen Sie, ob sich die Zusammensetzung, die Verknüpfung der Atome oder ihre räumliche Anordnung unterscheidet.</li>
+<li>Prüfen Sie, ob eine Drehung des gesamten Moleküls die beiden Konfigurationen ineinander überführen kann.</li>
+</ol>
 <!-- course:marburg -->
-<p class="protocol-output"><strong>Für Ihr Protokoll:</strong> Erklären Sie in höchstens zwei Sätzen, worin sich cis- und trans-Azobenzol unterscheiden und warum eine Drehung des gesamten Moleküls sie nicht ineinander überführt.</p>
+<div class="protocol-output"><p><strong>Für Ihr Protokoll:</strong></p>
+<ul>
+<li>Unterschied zwischen cis- und trans-Azobenzol und Begründung, warum eine Drehung des gesamten Moleküls sie nicht ineinander überführt (höchstens zwei Sätze)</li>
+</ul></div>
 <!-- /course -->
 </details>
 <details class="task" id="task-identify-symmetry">
 <summary>Symmetrie erkennen</summary>
-<p>Untersuchen Sie das Grundgerüst von trans-Azobenzol. Bestimmen Sie anhand seiner Symmetrie, welche Positionen nach dem Einsetzen genau einer Methoxygruppe dieselbe chemische Struktur ergeben. Berücksichtigen Sie die zehn Positionen 2, 3, 4, 5, 6, 2′, 3′, 4′, 5′ und 6′. Fassen Sie gleichwertige Positionen in Gruppen zusammen und bestimmen Sie die Anzahl chemisch verschiedener Strukturen.</p>
+<p class="task-question">Wie viele chemisch verschiedene trans-Azobenzole mit genau einer Methoxygruppe gibt es?</p>
+<ol>
+<li>Untersuchen Sie das Grundgerüst von trans-Azobenzol und seine Symmetrie.</li>
+<li>Bestimmen Sie, welche der zehn Auswahlpositionen 2, 3, 4, 5, 6, 2′, 3′, 4′, 5′ und 6′ nach dem Einsetzen genau einer Methoxygruppe dieselbe chemische Struktur ergeben.</li>
+<li>Fassen Sie diese symmetrieäquivalenten Auswahlpositionen in Gruppen zusammen und bestimmen Sie die Anzahl chemisch verschiedener Strukturen.</li>
+</ol>
+<details class="task-hint">
+<summary>Hinweis</summary>
+<p>Falls Sie nicht weiterkommen, können Sie einzelne Zuordnungen in der Webapp überprüfen: Bei einer symmetrieäquivalenten Eingabe wählt die Webapp die bereits vorhandene Startstruktur aus.</p>
+</details>
 <!-- course:marburg -->
-<p class="protocol-output"><strong>Für Ihr Protokoll:</strong> Geben Sie die Anzahl chemisch verschiedener trans-Azobenzole mit genau einer Methoxygruppe und die Gruppen symmetrieäquivalenter Positionen an. Begründen Sie Ihre Zuordnung anhand der Symmetrie des Grundgerüsts in höchstens zwei Sätzen.</p>
+<div class="protocol-output"><p><strong>Für Ihr Protokoll:</strong></p>
+<ul>
+<li>Anzahl chemisch verschiedener trans-Azobenzole mit genau einer Methoxygruppe</li>
+<li>Gruppen symmetrieäquivalenter Auswahlpositionen</li>
+<li>Begründung anhand der Symmetrie des Grundgerüsts (höchstens zwei Sätze)</li>
+</ul></div>
 <!-- /course -->
 </details>
 </section>
 <section id="guide-optimize">
 <details class="task" id="task-compare-optimized-geometries">
 <summary>Minimumstrukturen vergleichen</summary>
-<p>Verwenden Sie die cis- und trans-Startstrukturen von unsubstituiertem Azobenzol. Bestimmen Sie für beide die elektronische Energie, den C–N=N–C-Diederwinkel und den Ringabstand. Notieren Sie vor den Optimierungen Ihre Vermutung, wie sich die Ringstellung ändern wird. Berechnen Sie anschließend beide Minimumstrukturen.</p>
-<p>Vergleichen Sie Start- und Minimumstrukturen anhand derselben Größen. Berechnen Sie für die Minimumstrukturen ΔE = Etrans − Ecis in kJ/mol.</p>
+<p class="task-question">Wie verändern sich cis- und trans-Azobenzol bei der Optimierung, und welche Konfiguration hat die niedrigere elektronische Energie?</p>
+<ol>
+<li>Notieren Sie für die cis- und trans-Startstruktur von unsubstituiertem Azobenzol die elektronische Energie, den C–N=N–C-Diederwinkel und den Ringabstand.</li>
+<li>Notieren Sie Ihre Vermutung, wie sich die Ringstellung bei der Optimierung ändern wird.</li>
+<li>Berechnen Sie beide Minimumstrukturen und bestimmen Sie dieselben Größen.</li>
+<li>Berechnen Sie für die Minimumstrukturen ΔE = Etrans − Ecis in kJ/mol.</li>
+</ol>
 <!-- course:marburg -->
-<p class="protocol-output"><strong>Für Ihr Protokoll:</strong> Dokumentieren Sie Ihre Vermutung sowie elektronische Energie, C–N=N–C-Diederwinkel und Ringabstand für alle vier Strukturen in einer Tabelle. Geben Sie ΔE an. Beschreiben Sie die Strukturänderungen und erläutern Sie am Vorzeichen von ΔE, welche Konfiguration im verwendeten Modell die niedrigere elektronische Energie hat. Verwenden Sie für diese Erläuterung insgesamt höchstens drei Sätze.</p>
+<div class="protocol-output"><p><strong>Für Ihr Protokoll:</strong></p>
+<ul>
+<li>Ihre Vermutung</li>
+<li>Tabelle mit elektronischer Energie, Diederwinkel und Ringabstand der vier Strukturen</li>
+<li>ΔE</li>
+<li>Strukturänderungen und Deutung des Vorzeichens von ΔE: Welche Konfiguration hat im verwendeten Modell die niedrigere elektronische Energie? (höchstens drei Sätze)</li>
+</ul></div>
 <!-- /course -->
 </details>
 <details class="task" id="task-examine-substituent-geometry">
 <summary>Sterischen Einfluss untersuchen</summary>
-<p>Erstellen Sie trans-Azobenzol mit Methoxygruppen an den Positionen 2, 6, 2′ und 6′. Untersuchen Sie anhand von Atomabständen, welche Gruppen in der Startstruktur einander räumlich nahekommen. Die Erkundung der Atome und Abstände nennt dafür die kürzesten Abstände zwischen den beiden Molekülhälften. Notieren Sie vor der Optimierung Ihre Vermutung, wie sich die Ringstellung ändern wird. Berechnen Sie anschließend die Minimumstruktur.</p>
-<p>Vergleichen Sie Start- und Minimumstruktur anhand des C–N=N–C-Diederwinkels, des Ringabstands und des Abstands eines solchen Atompaars. Vergleichen Sie Diederwinkel und Ringabstand außerdem mit der Minimumstruktur des unsubstituierten trans-Azobenzols.</p>
+<p class="task-question">Wie verändern vier Methoxygruppen neben der Azogruppe die Struktur?</p>
+<ol>
+<li>Erstellen Sie trans-Azobenzol mit Methoxygruppen an den Positionen 2, 6, 2′ und 6′.</li>
+<li>Suchen Sie anhand von Atomabständen Gruppen, die einander in der Startstruktur räumlich nahekommen. Die Erkundung der Atome und Abstände nennt dafür die kürzesten Abstände zwischen den beiden Molekülhälften.</li>
+<li>Notieren Sie Ihre Vermutung, wie sich die Ringstellung bei der Optimierung ändern wird.</li>
+<li>Berechnen Sie die Minimumstruktur. Vergleichen Sie Start- und Minimumstruktur anhand des C–N=N–C-Diederwinkels, des Ringabstands und des Abstands eines solchen Atompaars.</li>
+<li>Vergleichen Sie Diederwinkel und Ringabstand mit der Minimumstruktur des unsubstituierten trans-Azobenzols.</li>
+</ol>
 <!-- course:marburg -->
-<p class="protocol-output"><strong>Für Ihr Protokoll:</strong> Geben Sie Ihre Vermutung an. Dokumentieren Sie Diederwinkel und Ringabstand für die substituierte Start- und Minimumstruktur sowie die unsubstituierte trans-Minimumstruktur in einer Tabelle. Ergänzen Sie ein Atompaar benachbarter Gruppen und seinen Abstand vor und nach der Optimierung. Erklären Sie anhand der räumlich benachbarten Gruppen die Änderungen sowie den Unterschied zur unsubstituierten Minimumstruktur in insgesamt höchstens vier Sätzen.</p>
+<div class="protocol-output"><p><strong>Für Ihr Protokoll:</strong></p>
+<ul>
+<li>Ihre Vermutung</li>
+<li>Tabelle mit Diederwinkel und Ringabstand der substituierten Start- und Minimumstruktur sowie der unsubstituierten trans-Minimumstruktur</li>
+<li>ein Atompaar benachbarter Gruppen mit seinem Abstand vor und nach der Optimierung</li>
+<li>Erklärung anhand der räumlich benachbarten Gruppen: Änderungen bei der Optimierung und Unterschied zur unsubstituierten Minimumstruktur (höchstens vier Sätze)</li>
+</ul></div>
 <!-- /course -->
 </details>
 <details class="task" id="task-analyze-reaction-path">
 <summary>Reaktionspfad analysieren</summary>
-<p>Suchen Sie ausgehend von der trans-Minimumstruktur des unsubstituierten Azobenzols eine Übergangsstruktur. Prüfen Sie anhand der berechneten Pfadstrukturen und der Verbindungsprüfung, ob der Pfad cis und trans verbindet. Ordnen Sie Anfang und Ende den beiden Konfigurationen zu. Beschreiben Sie, wie sich die Geometrie an der Azogruppe bis zum Energiemaximum und weiter zum Endpunkt ändert.</p>
-<p>Bestimmen Sie aus den Energien entlang des Pfads die elektronischen Energiebarrieren ΔE‡ für beide Richtungen. Vergleichen Sie jede Barriere mit RT ≈ 2,5 kJ/mol bei T = 298 K; R ist die universelle Gaskonstante. Berechnen Sie jeweils ΔE‡ / RT und erläutern Sie, welche Richtung auf diesem Pfad die niedrigere elektronische Energiebarriere hat.</p>
+<p class="task-question">Über welchen Weg gehen trans- und cis-Azobenzol ineinander über, und wie hoch ist die elektronische Energiebarriere in beiden Richtungen?</p>
+<ol>
+<li>Suchen Sie ausgehend von der trans-Minimumstruktur des unsubstituierten Azobenzols eine Übergangsstruktur.</li>
+<li>Prüfen Sie anhand der Pfadstrukturen und der Verbindungsprüfung, ob der Pfad cis und trans verbindet, und ordnen Sie Anfang und Ende den beiden Konfigurationen zu.</li>
+<li>Verfolgen Sie, wie sich die Struktur an der Azogruppe bis zum Energiemaximum und weiter zum Endpunkt verändert.</li>
+<li>Bestimmen Sie aus den Energien entlang des Pfads die elektronischen Energiebarrieren ΔE‡ für beide Richtungen.</li>
+<li>Berechnen Sie für jede Barriere ΔE‡ / RT mit der thermischen Energieskala RT ≈ 2,5 kJ/mol bei 298 K. Vergleichen Sie, welche Richtung auf diesem Pfad die niedrigere elektronische Energiebarriere hat.</li>
+</ol>
 <!-- course:marburg -->
-<p class="protocol-output"><strong>Für Ihr Protokoll:</strong> Dokumentieren Sie für Anfang, Energiemaximum und Ende des Pfads die relative elektronische Energie und den C–N=N–C-Diederwinkel in einer Tabelle. Geben Sie die elektronische Energiebarriere für beide Richtungen in der Tabelle an. Fassen Sie Pfadzuordnung, Verbindungsprüfung, Barrierendifferenz und den Vergleich mit RT in höchstens drei Sätzen zusammen.</p>
+<div class="protocol-output"><p><strong>Für Ihr Protokoll:</strong></p>
+<ul>
+<li>Tabelle mit relativer elektronischer Energie und C–N=N–C-Diederwinkel für Anfang, Energiemaximum und Ende des Pfads</li>
+<li>Tabelle mit ΔE‡ und ΔE‡ / RT für beide Richtungen</li>
+<li>Pfadzuordnung, Verbindungsprüfung, Barrierendifferenz und Vergleich mit RT (höchstens drei Sätze)</li>
+</ul></div>
+<!-- /course -->
+</details>
+<details class="exploration">
+<summary>Freiwillige Vertiefung</summary>
+<p>Suchen Sie für ein Derivat mit höchstens zwei Substituenten eine Übergangsstruktur und vergleichen Sie die elektronische Energiebarriere mit der von Azobenzol.</p>
+<!-- course:marburg -->
+<p>Diese Untersuchungen gehören nicht zum Pflichtteil, müssen nicht protokolliert werden und werden nicht bewertet.</p>
 <!-- /course -->
 </details>
 </section>
 <section id="guide-spectrum">
-<p class="spectrum-definition">Emax bezeichnet die Energie des höchsten Maximums der verbreiterten Absorptionskurve im untersuchten Energiebereich.</p>
 <details class="task" id="task-compare-isomer-spectra">
 <summary>Spektren vergleichen</summary>
-<p>Berechnen Sie die Spektren der cis- und trans-Minimumstruktur von unsubstituiertem Azobenzol. Vergleichen Sie die Anregungsenergien und Oszillatorstärken der elektronischen Übergänge sowie die Energien Emax der Absorptionsmaxima. Suchen Sie einen gemeinsamen Energiebereich, in dem eine Konfiguration deutlich stärker absorbiert als die andere. Vergleichen Sie dafür die relative Absorption beider Konfigurationen bei denselben Energien. Vergleichen Sie außerdem die vorhergesagten Farben und die gewichtete Lichtdurchlässigkeit.</p>
-<p>Geben Sie an, welche Konfiguration in diesem Bereich bei gleicher Molekülzahl stärker Licht aufnehmen würde. Erklären Sie, warum die Spektren allein keine Vorhersage des cis/trans-Verhältnisses unter Bestrahlung erlauben. Berücksichtigen Sie dabei, dass die Wahrscheinlichkeit des Übergangs eines angeregten Moleküls in die jeweilige Konfiguration zusätzlich bekannt sein müsste.</p>
+<p class="task-question">In welchem Energiebereich absorbiert eine Konfiguration deutlich stärker als die andere?</p>
+<ol>
+<li>Berechnen Sie die Spektren der cis- und trans-Minimumstruktur von unsubstituiertem Azobenzol.</li>
+<li>Vergleichen Sie die Anregungsenergien und Oszillatorstärken der elektronischen Übergänge, die Absorptionsmaxima Emax, die vorhergesagten Farben und die gewichtete Lichtdurchlässigkeit.</li>
+<li>Suchen Sie einen Energiebereich, in dem eine Konfiguration deutlich stärker absorbiert als die andere. Vergleichen Sie dafür die relative Absorption beider Konfigurationen bei denselben Energien.</li>
+<li>Überlegen Sie, ob sich daraus vorhersagen lässt, wie sich das cis/trans-Verhältnis unter Bestrahlung verändert.</li>
+</ol>
+<details class="task-hint">
+<summary>Hinweis</summary>
+<p>Zur letzten Frage helfen die Grundlagen zur <a href="https://mvondomaros-lab.github.io/photoswitchlab/theory/photoswitches/#zusammensetzung-unter-bestrahlung" target="_blank" rel="noreferrer">Zusammensetzung unter Bestrahlung</a>.</p>
+</details>
 <!-- course:marburg -->
-<p class="protocol-output"><strong>Für Ihr Protokoll:</strong> Dokumentieren Sie für cis und trans Emax, die Zuordnung zum ultravioletten oder sichtbaren Bereich, die vorhergesagte Farbe und die gewichtete Lichtdurchlässigkeit in einer Tabelle. Kennzeichnen Sie Absorptionsmaxima und Farben als Modellvorhersagen. Begründen Sie Ihre Wahl des Energiebereichs, nennen Sie die stärker absorbierende Konfiguration und erläutern Sie die Grenze der Vorhersage des cis/trans-Verhältnisses in höchstens drei Sätzen.</p>
+<div class="protocol-output"><p><strong>Für Ihr Protokoll:</strong></p>
+<ul>
+<li>Tabelle mit Emax, Zuordnung zum ultravioletten oder sichtbaren Bereich, vorhergesagter Farbe und gewichteter Lichtdurchlässigkeit für cis und trans; kennzeichnen Sie Maxima und Farben als Modellvorhersagen</li>
+<li>gewählter Energiebereich mit Begründung und die dort bei gleicher Molekülzahl stärker absorbierende Konfiguration</li>
+<li>Erklärung, warum sich aus den berechneten Spektren allein nicht vorhersagen lässt, wie sich das cis/trans-Verhältnis unter Bestrahlung verändert (zusammen mit der Begründung höchstens drei Sätze)</li>
+</ul></div>
 <!-- /course -->
 </details>
 <details class="task" id="task-compare-substituent-spectra">
 <summary>Substituentenreihe untersuchen</summary>
-<p>Untersuchen Sie eine der folgenden Reihen: trans-4-X-Azobenzole, trans-2-X-Azobenzole, trans-3-X-Azobenzole oder trans-4,4′-X₂-Azobenzole. Setzen Sie für X nacheinander CH₃, OCH₃, N(CH₃)₂, CF₃, CN und NO₂ ein. Erstellen und optimieren Sie alle sechs Derivate Ihrer Reihe und berechnen Sie die Spektren ihrer Minimumstrukturen.</p>
-<p>Bestimmen Sie für jedes Derivat die Energie Emax des Absorptionsmaximums und die Verschiebung ΔEmax = Emax(Derivat) − Emax(unsubstituiertes trans-Azobenzol). Ordnen Sie das Maximum dem ultravioletten oder sichtbaren Bereich zu und notieren Sie die vorhergesagte Farbe und die gewichtete Lichtdurchlässigkeit. Vergleichen Sie Lage und Stärke der Absorption im sichtbaren Bereich. Ein negativer Wert von ΔEmax entspricht einer Verschiebung zu kleinerer Energie.</p>
+<p class="task-question">Wie verschieben Substituenten das Absorptionsmaximum?</p>
 <!-- course:marburg -->
-<p>Ordnen Sie jeder Person in dieser Reihenfolge eine Reihe zu: 4-X, 2-X, 3-X, 4,4′-X₂. Bei weniger als vier Personen entfallen die übrigen Reihen.</p>
+<p>Ordnen Sie jeder Person in der Reihenfolge 4-X, 2-X, 3-X, 4,4′-X₂ eine Reihe zu. Bei weniger als vier Personen entfallen die übrigen Reihen.</p>
 <!-- /course -->
+<ol>
+<li>Untersuchen Sie eine dieser Reihen: trans-4-X-Azobenzole, trans-2-X-Azobenzole, trans-3-X-Azobenzole oder trans-4,4′-X₂-Azobenzole.</li>
+<li>Setzen Sie für X nacheinander CH₃, OCH₃, N(CH₃)₂, CF₃, CN und NO₂ ein. Erstellen und optimieren Sie alle sechs Derivate und berechnen Sie die Spektren ihrer Minimumstrukturen.</li>
+<li>Bestimmen Sie für jedes Derivat Emax und die Verschiebung ΔEmax = Emax(Derivat) − Emax(trans-Azobenzol). Ein negativer Wert entspricht einer Verschiebung zu kleinerer Energie.</li>
+<li>Vergleichen Sie die vorhergesagten Farben sowie Lage und Stärke der Absorption im sichtbaren Bereich.</li>
+</ol>
 <!-- course:marburg -->
-<p class="protocol-output"><strong>Für Ihr Protokoll:</strong> Geben Sie Ihre Reihe an und dokumentieren Sie Emax, ΔEmax, Spektralbereich, vorhergesagte Farbe und gewichtete Lichtdurchlässigkeit aller sechs Derivate in einer Tabelle. Bestimmen Sie selbst die Derivate mit dem kleinsten und dem größten ΔEmax. Dokumentieren Sie für diese beiden Derivate zusätzlich die Übergänge im sichtbaren Bereich mit Anregungsenergie und Oszillatorstärke. Beschreiben Sie den Trend innerhalb Ihrer Reihe und mindestens eine Abweichung, die nicht in einen einfachen Trend passt, in höchstens vier Sätzen.</p>
+<div class="protocol-output"><p><strong>Für Ihr Protokoll:</strong></p>
+<ul>
+<li>Ihre Reihe</li>
+<li>Tabelle mit Emax, ΔEmax und vorhergesagter Farbe aller sechs Derivate</li>
+<li>gespeicherte Ergebnisberichte der Derivate mit dem kleinsten und dem größten ΔEmax als Anlage</li>
+<li>Trend innerhalb Ihrer Reihe und mindestens eine Abweichung, die nicht in einen einfachen Trend passt (höchstens vier Sätze); kennzeichnen Sie Spektren, Maxima und Farben als Modellvorhersagen</li>
+</ul></div>
 <!-- /course -->
 </details>
 <details class="task" id="task-compare-substituent-series">
 <summary>Reihenübergreifende Trends prüfen</summary>
-<p>Vergleichen Sie die Verschiebungen ΔEmax der Absorptionsmaxima zwischen den untersuchten Substituentenreihen. Prüfen Sie insbesondere, ob die Reihenfolge der Substituenten bei Substitution an Position 2, 3 oder 4 erhalten bleibt und wie sich eine zweite Substitution an Position 4′ auswirkt. Beschränken Sie Ihre Aussagen auf die tatsächlich untersuchten Strukturen.</p>
-<p>Wählen Sie einen Substituenten, dessen Spektren sich zwischen den verfügbaren Substitutionsmustern deutlich unterscheiden. Berücksichtigen Sie den gesamten untersuchten Energiebereich und vergleichen Sie Absorptionsmaximum, Absorption im sichtbaren Bereich, vorhergesagte Farbe und gewichtete Lichtdurchlässigkeit. Wenn Sie allein arbeiten, beziehen Sie Trends und Abweichungen auf Ihre eigene Reihe.</p>
+<p class="task-question">Welche Zusammenhänge gelten in mehreren Substituentenreihen?</p>
 <!-- course:marburg -->
 <p>Tragen Sie die Ergebnisse aller in Ihrer Gruppe untersuchten Reihen zusammen. Nicht untersuchte Reihen bleiben in der Ergebnismatrix frei.</p>
 <!-- /course -->
+<ol>
+<li>Vergleichen Sie die Verschiebungen ΔEmax zwischen den untersuchten Reihen.</li>
+<li>Prüfen Sie, ob die Reihenfolge der Substituenten bei Substitution an Position 2, 3 oder 4 erhalten bleibt und wie sich eine zweite Substitution an Position 4′ auswirkt.</li>
+<li>Beschränken Sie Ihre Aussagen auf die tatsächlich untersuchten Strukturen und das verwendete Rechenmodell.</li>
+</ol>
 <!-- course:marburg -->
-<p class="protocol-output"><strong>Für Ihr Protokoll:</strong> Dokumentieren Sie die Energien Emax in der Ergebnismatrix. Formulieren Sie höchstens zwei übergreifende Trends und belegen Sie jeden mit konkreten Werten. Nennen Sie mindestens eine Abweichung oder einen Fall, auf den ein Trend nicht zutrifft. Geben Sie außerdem den für den Spektrenvergleich gewählten Substituenten an und dokumentieren Sie den Vergleich anhand von Emax, Anregungsenergien und Oszillatorstärken im sichtbaren Bereich, vorhergesagter Farbe und gewichteter Lichtdurchlässigkeit. Beschränken Sie Ihre Aussagen auf die untersuchten Strukturen und das verwendete Rechenmodell.</p>
+<div class="protocol-output"><p><strong>Für Ihr Protokoll:</strong></p>
+<ul>
+<li>gemeinsame Ergebnismatrix mit Emax</li>
+<li>höchstens zwei übergreifende Trends, jeweils mit konkreten Werten belegt</li>
+<li>mindestens eine Abweichung oder ein Fall, auf den ein Trend nicht zutrifft</li>
+<li>wenn Sie allein arbeiten: Trends und Abweichungen innerhalb Ihrer eigenen Reihe</li>
+</ul></div>
 <!-- /course -->
 </details>
 <details class="task" id="task-plan-experiment-series">
 <summary>Eigenes Derivat untersuchen</summary>
-<p>Entwickeln Sie auf Grundlage der untersuchten Reihen ein neues Substitutionsmuster mit zwei oder drei Substituenten, darunter mindestens zwei verschiedene Substituentenarten. Die trans-Struktur darf keiner Struktur aus den systematischen Reihen entsprechen. Wählen Sie das Muster gezielt, um einen gefundenen Trend zu prüfen, eine Abweichung zu untersuchen, ein Absorptionsmaximum bei kleinerer Energie oder einen deutlichen Unterschied der Absorption zwischen cis und trans bei derselben Photonenenergie zu erreichen.</p>
-<p>Notieren Sie vor den Rechnungen Ihre Begründung und eine Vermutung zum erwarteten Ergebnis. Erstellen und optimieren Sie das Derivat in der cis- und trans-Konfiguration und berechnen Sie beide Spektren. Vergleichen Sie die Energien Emax der Absorptionsmaxima, die Absorption im sichtbaren Bereich, die Farbvorhersagen, die gewichtete Lichtdurchlässigkeit und die relative Absorption beider Konfigurationen bei derselben Energie.</p>
+<p class="task-question">Bestätigt ein selbst entworfenes Derivat Ihre Erwartung?</p>
+<ol>
+<li>Entwerfen Sie auf Grundlage der untersuchten Reihen ein neues Substitutionsmuster mit zwei oder drei Substituenten, darunter mindestens zwei verschiedene Substituentenarten. Wählen Sie es gezielt für eines dieser Ziele:
+<ul>
+<li>einen gefundenen Trend prüfen,</li>
+<li>eine Abweichung untersuchen,</li>
+<li>ein Absorptionsmaximum bei möglichst kleiner Energie erreichen oder</li>
+<li>einen deutlichen Unterschied der Absorption zwischen cis und trans bei derselben Photonenenergie erreichen.</li>
+</ul>
+</li>
+<li>Notieren Sie vor den Rechnungen Ihre Begründung und Ihre Vermutung.</li>
+<li>Erstellen und optimieren Sie das Derivat in der cis- und in der trans-Konfiguration und berechnen Sie beide Spektren.</li>
+<li>Vergleichen Sie Emax, die Absorption im sichtbaren Bereich, die vorhergesagten Farben und die gewichtete Lichtdurchlässigkeit.</li>
+</ol>
 <!-- course:marburg -->
-<p>Untersuchen Sie für jede Person ein anderes Derivat. Wählen Sie gemeinsam eine Photonenenergie zwischen 1,5 und 5,5 eV. Bestimmen Sie anschließend, welches frei gewählte Derivat das kleinste Emax und welches bei dieser gemeinsamen Energie den größten Unterschied zwischen den relativen Absorptionswerten von cis und trans zeigt. Geben Sie beim kleinsten Emax auch die Konfiguration an.</p>
+<p><strong>Gruppenrekorde:</strong> Untersuchen Sie für jede Person ein anderes Derivat. Wählen Sie gemeinsam eine Photonenenergie zwischen 1,5 und 5,5 eV. Ermitteln Sie danach zwei Rekorde Ihrer Gruppe: das kleinste Emax und den größten Unterschied der relativen Absorption von cis und trans bei der gewählten Energie.</p>
 <!-- /course -->
 <!-- course:marburg -->
-<p class="protocol-output"><strong>Für Ihr Protokoll:</strong> Geben Sie Positionen und Substituenten Ihres Derivats an, begründen Sie die Wahl anhand eines Ergebnisses aus den systematischen Reihen und dokumentieren Sie Ihre vorherige Vermutung. Erfassen Sie für Ihr cis/trans-Paar Emax, Spektralbereich, vorhergesagte Farbe und gewichtete Lichtdurchlässigkeit in einer Tabelle. Ergänzen Sie die Anregungsenergien und Oszillatorstärken der Übergänge im sichtbaren Bereich. Dokumentieren Sie für den Absorptionsvergleich die gewählte gemeinsame Photonenenergie und die beiden zugehörigen relativen Absorptionswerte. Geben Sie an, ob das Ergebnis den zugrunde gelegten Trend stützt, ihm widerspricht oder keine eindeutige Aussage erlaubt.</p>
-<p class="protocol-group-output">Dokumentieren Sie für beide ausgewählten Gruppenergebnisse Positionen und Substituenten. Geben Sie für das kleinste Emax den Wert und die Konfiguration an; geben Sie für den größten Absorptionsunterschied die gemeinsam gewählte Photonenenergie und beide relativen Absorptionswerte an.</p>
+<div class="protocol-output"><p><strong>Für Ihr Protokoll:</strong></p>
+<ul>
+<li>Positionen und Substituenten Ihres Derivats, Ihr Ziel mit Begründung anhand eines Ergebnisses aus den systematischen Reihen und Ihre vorherige Vermutung</li>
+<li>Tabelle mit Emax, vorhergesagter Farbe und gewichteter Lichtdurchlässigkeit für cis und trans</li>
+<li>gespeicherte Ergebnisberichte beider Konfigurationen als Anlage</li>
+<li>Prüfung der Vermutung: Stützt das Ergebnis sie, widerspricht es ihr oder erlaubt es keine eindeutige Aussage?</li>
+<li>beide Gruppenrekorde mit Positionen und Substituenten; beim kleinsten Emax Wert und Konfiguration, beim größten Unterschied die gewählte Photonenenergie und beide relativen Absorptionswerte</li>
+</ul></div>
 <!-- /course -->
 </details>
+<details class="exploration">
+<summary>Freiwillige Vertiefung</summary>
+<p>Untersuchen Sie trans-Push–Pull-Systeme. Damit sind hier trans-Azobenzole gemeint, die auf verschiedenen Phenylringen einen elektronenschiebenden Substituenten und einen elektronenziehenden Substituenten tragen: Der eine erhöht die Elektronendichte im Azobenzol-Gerüst, der andere verringert sie. Kombinieren Sie beispielsweise OCH₃ oder N(CH₃)₂ mit CF₃, CN oder NO₂ und vergleichen Sie die berechneten Spektren verschiedener Positionen und Substituentenpaare.</p>
+<!-- course:marburg -->
+<p>Diese Untersuchungen gehören nicht zum Pflichtteil, müssen nicht protokolliert werden und werden nicht bewertet.</p>
+<!-- /course -->
+</details>
+<!-- course:marburg -->
+<details class="next-steps">
+<summary>Protokoll besprechen und abgeben</summary>
+<p>Prüfen Sie abschließend Ihr Protokoll auf vollständige Ergebnisse, Einheiten und Anlagen.</p>
+<p>Das ausgefüllte Protokoll besprechen Sie im Anschluss mit Ihren Assistent*innen. Danach laden Sie es zusammen mit den Anlagen auf <a href="https://ilias.uni-marburg.de/" target="_blank" rel="noreferrer">ILIAS</a> hoch.</p>
+</details>
+<!-- /course -->
 </section>

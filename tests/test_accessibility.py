@@ -52,11 +52,22 @@ def test_both_protocols_available_in_course_with_same_task_headings():
     assert len(headings[0]) == 9
 
 
+def task_blocks(source):
+    """Return (id, body) for each task, including nested hint details."""
+    blocks = []
+    for start in re.finditer(r'<details class="task" id="([^"]+)">', source):
+        depth, position = 1, start.end()
+        for tag in re.finditer(r"<(/?)details\b", source[position:]):
+            depth += -1 if tag[1] else 1
+            if not depth:
+                blocks.append((start[1], source[position : position + tag.start()]))
+                break
+    return blocks
+
+
 def test_autonomous_accessible_tasks_are_shared_with_text_protocol_and_course_filtered():
     source = (STATIC / "guide-accessible.html").read_text()
-    tasks = re.findall(
-        r'<details class="task" id="([^"]+)">(.*?)</details>', source, re.S
-    )
+    tasks = task_blocks(source)
     assert len(tasks) == len({task_id for task_id, _ in tasks}) == 9
     with ZipFile(STATIC / "materials/protokollvorlage-text.docx") as archive:
         tree = ET.fromstring(archive.read("word/document.xml"))
@@ -65,10 +76,13 @@ def test_autonomous_accessible_tasks_are_shared_with_text_protocol_and_course_fi
         "".join(paragraph.itertext()) for paragraph in tree.findall(".//w:p", ns)
     )
     for _, task in tasks:
-        for paragraph in re.findall(r"<p[^>]*>(.*?)</p>", task, re.S):
+        # The hint stays in the app; question, steps and deliverables go into the protocol.
+        printed = re.sub(r'<details class="task-hint">.*?</details>', "", task, flags=re.S)
+        printed = re.sub(r"<li>([^<]*)<ul>.*?</ul>", r"<li>\1</li>", printed, flags=re.S)
+        for paragraph in re.findall(r"<(?:p|li)[^>]*>(.*?)</(?:p|li)>", printed, re.S):
             wording = " ".join(unescape(re.sub(r"<[^>]+>", "", paragraph)).split())
-            wording = wording.removeprefix("Für Ihr Protokoll:").strip()
-            assert wording in document_text
+            if wording != "Für Ihr Protokoll:":
+                assert wording in document_text
         for unavailable_action in (
             "Strukturerkundung",
             "merken",
@@ -77,31 +91,27 @@ def test_autonomous_accessible_tasks_are_shared_with_text_protocol_and_course_fi
             "Abbildung einfügen",
             "tastbare",
             "ohne Bilder",
-            "Ergebnisbericht beilegen",
         ):
             assert unavailable_action not in task
-    assert "Emax bezeichnet" in source
     assert "gemerkten" not in document_text
-    assert "zusätzlich speichern" in document_text
-    # Both task routes require the same descriptive color quantities; none is optional.
+    assert "Ergebnisberichte und geben sie als Anlage ab" in document_text
+    # Both task routes name colors wherever spectra are compared; none is optional.
     for task_id, task in tasks:
         if task_id in {
             "task-compare-isomer-spectra",
             "task-compare-substituent-spectra",
-            "task-compare-substituent-series",
             "task-plan-experiment-series",
         }:
             assert "Farb" in task
-            assert "Lichtdurchlässigkeit" in task
     assert "Pflichtabgaben" not in source
     assert "Farbabstand" not in source
     table_text = " ".join(
         "".join(table.itertext()) for table in tree.findall(".//w:tbl", ns)
     )
     assert table_text.count("Farbvorhersage") == 3
-    assert table_text.count("Lichtdurchlässigkeit") == 3
-    assert "Gemeinsame Photonenenergie" in table_text
-    assert "Absorption cis" in table_text and "Absorption trans" in table_text
+    assert table_text.count("Lichtdurchlässigkeit") == 2
+    assert "Gruppenrekord" in table_text
+    assert "relative Absorption cis und trans" in table_text
     with TestClient(create_app(course="marburg")) as client:
         course_response = client.get("/static/guide-accessible.html")
     assert course_response.status_code == 200

@@ -82,9 +82,8 @@ def test_protocol_download_and_tasks_without_starting_a_session():
         assert not re.search(r"geometr", visible_index, re.I)
         assert not re.search(r"geometr", text, re.I)
         assert "Atome zählen" not in guide and "Atome zählen" not in text
-        assert (
-            "die Verknüpfung der Atome" in guide and "die Verknüpfung der Atome" in text
-        )
+        assert "die Verknüpfung der Atome" in guide
+        assert "Für Ihr Protokoll:" in text and "Hinweis" not in text
         assert "symmetrieäquivalenten Auswahlpositionen" in guide
         assert "Symmetrieäquivalente Auswahlpositionen" in text
         assert "Falls Sie nicht weiterkommen" in guide

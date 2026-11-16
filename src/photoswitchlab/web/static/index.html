@@ -17,7 +17,7 @@ document their own choices.
     <meta name="description" content="$brand_title · $brand_subtitle"/>
     <link rel="icon" type="image/svg+xml" href="static/brand-mark.svg"/>
     <link rel="stylesheet" href="static/header.css?v=8"/>
-    <link rel="stylesheet" href="static/app.css?v=ui-77"/>
+    <link rel="stylesheet" href="static/app.css?v=ui-78"/>
     <script src="static/vendor/ngl.js" defer></script>
     <script src="static/vendor/chart.js" defer></script>
     <script src="static/progress.js?v=ui-36" defer></script>
@@ -27,7 +27,7 @@ document their own choices.
     <script src="static/sonification-audio.js?v=1" defer></script>
     <script src="static/presentation.js?v=5" defer></script>
     <script src="static/accessibility.js?v=15" defer></script>
-    <script src="static/app.js?v=ui-114" defer></script>
+    <script src="static/app.js?v=ui-115" defer></script>
 </head>
 <body>
 <a href="#workspace" class="skip">Zum Arbeitsbereich</a>
@@ -460,7 +460,7 @@ document their own choices.
                         <div id="simple-spectrum-plot" class="simple-only"></div>
                         <div id="spectrum-sonification" class="sonification" aria-describedby="spectrum-sonification-hint"
                              aria-label="Hörbares UV/Vis-Spektrum" hidden>Hörbares UV/Vis-Spektrum</div>
-                        <p id="spectrum-sonification-hint" class="note" hidden>Hörbares Spektrum: Wählen Sie das Feld mit der Tabulatortaste aus. Die Pfeiltasten nach links und rechts bewegen sich in Schritten von 0,05 eV entlang der Energie; die Energie steigt nach rechts. Die Tonhöhe folgt der relativen Absorption, die Stereoposition der Energie. Pos1 und Ende springen an die Ränder, Umschalt und Ende spielt die ganze Kurve ab. Bild auf und Bild ab wechseln zwischen den Konfigurationen; H zeigt alle Tastenbefehle.</p>
+                        <p id="spectrum-sonification-hint" class="note" hidden>Pfeiltasten links und rechts: Energie in Schritten von 0,05 eV; die Tonhöhe folgt der relativen Absorption. Bild auf und Bild ab wechseln zwischen den Konfigurationen; H zeigt alle Tastenbefehle.</p>
                         <div id="spectrum-sonification-cc" class="sr-only"></div>
                         <label for="curve-energy">Absorption bei gleicher Energie vergleichen / eV</label>
                         <input id="curve-energy" type="text" inputmode="decimal" autocomplete="off" aria-describedby="curve-value"/>
@@ -770,11 +770,11 @@ document their own choices.
 <div id="absorption-maximum-help" class="property-help" popover role="dialog"
      aria-labelledby="absorption-maximum-help-title">
     <div class="dialog-heading">
-        <h2 id="absorption-maximum-help-title">Absorptionsmaximum</h2>
+        <h2 id="absorption-maximum-help-title">Absorptionsmaximum E<sub>max</sub></h2>
         <button type="button" class="close" popovertarget="absorption-maximum-help"
                 popovertargetaction="hide" aria-label="Erklärung schließen" autofocus>×</button>
     </div>
-    <p>Der angezeigte Wert bezeichnet die Energie am höchsten Punkt der blauen
+    <p>E<sub>max</sub> bezeichnet die Energie am höchsten Punkt der blauen
         Absorptionskurve im dargestellten Energiebereich. Da sich die verbreiterten
         Beiträge mehrerer Übergänge überlagern, kann dieses Maximum zwischen
         einzelnen Übergängen liegen. Es ist daher nicht zwangsläufig die

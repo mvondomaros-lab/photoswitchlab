@@ -30,26 +30,26 @@ Die Aufgaben in der Webapp führen Sie durch drei Schritte:
 Bearbeiten Sie die Pflichtaufgaben in allen drei Versuchsschritten der Webapp.
 Im Aufgabenbereich steht für jeden Schritt, was Sie untersuchen und welche
 Ergebnisse Sie im Protokoll festhalten sollen. Freiwillige Vertiefungen gehören
-nicht zum Pflichtteil. Die Substituentenreihen für die Gruppenarbeit erhalten Sie
-von Ihrer Betreuung.
+nicht zum Pflichtteil. Die Substituentenreihen verteilen Sie in Ihrer Gruppe nach
+der in der Aufgabe angegebenen Reihenfolge.
 
 ## Protokoll führen
 
-Laden Sie die [Protokollvorlage mit Abbildungen im DOCX-Format](../../src/photoswitchlab/web/static/materials/protokollvorlage.docx)
+Laden Sie die [Protokollvorlage im DOCX-Format](../../src/photoswitchlab/web/static/materials/protokollvorlage.docx)
 herunter und bearbeiten Sie sie mit Word oder LibreOffice Writer. Die Überschriften entsprechen
 den Aufgaben. Tragen Sie berechnete Werte mit Einheiten ein und fügen Sie die
 geforderten Strukturansichten, Energieprofile und Spektren ein. Kennzeichnen Sie
 Modellvorhersagen, wo die Aufgaben es verlangen.
 
-Alternativ steht die [Protokollvorlage für textbasierte Auswertung im DOCX-Format](../../src/photoswitchlab/web/static/materials/protokollvorlage-text.docx)
-bereit. Sie dokumentieren darin dieselben Größen in kompakten Tabellen anstelle der
-Abbildungen. Fragestellungen und Gruppenergebnisse sind in beiden Vorlagen gleich.
+Wenn Sie ohne Abbildungen arbeiten, verwenden Sie die [Protokollvorlage ohne Abbildungen im DOCX-Format](../../src/photoswitchlab/web/static/materials/protokollvorlage-text.docx).
+Die Aufgaben sind dieselben. Statt Abbildungen tragen Sie die zugehörigen Werte in
+Tabellen ein oder geben gespeicherte Ergebnisberichte als Anlage ab.
 
-Speichern Sie die Vorlage und exportierte Abbildungen beziehungsweise Ergebnisberichte während der Arbeit auf
+Speichern Sie die Vorlage und exportierte Abbildungen oder Ergebnisberichte während der Arbeit auf
 Ihrem Computer. Ergebnisse in der Webapp gehen beim Serverneustart verloren und
 werden nach 24 Stunden Inaktivität gelöscht.
 
 ## Protokoll besprechen und abgeben
 
 Besprechen Sie das ausgefüllte Protokoll mit Ihrer Betreuung und laden Sie es
-anschließend in [ILIAS](https://ilias.uni-marburg.de/) hoch.
+anschließend mit eventuellen Anlagen in [ILIAS](https://ilias.uni-marburg.de/) hoch.

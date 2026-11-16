@@ -1398,7 +1398,13 @@ select {
 .task-panel details[open] > summary { color: var(--blue); }
 .task-panel details { margin: 8px 0; padding: 0; font-size: inherit; }
 .task-panel li { margin-bottom: 8px; }
-.task-panel .protocol-output:has(> strong) { padding-top: 12px; border-top: 1px solid var(--line); }
+.task-panel .protocol-output { margin-top: 12px; padding-top: 4px; border-top: 1px solid var(--line); }
+.task-panel .protocol-output > p { margin-bottom: 4px; }
+.task-panel ol, .task-panel ul { padding-left: 1.4rem; }
+.task-panel li > ul { margin-top: 6px; }
+.task-panel li > ul > li { margin-bottom: 2px; }
+.task-panel .task-question { font-weight: 600; }
+.task-panel .task-hint > summary { padding: 4px 0; font-size: .875rem; }
 @media (min-width: 1380px) {
   .learning-layout:has(.task-panel:not([hidden])) {
     display: grid; grid-template-columns: minmax(0, 1fr) 360px;

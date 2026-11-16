@@ -225,7 +225,7 @@ Methoxygruppen an den Positionen 2 und 2′ ergeben beispielsweise 2,2′-Dimeth
 Bei unterschiedlichen Substituenten kann die alphabetische Reihenfolge entscheiden: Tragen die Positionen 2 und 6
 eine Methoxy- und eine Nitrogruppe, bleibt die Zahlenfolge 2,6 beim Umkehren der Nummerierungsrichtung gleich.
 *Methoxy* steht alphabetisch vor *Nitro* und erhält deshalb die Position 2. Der Name lautet
-2-Methoxy-6-Nitroazobenzol.
+2-Methoxy-6-nitroazobenzol.
 
 <details markdown="1">
 <summary markdown="span">Ergänzung: Benennung eines mehrfach substituierten Azobenzols</summary>
