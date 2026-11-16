@@ -10,6 +10,7 @@ import json
 import re
 
 from docx import Document
+from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.shared import Cm, Pt, RGBColor
 from docx.oxml import OxmlElement
 from docx.oxml.ns import qn
@@ -54,22 +55,20 @@ def build(text_based=False):
     lang = OxmlElement("w:lang")
     lang.set(qn("w:val"), "de-DE")
     normal.element.get_or_add_rPr().append(lang)
+    # The footer shows only the page number; the license travels in the metadata.
+    doc.core_properties.comments = (
+        "Vorlage: PhotoSwitchLab · Michael von Domaros · CC BY-SA 4.0 · "
+        "https://mvondomaros-lab.github.io/photoswitchlab/lizenz/"
+    )
     footer = sec.footer.paragraphs[0]
-    footer.add_run("PhotoSwitchLab · Marburg    |    ")
+    footer.alignment = WD_ALIGN_PARAGRAPH.CENTER
     field = OxmlElement("w:fldSimple")
     field.set(qn("w:instr"), "PAGE")
     footer._p.append(field)
-    for run in footer.runs:
-        run.font.size = Pt(9)
-        run.font.color.rgb = RGBColor.from_string("586B80")
-    notice = sec.footer.add_paragraph(
-        "Vorlage: PhotoSwitchLab · Michael von Domaros · CC BY-SA 4.0\n"
-        "https://mvondomaros-lab.github.io/photoswitchlab/lizenz/"
-    )
-    notice.paragraph_format.space_after = Pt(0)
-    for run in notice.runs:
-        run.font.size = Pt(8)
-        run.font.color.rgb = RGBColor.from_string("586B80")
+    number = footer.add_run("1")
+    field.append(number._r)
+    number.font.size = Pt(9)
+    number.font.color.rgb = RGBColor.from_string("586B80")
 
     def p(text, style=None):
         para = doc.add_paragraph(style=style)
