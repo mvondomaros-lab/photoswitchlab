@@ -35,7 +35,7 @@ def build(text_based=False):
     normal = doc.styles["Normal"]
     normal.font.name, normal.font.size = "Arial", Pt(10.5)
     normal.font.color.rgb = RGBColor.from_string("192D43")
-    normal.paragraph_format.space_after = Pt(7)
+    normal.paragraph_format.space_after = Pt(6)
     normal.paragraph_format.line_spacing = 1.12
     for name, size in [("Title", 25), ("Heading 1", 18), ("Heading 2", 13)]:
         style = doc.styles[name]
@@ -70,8 +70,7 @@ def build(text_based=False):
     number.font.size = Pt(9)
     number.font.color.rgb = RGBColor.from_string("586B80")
 
-    def p(text, style=None):
-        para = doc.add_paragraph(style=style)
+    def formatted_text(para, text):
         for part in re.split(r"(E(?:trans|cis|TS|max)|ΔE(?:‡|max))", text):
             if part in ("Etrans", "Ecis", "ETS", "Emax"):
                 para.add_run("E")
@@ -85,6 +84,9 @@ def build(text_based=False):
             else:
                 para.add_run(part)
         return para
+
+    def p(text, style=None):
+        return formatted_text(doc.add_paragraph(style=style), text)
 
     def answer(text="[Ihre Antwort]"):
         para = p(text)
@@ -105,9 +107,10 @@ def build(text_based=False):
             nested.drop_tree()
         return words(copy)
 
-    def task(task_id):
+    def task(task_id, *, new_page=False):
         el = tasks[task_id]
-        doc.add_heading(el.find("summary").text.strip(), 2)
+        heading = doc.add_heading(el.find("summary").text.strip(), 2)
+        heading.paragraph_format.page_break_before = new_page
         for paragraph in el.xpath('./p[@class="task-question"]'):
             p(words(paragraph)).runs[0].font.italic = True
         if text_based:
@@ -121,9 +124,14 @@ def build(text_based=False):
                     for item in step.xpath("./ul/li"):
                         p(words(item), "List Bullet 2")
         output = el.xpath('./div[@class="protocol-output"]')[0]
-        p("Für Ihr Protokoll:").runs[0].font.bold = True
-        for item in output.xpath("./ul/li"):
-            p(words(item), "List Bullet")
+        label = p("Für Ihr Protokoll:")
+        label.runs[0].font.bold = True
+        label.paragraph_format.keep_with_next = True
+        items = output.xpath("./ul/li")
+        for index, item in enumerate(items):
+            para = p(words(item), "List Bullet")
+            para.paragraph_format.keep_together = True
+            para.paragraph_format.keep_with_next = index < len(items) - 1
 
     def table(headers, rows, widths):
         t = doc.add_table(rows=1, cols=len(headers))
@@ -131,11 +139,11 @@ def build(text_based=False):
         for col, width in zip(t.columns, widths):
             col.width = Cm(width)
         for c, name, width in zip(t.rows[0].cells, headers, widths):
-            c.text = name
+            formatted_text(c.paragraphs[0], name)
             c.width = Cm(width)
         for row in rows:
             for c, value, width in zip(t.add_row().cells, row, widths):
-                c.text = value
+                formatted_text(c.paragraphs[0], value)
                 c.width = Cm(width)
         for i, row in enumerate(t.rows):
             trpr = row._tr.get_or_add_trPr()
@@ -171,6 +179,7 @@ def build(text_based=False):
                 pr.append(align)
                 for para in c.paragraphs:
                     para.paragraph_format.space_after = Pt(2)
+                    para.paragraph_format.keep_with_next = i < len(t.rows) - 1
                     for run in para.runs:
                         run.font.size = Pt(9)
                         if i == 0:
@@ -215,8 +224,7 @@ def build(text_based=False):
         "Begründung anhand der Symmetrie: [höchstens zwei Sätze]"
     )
 
-    doc.add_page_break()
-    doc.add_heading("Struktur optimieren", 1)
+    doc.add_heading("Struktur optimieren", 1).paragraph_format.page_break_before = True
     task("task-compare-optimized-geometries")
     answer("Vermutung vor den Optimierungen: [Ihre Vermutung]")
     table(
@@ -237,7 +245,7 @@ def build(text_based=False):
         "Strukturänderungen und Deutung des Vorzeichens: [höchstens drei Sätze]"
     )
 
-    task("task-examine-substituent-geometry")
+    task("task-examine-substituent-geometry", new_page=True)
     answer("Vermutung zur Änderung der Ringstellung: [Ihre Vermutung]")
     table(
         ["Struktur", "C–N=N–C / °", "Ringabstand / pm"],
@@ -264,8 +272,7 @@ def build(text_based=False):
         "Sterischer Einfluss und Vergleich mit unsubstituiertem trans-Azobenzol: [höchstens vier Sätze]"
     )
 
-    doc.add_page_break()
-    task("task-analyze-reaction-path")
+    task("task-analyze-reaction-path", new_page=True)
     if text_based:
         table(
             ["Pfadstruktur", "ΔE zum Anfang / (kJ/mol)", "C–N=N–C / °"],
@@ -281,8 +288,7 @@ def build(text_based=False):
     )
     answer("Pfad, Verbindungsprüfung, Barrieren- und RT-Vergleich: [höchstens drei Sätze]")
 
-    doc.add_page_break()
-    doc.add_heading("Spektrum berechnen", 1)
+    doc.add_heading("Spektrum berechnen", 1).paragraph_format.page_break_before = True
     task("task-compare-isomer-spectra")
     table(
         ["Konfiguration", "Emax / eV", "UV oder sichtbar", "Farbvorhersage", "Lichtdurchlässigkeit / %"],
@@ -296,8 +302,7 @@ def build(text_based=False):
         "Energiebereich, stärker absorbierende Konfiguration und Grenze der Vorhersage: [höchstens drei Sätze]"
     )
 
-    doc.add_page_break()
-    task("task-compare-substituent-spectra")
+    task("task-compare-substituent-spectra", new_page=True)
     answer("Zugeordnete Reihe: [4-X, 2-X, 3-X oder 4,4′-X₂]")
     table(
         ["X", "Emax / eV", "ΔEmax / eV", "Farbvorhersage"],
@@ -312,8 +317,7 @@ def build(text_based=False):
         figure("Spektrum zum größten ΔEmax: [Abbildung einfügen und beschriften]")
     answer("Trend und Abweichung: [höchstens vier Sätze]")
 
-    doc.add_page_break()
-    task("task-compare-substituent-series")
+    task("task-compare-substituent-series", new_page=True)
     table(
         ["X", "2-X / eV", "3-X / eV", "4-X / eV", "4,4′-X₂ / eV"],
         [[label, "[Wert]", "[Wert]", "[Wert]", "[Wert]"] for label in substituents],
@@ -323,8 +327,8 @@ def build(text_based=False):
     answer("Übergreifender Trend 2 mit konkreten Werten: [Trend und Belege]")
     answer("Abweichung oder begrenzter Gültigkeitsbereich: [Beobachtung]")
 
-    doc.add_page_break()
-    task("task-plan-experiment-series")
+    final_task_start = len(doc.paragraphs)
+    task("task-plan-experiment-series", new_page=True)
     answer(
         "Positionen und Substituenten: [Auswahl]\n"
         "Ziel und Bezug zur systematischen Reihe: [Ziel und Begründung]\n"
@@ -356,6 +360,10 @@ def build(text_based=False):
         ],
         [5, 5.5, 6.5],
     )
+    if text_based:
+        # Keep the final task and its compact results table on the same page.
+        for para in doc.paragraphs[final_task_start:]:
+            para.paragraph_format.space_after = Pt(4)
     output = OUTPUT.with_name("protokollvorlage-text.docx") if text_based else OUTPUT
     output.parent.mkdir(parents=True, exist_ok=True)
     doc.save(output)
